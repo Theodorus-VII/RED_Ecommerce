@@ -1,2 +1,4 @@
 */bin/
 */.vs/
+[Dd]ebug/
+.gitignore
