@@ -14,9 +14,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
+// var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
+// builder.Services.AddDbContext<ApplicationDbContext>(
+//     options => options.UseSqlServer(connectionString)
+// );
+var connectionString = "server=localhost;database=EcommerceTest;Uid=root;Pwd=";
 builder.Services.AddDbContext<ApplicationDbContext>(
-    options => options.UseSqlServer(connectionString)
+    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()

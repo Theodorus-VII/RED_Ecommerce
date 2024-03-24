@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Data;
 
+
 public class ApplicationDbContext
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
@@ -22,7 +23,21 @@ public class ApplicationDbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        // builder.ApplyConfiguration(new RoleConfiguration());
+        
+        // mysql specific stupidity
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            var tableName = entityType.GetTableName();
+            var schema = entityType.GetSchema();
+
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(string) && (property.GetMaxLength() >= 255 || property.GetMaxLength() == null))
+                {
+                    property.SetMaxLength(100);
+                }
+            }
+        }
     }
 
 }

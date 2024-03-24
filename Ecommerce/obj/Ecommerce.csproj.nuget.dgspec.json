@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj": {}
+    "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj": {
+    "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
+        "projectUniqueName": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
         "projectName": "Ecommerce",
-        "projectPath": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
+        "projectPath": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
         "packagesPath": "C:\\Users\\Xeth\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\obj\\",
+        "outputPath": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Xeth\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -66,6 +66,10 @@
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
               "version": "[6.0.28, )"
+            },
+            "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[6.0.3, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
