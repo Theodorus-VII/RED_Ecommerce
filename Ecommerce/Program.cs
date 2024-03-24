@@ -1,3 +1,4 @@
+using Ecommerce.Configuration;
 using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services;
@@ -18,19 +19,18 @@ builder.Services.AddSwaggerGen();
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
+
 var connectionString = "server=localhost;database=EcommerceTest;Uid=root;Pwd=";
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-builder.Services.AddIdentity<User, IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-
-builder.Services.AddControllers();
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // Add the services here. Same format, 
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 
 var app = builder.Build();
@@ -44,6 +44,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

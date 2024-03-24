@@ -1,5 +1,6 @@
 using Ecommerce.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ecommerce.Controllers;
 [ApiController]
@@ -33,5 +34,12 @@ public class TestController : ControllerBase
     {
         var serviceResult = _testService.DbServiceTest();
         return Ok(serviceResult);
+    }
+
+    [HttpGet("authTest")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public IActionResult AuthenticationTest()
+    {
+        return Ok("Authenticated");
     }
 }
