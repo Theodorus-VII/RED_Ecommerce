@@ -18,6 +18,7 @@ bld/
 **/.vs/
 
 
+
 # Ignore .NET temporary files
 **/obj/
 **/bin/
