@@ -6,5 +6,5 @@ public interface IAuthResponse
 {
     public bool IsAuthSuccess();
     public string Error { get; set; }
-    public UserDto User { get; set; }
+    public UserDto User { set; }
 }

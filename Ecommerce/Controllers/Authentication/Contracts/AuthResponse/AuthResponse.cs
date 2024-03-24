@@ -19,7 +19,7 @@ public class AuthSucessResponse : IAuthResponse
 public class AuthFailResponse : IAuthResponse
 {
     public string Error { get; set; }
-    public UserDto? User { get; set;} = null;
+    public UserDto? User { get; set; } = null;
 
     public bool IsAuthSuccess() => false;
 
