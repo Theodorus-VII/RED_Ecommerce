@@ -936,6 +936,37 @@
           }
         }
       },
+      "MySqlConnector/2.1.2": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/MySqlConnector.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/MySqlConnector.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Pomelo.EntityFrameworkCore.MySql/6.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.Relational": "[6.0.28, 6.0.999]",
+          "Microsoft.Extensions.DependencyInjection": "6.0.1",
+          "MySqlConnector": "2.1.2"
+        },
+        "compile": {
+          "lib/net6.0/Pomelo.EntityFrameworkCore.MySql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Pomelo.EntityFrameworkCore.MySql.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Swashbuckle.AspNetCore/6.5.0": {
         "type": "package",
         "dependencies": {
@@ -2632,6 +2663,49 @@
         "version.txt"
       ]
     },
+    "MySqlConnector/2.1.2": {
+      "sha512": "JVokQTUNN3WHAu9Vw8ieeq1dXTFokJiig5P0VJ4f439UxRrsPo6SaVWC8Zdm6mkPeQFhZ0/9afdWa02EY/1j/w==",
+      "type": "package",
+      "path": "mysqlconnector/2.1.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net45/MySqlConnector.dll",
+        "lib/net45/MySqlConnector.xml",
+        "lib/net461/MySqlConnector.dll",
+        "lib/net461/MySqlConnector.xml",
+        "lib/net471/MySqlConnector.dll",
+        "lib/net471/MySqlConnector.xml",
+        "lib/net5.0/MySqlConnector.dll",
+        "lib/net5.0/MySqlConnector.xml",
+        "lib/net6.0/MySqlConnector.dll",
+        "lib/net6.0/MySqlConnector.xml",
+        "lib/netcoreapp3.1/MySqlConnector.dll",
+        "lib/netcoreapp3.1/MySqlConnector.xml",
+        "lib/netstandard2.0/MySqlConnector.dll",
+        "lib/netstandard2.0/MySqlConnector.xml",
+        "lib/netstandard2.1/MySqlConnector.dll",
+        "lib/netstandard2.1/MySqlConnector.xml",
+        "logo.png",
+        "mysqlconnector.2.1.2.nupkg.sha512",
+        "mysqlconnector.nuspec"
+      ]
+    },
+    "Pomelo.EntityFrameworkCore.MySql/6.0.3": {
+      "sha512": "jEa462J9uNlmpX7qLXpJVOInonwF6E0bFbij6hboTsQJK7thfazh8xwF8fe79kUrp4+6e5A13KT5aLBIkt7RTg==",
+      "type": "package",
+      "path": "pomelo.entityframeworkcore.mysql/6.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "icon.png",
+        "lib/net6.0/Pomelo.EntityFrameworkCore.MySql.dll",
+        "lib/net6.0/Pomelo.EntityFrameworkCore.MySql.xml",
+        "pomelo.entityframeworkcore.mysql.6.0.3.nupkg.sha512",
+        "pomelo.entityframeworkcore.mysql.nuspec"
+      ]
+    },
     "Swashbuckle.AspNetCore/6.5.0": {
       "sha512": "FK05XokgjgwlCI6wCT+D4/abtQkL1X1/B9Oas6uIwHFmYrIO9WUD5aLC9IzMs9GnHfUXOtXZ2S43gN1mhs5+aA==",
       "type": "package",
@@ -3316,6 +3390,7 @@
       "Microsoft.EntityFrameworkCore >= 6.0.28",
       "Microsoft.EntityFrameworkCore.Design >= 6.0.28",
       "Microsoft.EntityFrameworkCore.SqlServer >= 6.0.28",
+      "Pomelo.EntityFrameworkCore.MySql >= 6.0.3",
       "Swashbuckle.AspNetCore >= 6.5.0"
     ]
   },
@@ -3325,11 +3400,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
+      "projectUniqueName": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
       "projectName": "Ecommerce",
-      "projectPath": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
+      "projectPath": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\Ecommerce.csproj",
       "packagesPath": "C:\\Users\\Xeth\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Xeth\\Desktop\\New folder\\RED_Ecommerce\\Ecommerce\\obj\\",
+      "outputPath": "C:\\Users\\Xeth\\Desktop\\New folder\\mysql\\RED_Ecommerce\\Ecommerce\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Xeth\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -3384,6 +3459,10 @@
           "Microsoft.EntityFrameworkCore.SqlServer": {
             "target": "Package",
             "version": "[6.0.28, )"
+          },
+          "Pomelo.EntityFrameworkCore.MySql": {
+            "target": "Package",
+            "version": "[6.0.3, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
