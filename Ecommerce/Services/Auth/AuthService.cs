@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
@@ -58,6 +57,11 @@ public class AuthService : IAuthService
     {
         try
         {
+            // check if user alerady exists.
+            if (await _userManager.FindByEmailAsync(request.Email) != null)
+            {
+                throw new Exception("Email already exists.");
+            }
             Console.WriteLine("Creating user...");
             User user = new(
                 request.Email,
@@ -75,18 +79,13 @@ public class AuthService : IAuthService
                 string token = _tokenGenerator.GenerateToken(user);
                 return new AuthSucessResponse(new UserDto(user, token));
             }
-            throw new Exception($"Encountered Identity Errors: {result.Errors}");
+            Console.WriteLine($"Encountered Identity Errors: {result.Errors}");
+            throw new Exception("Server Error");
         }
         catch (Exception e)
         {
             Console.WriteLine($"Registration Error: {e}");
-            // IdentityError error = new()
-            // {
-            //     Code = "500",
-            //     Description = "Server Error"
-            // };
-            // IdentityResult result = IdentityResult.Failed(error);
-            return new AuthFailResponse("Server Error");
+            return new AuthFailResponse(e.Message);
         }
     }
 }
