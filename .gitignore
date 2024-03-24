@@ -1,5 +1,5 @@
 # Build results
-[Dd]ebug/
+**/[Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
@@ -15,4 +15,9 @@ bld/
 [Ll]ogs/
 
 
-.vs/
+**/.vs/
+
+
+# Ignore .NET temporary files
+**/obj/
+**/bin/
