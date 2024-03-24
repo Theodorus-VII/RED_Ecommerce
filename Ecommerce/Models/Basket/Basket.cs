@@ -3,7 +3,6 @@ namespace Ecommerce.Models;
 public class Basket
 {
     public int Id {get; set;}
-    public int UserId { get; set; }
     public User? User { get; set; } // User is not in the db, this just set's UserId as a foreign key in EF Core.
     private readonly List<Basket_Item> _items = new List<Basket_Item>();
 
