@@ -61,12 +61,12 @@ public static class ConfigureJwtAuthentication
             }
         );
         
-        services.AddAuthorization(
-            options =>
-            {
-                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-            }
-        );
+        // services.AddAuthorization(
+        //     options =>
+        //     {
+        //         options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+        //     }
+        // );
 
         return services;
     }

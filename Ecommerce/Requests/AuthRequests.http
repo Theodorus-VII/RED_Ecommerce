@@ -20,9 +20,9 @@ Content-Type: application/json
 
 POST {{Api_HostAddress}}/login HTTP/1.1  
 Content-Type: application/json
-
+ 
 {
-  "Email": "email@email.com",
+  "Email": "aemail@email.com",
   "Password": "randompassword"
 }
 

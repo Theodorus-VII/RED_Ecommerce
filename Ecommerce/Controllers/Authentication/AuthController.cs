@@ -18,7 +18,6 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-
     //test route
     [HttpGet("test")]
     public IActionResult GetUsers()

@@ -37,8 +37,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // app.UseSwagger();
+    // app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
@@ -48,9 +48,8 @@ app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    var roles = new string[] { "Admin", "Customer" };
+    var roles = new string[] { Roles.Admin, Roles.Customer };
     await scope.ServiceProvider.AddRoles(roles);
-    // await ConfigureRoles.AddRoles(scope.ServiceProvider, roles);
 }
 
 app.MapControllers();

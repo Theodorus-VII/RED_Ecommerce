@@ -1,10 +1,14 @@
+using Ecommerce.Models;
 using Ecommerce.Services;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ecommerce.Controllers;
+
 [ApiController]
 [Route("test")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Roles.Customer)]
 public class TestController : ControllerBase
 {
     private readonly TestService _testService;
@@ -14,13 +18,11 @@ public class TestController : ControllerBase
         _testService = testService;
     }
 
-
     [HttpGet()]
     public IActionResult GetTestResult()
     {
         return Ok("Ok from the test controller");
     }
-
 
     [HttpGet("service_test")]
     public IActionResult GetServiceTestResult()

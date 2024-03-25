@@ -46,24 +46,25 @@ public class AuthService : IAuthService
                 throw new Exception("Invalid Password");
             }
 
-            ClaimsIdentity identity = new(IdentityConstants.ApplicationScheme);
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-            identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
+            // ClaimsIdentity identity = new(IdentityConstants.ApplicationScheme);
+            // identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+            // identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
+            // identity.AddClaim(new Claim(ClaimTypes.Role, "Customer"));
 
-            string token = _tokenGenerator.GenerateToken(user);
-            
+            var claims = new List<Claim>();
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
             {
-                Console.WriteLine($"Role: {role}");
-                _logger.LogInformation($"Role: {role}");
+                _logger.LogInformation($"User Role: {role}");
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
-            
+            string token = _tokenGenerator.GenerateToken(user, claims);
+
             return new AuthSucessResponse(new UserDto(user, token));
         }
         catch
         {
-            Console.WriteLine("Invalid Username or Password");
+            _logger.LogError("Invalid Username or Password");
             return new AuthFailResponse(error: "Invalid Username or Password");
         }
     }
@@ -77,7 +78,7 @@ public class AuthService : IAuthService
             {
                 throw new Exception("Email already exists.");
             }
-            Console.WriteLine("Creating user...");
+            _logger.LogInformation("Creating user...");
             User user =
                 new(
                     request.Email,
@@ -86,25 +87,33 @@ public class AuthService : IAuthService
                     request.DefaultShippingAddress,
                     request.BillingAddress
                 );
-            Console.WriteLine(request.Password);
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
             {
-                Console.WriteLine($"Encountered Identity Errors: {result.Errors}");
+                _logger.LogError($"Encountered Identity Errors: {result.Errors}");
                 throw new Exception("Server Error");
             }
-            Console.WriteLine("User added to server.");
-            var assignRoleResult = await _userManager.AddToRoleAsync(user, "Customer");
+            _logger.LogInformation("User added to server.");
+            var assignRoleResult = await _userManager.AddToRoleAsync(user, Roles.Customer);
             if (!assignRoleResult.Succeeded)
             {
-                Console.WriteLine($"Encountered Role Assignment Error: {assignRoleResult.Errors}");
+                _logger.LogError($"Encountered Role Assignment Error: {assignRoleResult.Errors}");
             }
-            string token = _tokenGenerator.GenerateToken(user);
+
+            var claims = new List<Claim>();
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                _logger.LogInformation($"User Role: {role}");
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            string token = _tokenGenerator.GenerateToken(user, claims);
             return new AuthSucessResponse(new UserDto(user, token));
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Registration Error: {e}");
+            _logger.LogError($"Registration Error: {e}");
             return new AuthFailResponse(e.Message);
         }
     }
