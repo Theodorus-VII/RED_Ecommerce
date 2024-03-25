@@ -24,6 +24,7 @@ public static class ConfigureJwtAuthentication
         services.AddSingleton(Options.Create(jwtSettings));
         
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+        
 
         services.AddIdentity<User, IdentityRole<Guid>>(
             options =>
@@ -59,7 +60,13 @@ public static class ConfigureJwtAuthentication
                 };
             }
         );
-        services.AddAuthorization();
+        
+        services.AddAuthorization(
+            options =>
+            {
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            }
+        );
 
         return services;
     }

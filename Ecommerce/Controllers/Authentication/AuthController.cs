@@ -36,7 +36,8 @@ public class AuthController : ControllerBase
 
         if (response.IsAuthSuccess())
         {
-            return Ok($"{response}");
+            var user = response.User;
+            return Ok(user);
         }
         return BadRequest(response.Error.ToString());
     }
@@ -55,14 +56,6 @@ public class AuthController : ControllerBase
         }
 
         var user = response.User;
-
-        // ClaimsIdentity identity = new ClaimsIdentity(IdentityConstants.ApplicationScheme);
-        // identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-        // identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
-
-        // await HttpContext.SignInAsync(
-        //     IdentityConstants.ApplicationScheme,
-        //     new ClaimsPrincipal(identity));
 
         return Ok(user);
     }

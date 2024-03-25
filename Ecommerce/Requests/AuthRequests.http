@@ -8,21 +8,21 @@ POST {{Api_HostAddress}}/register
 Content-Type: application/json
 
 {
-  "FirstName": "another name",
-  "LastName": "another last name",
-  "Email": "anotheremail@email.com",
-  "Password": "anotherrandompassword",
+  "FirstName": "name",
+  "LastName": "last name",
+  "Email": "aemail@email.com",
+  "Password": "randompassword",
   "DefaultShippingAddress": "Garfield's house",
   "BillingAddress": "Kizaru"
 }
 
 ### Login
 
-POST {{Api_HostAddress}}/login HTTP/1.1
+POST {{Api_HostAddress}}/login HTTP/1.1  
 Content-Type: application/json
 
 {
-  "Email": "anotheremail@email.com",
-  "Password": "anotherrandompassword"
+  "Email": "email@email.com",
+  "Password": "randompassword"
 }
 

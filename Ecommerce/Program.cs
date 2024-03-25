@@ -10,10 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
 // builder.Services.AddDbContext<ApplicationDbContext>(
@@ -21,17 +21,16 @@ builder.Services.AddSwaggerGen();
 // );
 
 var connectionString = "server=localhost;database=EcommerceTest;Uid=root;Pwd=";
-builder.Services.AddDbContext<ApplicationDbContext>(
-    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Add the services here. Same format, 
+// Add the services here. Same format,
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 
 var app = builder.Build();
 
@@ -46,6 +45,13 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roles = new string[] { "Admin", "Customer" };
+    await scope.ServiceProvider.AddRoles(roles);
+    // await ConfigureRoles.AddRoles(scope.ServiceProvider, roles);
+}
 
 app.MapControllers();
 
