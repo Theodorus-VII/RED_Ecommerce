@@ -1,6 +1,7 @@
-using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Services;
+using Ecommerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +13,17 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IEmailService _emailService;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        IEmailService emailService,
+        ILogger<AuthController> logger
+    )
     {
-        _logger = logger;
         _authService = authService;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     //test route
@@ -32,11 +39,20 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Attempting to register a new user...");
 
-        var response = await _authService.RegisterUser(registrationRequest);
+        var response = await _authService.RegisterCustomer(registrationRequest);
 
         if (response.IsAuthSuccess())
         {
+            _logger.LogInformation("User Successfully Created.");
+
             var user = response.User;
+            var confirmationEmail = new EmailDto
+            {
+                Recipient = user.Email,
+                Subject = "Welcome to _______ Commerce",
+                Message = $@"<p>Your new account at _______ Commerce has been created.</p>"
+            };
+            _emailService.SendEmail(confirmationEmail);
             return Ok(user);
         }
         return BadRequest(response.Error.ToString());
@@ -72,5 +88,30 @@ public class AuthController : ControllerBase
         );
 
         return Ok(response.User);
+    }
+
+    [HttpPost("admin-register")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> AdminCreate(RegistrationRequest request)
+    {
+        _logger.LogInformation("Attempting to register a new user...");
+
+        var response = await _authService.RegisterAdmin(request);
+
+        if (response.IsAuthSuccess())
+        {
+            _logger.LogInformation("Admin Successfully Created.");
+
+            var user = response.User;
+            var confirmationEmail = new EmailDto
+            {
+                Recipient = user.Email,
+                Subject = "Welcome to _______ Commerce",
+                Message = $@"<p>Your new admin account at _______ Commerce has been created.</p>"
+            };
+            _emailService.SendEmail(confirmationEmail);
+            return Ok(user);
+        }
+        return BadRequest(response.Error.ToString());
     }
 }

@@ -47,9 +47,26 @@ public class UserAccountController : ControllerBase
         return BadRequest();
     }
 
-    [HttpDelete()]
-    public IActionResult DeleteUser()
+    [HttpDelete("delete")]
+    public async Task<IActionResult> DeleteUser()
     {
-        return Ok("sth");
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        // return error if the user Id isn't in the token claims.
+        _logger.LogInformation($"{userIdClaim}");
+        if (userIdClaim == null)
+        {
+            _logger.LogError("User Id claim not found within the token provided");
+            return BadRequest("Invalid user");
+        }
+        // extract the user Id from the claim.
+        Guid userId = Guid.Parse(userIdClaim.Value);
+
+        var result = await _userAccountService.DeleteUser(userId);
+        if (result)
+        {
+            return Ok("User Account Deleted");
+        }
+        return BadRequest("Server Error");
     }
 }

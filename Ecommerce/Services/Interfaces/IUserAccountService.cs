@@ -4,4 +4,5 @@ namespace Ecommerce.Services.Interfaces;
 
 public interface IUserAccountService{
     public Task<bool> UpdateUserDetails(Guid userId, UserPatchRequest request);
+    public Task<bool> DeleteUser(Guid userId);
 }
