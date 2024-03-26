@@ -3,7 +3,7 @@ using Ecommerce.Data;
 using Ecommerce.Infrastructure.Authentication;
 using Ecommerce.Models;
 using Ecommerce.Services.Authentication;
-using Ecommerce.Services.Inerfaces;
+using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;

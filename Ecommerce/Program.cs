@@ -2,6 +2,7 @@ using Ecommerce.Configuration;
 using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services;
+using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,14 +32,15 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // app.UseSwagger();
-    // app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

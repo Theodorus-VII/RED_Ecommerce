@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
-using Ecommerce.Services.Inerfaces;
+using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Services;
@@ -58,6 +58,8 @@ public class AuthService : IAuthService
                 _logger.LogInformation($"User Role: {role}");
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
+            
+
             string token = _tokenGenerator.GenerateToken(user, claims);
 
             return new AuthSucessResponse(new UserDto(user, token));
