@@ -6,7 +6,8 @@ public record RegistrationRequest(
     string FirstName,
     string LastName,
     string Email,
-    string Password,
+    string? PhoneNumber,
+    string? Password,
     string? DefaultShippingAddress,
     string? BillingAddress
 );

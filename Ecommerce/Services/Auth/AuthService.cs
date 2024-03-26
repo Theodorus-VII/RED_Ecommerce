@@ -69,9 +69,9 @@ public class AuthService : IAuthService
 
             return new AuthSucessResponse(new UserDto(user, token, refreshToken));
         }
-        catch
+        catch (Exception e)
         {
-            _logger.LogError("Invalid Username or Password");
+            _logger.LogError($"Login Error: {e}");
             return new AuthFailResponse(error: "Invalid Username or Password");
         }
     }

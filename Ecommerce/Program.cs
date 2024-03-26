@@ -28,11 +28,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+
+
 // Add the services here. Same format,
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 var app = builder.Build();
 
