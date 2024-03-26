@@ -18,9 +18,15 @@ public class TestService
         return "Just some string from the test service";
     }
 
-    public IEnumerable<User> DbServiceTest()
+    public async Task<IEnumerable<Product>> DbServiceTest()
     {
-        return _applicationDbContext.Users;
+        if (!_applicationDbContext.Products.Any())
+        {
+            var p = new Product();
+            await _applicationDbContext.Products.AddAsync(p);
+            _applicationDbContext.SaveChanges();
+        }
+        return _applicationDbContext.Products;
     }
 
 }
