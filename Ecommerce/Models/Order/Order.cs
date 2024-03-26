@@ -6,11 +6,13 @@ public class Order
     public DateTimeOffset OrderDate { get; set; }
     public decimal TotalPrice { get; set; }
     // add status enum.
+    // add userId as foreign key
+    public string UserId { get; set; }
     public User? User { get; set; }
-    private readonly List<Order_Item> _items = new List<Order_Item>();
+    private readonly List<OrderItem> _items = new List<OrderItem>();
 
     
-    public IReadOnlyCollection<Order_Item> Items => _items.AsReadOnly();
+    public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
     public int GetTotalNumItems => _items.Sum(i => i.Quantity);
     public void AddItemToOrder(int productId, int quantity = 1)
     {

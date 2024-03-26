@@ -18,7 +18,7 @@ builder.Services.AddSwaggerGen();
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-var connectionString = "server=localhost;database=EcommerceTest;Uid=root;Pwd=";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );

@@ -19,32 +19,10 @@ namespace Ecommerce.Data.Migrations
                 .HasAnnotation("ProductVersion", "6.0.28")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("Ecommerce.Models.Basket", b =>
+            modelBuilder.Entity("CartItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CartItemId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId1");
-
-                    b.ToTable("Baskets");
-                });
-
-            modelBuilder.Entity("Ecommerce.Models.Basket_Item", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("BasketId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
@@ -53,14 +31,15 @@ namespace Ecommerce.Data.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<string>("UserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CartItemId");
 
-                    b.HasIndex("BasketId");
+                    b.HasIndex("ProductId");
 
-                    b.ToTable("Basket_Items");
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Category", b =>
@@ -389,22 +368,15 @@ namespace Ecommerce.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Ecommerce.Models.Basket", b =>
+            modelBuilder.Entity("CartItem", b =>
                 {
-                    b.HasOne("Ecommerce.Models.User", "User")
+                    b.HasOne("Ecommerce.Models.Product", "Product")
                         .WithMany()
-                        .HasForeignKey("UserId1");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Ecommerce.Models.Basket_Item", b =>
-                {
-                    b.HasOne("Ecommerce.Models.Basket", null)
-                        .WithMany("Items")
-                        .HasForeignKey("BasketId")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Category", b =>
@@ -481,11 +453,6 @@ namespace Ecommerce.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Ecommerce.Models.Basket", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Order", b =>
