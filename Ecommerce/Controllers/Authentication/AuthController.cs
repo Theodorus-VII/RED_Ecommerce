@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -54,8 +55,22 @@ public class AuthController : ControllerBase
             return BadRequest(response.Error);
         }
 
-        var user = response.User;
+        return Ok(response.User);
+    }
 
-        return Ok(user);
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(TokenRequestModel request)
+    {
+        if (request is null)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        var response = await _authService.RefreshToken(
+            expiredToken: request.AccessToken,
+            refreshToken: request.RefreshToken
+        );
+
+        return Ok(response.User);
     }
 }

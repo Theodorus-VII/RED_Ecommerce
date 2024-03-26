@@ -10,4 +10,5 @@ public interface IAuthService
     public IEnumerable<User> GetUsers();
     public Task<IAuthResponse> RegisterUser(RegistrationRequest request);
     public Task<IAuthResponse> LoginUser(LoginRequest request);
+    public Task<IAuthResponse> RefreshToken(string expiredToken, string refreshToken);
 }
