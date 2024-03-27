@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 namespace Ecommerce.Models;
 [ApiController]
 [Route("/product")]
@@ -30,6 +31,29 @@ public class ProductController:ControllerBase{
     public async Task<ActionResult> RemoveProduct(int id){
         await _services.DeleteProduct(id);
         return NoContent();
+    }
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody] ProductDto dto){
+        try{
+            ProductDto resDto=await _services.ModifyProudct(dto);
+            if(resDto!=null)return Ok(resDto);
+            return NotFound();
+        }
+        catch{
+            return Problem(statusCode:500);
+        }
+    }
+    [HttpGet("{id}/rating")]
+    public async Task<ActionResult<double>>  GetRating(int id){
+        try{
+            double average=await _services.GetAverageRating(id);
+            return Ok(average);
+        }
+        catch{
+            return Problem(statusCode:500);
+        }
+        
+
     }
 
 

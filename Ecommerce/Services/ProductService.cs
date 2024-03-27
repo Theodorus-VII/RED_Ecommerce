@@ -8,7 +8,11 @@ public interface IProductService{
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
     public Task<List<ProductDto>> GetProductByFilter(FilterAttributes filterAttributes);
-    // public Task<ProductDto> UpdateProudct(ProductDto product);  
+    public Task<ProductDto> ModifyProudct(ProductDto product);  
+    public Task BuyProduct(int id);
+    public Task<double> GetAverageRating(int id);
+    public Task AddRating(int id, int ratingNum, string email);
+    public Task ChangeRating(int id, int ratingNum, string email);
 
 }
 public class ProductService:IProductService{
@@ -66,9 +70,43 @@ public class ProductService:IProductService{
         _context.Remove(product);
         await _context.SaveChangesAsync();
     }
-    // public async Task<int> GetAverageRating(int id){
+    public async Task<double> GetAverageRating(int id){
+        List<Rating> ratings=await _context.Ratings.Where(r=>r.ProductId==id).ToListAsync();
+        double average=0;
+        foreach(Rating rating in ratings)average+=rating.rating;
+        average/=ratings.Count;
+        return average;
 
-    // }
+    }
+    public async Task<ProductDto> ModifyProudct(ProductDto product){
+        Product match=await _context.Products.FirstAsync(p=>p.Id==product.Id);
+        match.name=product.Name;
+        match.brand=product.Brand;
+        match.details=product.Details;
+        match.image=product.Image;
+        match.price=product.Price;
+        await _context.SaveChangesAsync();
+        return product;
+    }
+    public async Task BuyProduct(int id){
+        Product? product=await _context.Products.FindAsync(id);
+        if(product!=null)product.count-=1;
+        await _context.SaveChangesAsync();
+    }
+    public async Task AddRating(int id,int ratingNum, string email){
+        Product product=await _context.Products.FirstAsync(p=>p.Id==id);
+        product?.ratings?.Add(new Rating{
+            rating=ratingNum,
+            ProductId=id,
+            Email=email,
+        });
+        await _context.SaveChangesAsync();
+    }
+    public async Task ChangeRating(int id,int ratingNum, string email){
+        Rating rating=await _context.Ratings.FirstAsync(r=>r.ProductId==id&&r.Email.Equals(email));
+        rating.rating=ratingNum;
+        await _context.SaveChangesAsync();
+    }
 
 
 }
