@@ -17,15 +17,21 @@ public class ProductController:ControllerBase{
             return Ok(result);
         }
         catch(Exception e){
-            
+            Console.WriteLine(e.Message);
         }
         return NotFound();
         
     }
     [HttpPost]
     public async Task<ActionResult> PostProduct([FromBody]ProductDto dto){
-        ProductDto myDto=await _services.RegisterProduct(dto);
-        return Created(string.Empty,myDto);
+        try{
+            ProductDto myDto=await _services.RegisterProduct(dto);
+            return Created(string.Empty,myDto);
+        }
+        catch{
+            return BadRequest();
+        }
+        
     }
      [HttpDelete("{id}")]
     public async Task<ActionResult> RemoveProduct(int id){
@@ -50,7 +56,7 @@ public class ProductController:ControllerBase{
             return Ok(average);
         }
         catch{
-            return Problem(statusCode:500);
+            return NotFound();
         }
         
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Models;
 public interface IProductService{
-   public Task<ProductDto> GetProduct(int id);
+   public Task<ProductDto?> GetProduct(int id);
     public Task<ProductDto> RegisterProduct(ProductDto dto);
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
@@ -20,13 +20,13 @@ public class ProductService:IProductService{
     public ProductService(ApplicationDbContext context){
         this._context=context;
     }
-    public  async Task<ProductDto>  GetProduct(int id){
-       Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id);
+    public  async Task<ProductDto?>  GetProduct(int id){
+       Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id&&p.count>0);
        return ToDto(match);
     }
-    public ProductDto ToDto(Product? myProduct){
+    public ProductDto? ToDto(Product? myProduct){
             if(myProduct==null){
-                return new ProductDto();
+                return null;
             }
             ProductDto myDto=new ProductDto();
             myDto.Id=myProduct.Id;
@@ -35,7 +35,7 @@ public class ProductService:IProductService{
             myDto.Details=myProduct.details??"None";
             myDto.Category=myProduct.category;
             myDto.Price=myProduct.price;
-            myDto.Image=myProduct.image??"DefaultImage.jpeg";
+            myDto.Image=myProduct.image??myDto.Image;
             return myDto;
     }
      public async Task<ProductDto> RegisterProduct(ProductDto dto){
@@ -57,6 +57,7 @@ public class ProductService:IProductService{
         List<Product> products=await _context.Products.Where(p=>(filterAttributes.category==null||filterAttributes.category==p.category))
                                                       .Where(p=>p.price<=filterAttributes.high&&p.price>=filterAttributes.low)
                                                       .Where(p=>p.name.Contains(filterAttributes.name)||p.brand.Contains(filterAttributes.name))
+                                                      .Where(p=>p.count>0)
                                                       .ToListAsync();
                                                       
         List<ProductDto> pDto=new List<ProductDto>();
