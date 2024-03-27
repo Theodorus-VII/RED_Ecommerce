@@ -24,7 +24,7 @@ public class EmailService : IEmailService
         return;
     }
 
-    public bool SendEmail(EmailDto request)
+    public async Task<bool> SendEmail(EmailDto request)
     {
         try
         {
@@ -43,7 +43,8 @@ public class EmailService : IEmailService
                 SecureSocketOptions.StartTls
             );
             smtp.Authenticate(_emailConfiguration.From, _emailConfiguration.Password);
-            smtp.Send(email);
+            await smtp.SendAsync(email);
+            _logger.LogInformation("Email sent");
             smtp.Disconnect(true);
             
             return true;
