@@ -10,6 +10,7 @@ public class ApplicationDbContext
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
     public DbSet<Product> Products { get; set; } = null!;
+
     public DbSet<Category> Categories { get; set; } = null!;
     //public DbSet<Order> Orders { get; set; } = null!;
     //public DbSet<OrderItem> Order_Items { get; set; } = null!;
@@ -21,6 +22,13 @@ public class ApplicationDbContext
     //public DbSet<Cart> Carts { get; set; } = null!;
     //public DbSet<CartItem> Cart_Items { get; set; } = null!;
     public DbSet<CartItem> CartItems { get; set; } = null!;
+
+//     public DbSet<Order> Orders { get; set; } = null!;
+//     public DbSet<Order_Item> Order_Items { get; set; } = null!;
+//     public DbSet<Basket> Baskets { get; set; } = null!;
+//     public DbSet<Basket_Item> Basket_Items { get; set; } = null!;
+     public DbSet<Rating> Ratings { get; set; } = null!;
+
 
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options

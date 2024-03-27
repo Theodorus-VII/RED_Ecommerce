@@ -4,7 +4,7 @@ public record UserPatchRequest(
     string? FirstName,
     string? LastName,
     string? Email,
-    
+    string? PhoneNumber,
     string? OldPassword,
     string? NewPassword,
     string? DefaultShippingAddress,

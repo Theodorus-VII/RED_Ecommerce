@@ -29,13 +29,23 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+
+
 // Add the services here. Same format,
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IProductService,ProductService>();
+
+
 
 var app = builder.Build();
 

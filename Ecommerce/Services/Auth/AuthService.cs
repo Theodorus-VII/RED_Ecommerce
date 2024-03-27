@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Policy;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
@@ -11,24 +12,32 @@ public class AuthService : IAuthService
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         UserManager<User> userManager,
         RoleManager<IdentityRole<Guid>> roleManager,
         IJwtTokenGenerator tokenGenerator,
+        IEmailService emailService,
         ILogger<AuthService> logger
     )
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
+        _emailService = emailService;
         _logger = logger;
     }
 
     public IEnumerable<User> GetUsers()
     {
         return _userManager.Users;
+    }
+
+    public ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
+    {
+        return _tokenGenerator.GetPrincipalFromExpiredToken(token);
     }
 
     public async Task<IAuthResponse> LoginUser(LoginRequest request)
@@ -46,11 +55,6 @@ public class AuthService : IAuthService
                 throw new Exception("Invalid Password");
             }
 
-            // ClaimsIdentity identity = new(IdentityConstants.ApplicationScheme);
-            // identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-            // identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
-            // identity.AddClaim(new Claim(ClaimTypes.Role, "Customer"));
-
             var claims = new List<Claim>();
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
@@ -58,20 +62,35 @@ public class AuthService : IAuthService
                 _logger.LogInformation($"User Role: {role}");
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
-            
 
             string token = _tokenGenerator.GenerateToken(user, claims);
+            string refreshToken = _tokenGenerator.GenerateRefreshToken();
 
-            return new AuthSucessResponse(new UserDto(user, token));
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
+
+            await _userManager.UpdateAsync(user);
+
+            return new AuthSucessResponse(new UserDto(user, token, refreshToken));
         }
-        catch
+        catch (Exception e)
         {
-            _logger.LogError("Invalid Username or Password");
+            _logger.LogError($"Login Error: {e}");
             return new AuthFailResponse(error: "Invalid Username or Password");
         }
     }
 
-    public async Task<IAuthResponse> RegisterUser(RegistrationRequest request)
+    public async Task<IAuthResponse> RegisterAdmin(RegistrationRequest request)
+    {
+        return await RegisterUser(request, Roles.Admin);
+    }
+
+    public async Task<IAuthResponse> RegisterCustomer(RegistrationRequest request)
+    {
+        return await RegisterUser(request, Roles.Customer);
+    }
+
+    public async Task<IAuthResponse> RegisterUser(RegistrationRequest request, string Role)
     {
         try
         {
@@ -96,7 +115,7 @@ public class AuthService : IAuthService
                 throw new Exception("Server Error");
             }
             _logger.LogInformation("User added to server.");
-            var assignRoleResult = await _userManager.AddToRoleAsync(user, Roles.Customer);
+            var assignRoleResult = await _userManager.AddToRoleAsync(user, Role);
             if (!assignRoleResult.Succeeded)
             {
                 _logger.LogError($"Encountered Role Assignment Error: {assignRoleResult.Errors}");
@@ -111,7 +130,14 @@ public class AuthService : IAuthService
             }
 
             string token = _tokenGenerator.GenerateToken(user, claims);
-            return new AuthSucessResponse(new UserDto(user, token));
+            string refreshToken = _tokenGenerator.GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
+
+            await _userManager.UpdateAsync(user);
+
+            return new AuthSucessResponse(new UserDto(user, token, refreshToken));
         }
         catch (Exception e)
         {
@@ -119,4 +145,130 @@ public class AuthService : IAuthService
             return new AuthFailResponse(e.Message);
         }
     }
+
+    public async Task<IAuthResponse> RefreshToken(string expiredToken, string refreshToken)
+    {
+        try
+        {
+            // extract user data from the expired token
+            var principal = GetClaimsPrincipalFromExpiredToken(expiredToken);
+
+            var userIdClaim = principal.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier
+            );
+
+            _logger.LogInformation($"{userIdClaim}");
+            if (userIdClaim is null)
+            {
+                throw new Exception("Invalid User. Claim corresponding to Id not found");
+            }
+
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            _logger.LogInformation($"{user}");
+
+            if (user is null)
+            {
+                throw new Exception("Invalid user");
+            }
+            if (user.RefreshToken != refreshToken || user.RefreshTokenExpiry <= DateTime.Now)
+            {
+                _logger.LogInformation($"User refresh token: {user.RefreshToken}");
+                _logger.LogInformation($"Supplied refresh token: {refreshToken}");
+                _logger.LogInformation($"Token Expiry: {user.RefreshTokenExpiry}");
+
+                throw new Exception("Invalid or Expired Refresh Token");
+            }
+            var newAccessToken = _tokenGenerator.GenerateToken(user, principal.Claims);
+            var newRefreshToken = _tokenGenerator.GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
+
+            await _userManager.UpdateAsync(user);
+
+            return new AuthSucessResponse(new UserDto(user, newAccessToken, newRefreshToken));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Refresh Token Error: {e}");
+            return new AuthFailResponse("Invalid Client Request");
+        }
+    }
+
+    public async Task<string?> GenerateEmailConfirmationToken(string email)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Error encountered while creating email confirmation token: {e}");
+            return null;
+        }
+    }
+
+    public async Task<bool> ConfirmEmail(string email, string token)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return false;
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        return false;
+    }
+
+    // public async Task<bool> SendConfirmationEmail(UserDto userDto, string url)
+    // {
+    //     try
+    //     {
+    //         var user = await _userManager.FindByEmailAsync(userDto.Email);
+
+    //         var confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user);
+    //         var confirmationEmail = new EmailDto
+    //         {
+    //             Recipient = user.Email,
+    //             Subject = "Welcome to _______ Commerce",
+    //             Message =
+    //                 $@"<p>Your new account at _______ Commerce has been created.
+    //         Please confirm your email <a href={confirmationToken}>here</a></p>"
+    //         };
+    //         _emailService.SendEmail(confirmationEmail);
+    //         _logger.LogInformation("Confirmation Email sending...");
+    //         return true;
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         _logger.LogError($"Error while sending Email: {e}");
+    //         return false;
+    //     }
+    // }
+
+    // public async Task<bool> SendForgotPasswordEmail(User user)
+    // {
+    //     try
+    //     {
+    //         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+    //         var passResetEmail = new EmailDto
+    //         {
+    //             Recipient = user.Email,
+    //             Subject = "Reset Password",
+    //             Message = $@"<p>Reset your password <a href={resetToken}>here</a></p>"
+    //         };
+    //         _emailService.SendEmail(passResetEmail);
+    //         _logger.LogInformation("Password reset Email sending...");
+    //         return true;
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         _logger.LogError($"Error while sending password reset email: {e}");
+    //         return false;
+    //     }
+    // }
 }

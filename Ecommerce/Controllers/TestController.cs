@@ -1,5 +1,6 @@
 using Ecommerce.Models;
 using Ecommerce.Services;
+using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
