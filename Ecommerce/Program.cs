@@ -31,6 +31,7 @@ builder.Services.AddControllers();
 // Add the services here. Same format, 
 //  just replace TestService with the service to use.
 builder.Services.AddScoped<TestService>();
+builder.Services.AddScoped<IProductService,ProductService>();
 
 
 var app = builder.Build();
