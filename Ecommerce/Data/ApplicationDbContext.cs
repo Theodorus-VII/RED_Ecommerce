@@ -11,8 +11,13 @@ public class ApplicationDbContext
 {
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
-    public DbSet<Order> Orders { get; set; } = null!;
-    public DbSet<OrderItem> Order_Items { get; set; } = null!;
+    //public DbSet<Order> Orders { get; set; } = null!;
+    //public DbSet<OrderItem> Order_Items { get; set; } = null!;
+
+    public DbSet<Address> Addresses { get; set; }
+    public DbSet<PaymentInfo> PaymentInfos { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
     //public DbSet<Cart> Carts { get; set; } = null!;
     //public DbSet<CartItem> Cart_Items { get; set; } = null!;
     public DbSet<CartItem> CartItems { get; set; } = null!;

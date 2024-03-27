@@ -3,6 +3,7 @@ using System;
 using Ecommerce.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,13 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Ecommerce.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240326072523_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.28")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("CartItem", b =>
@@ -40,52 +42,6 @@ namespace Ecommerce.Data.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("CartItems");
-                });
-
-            modelBuilder.Entity("Ecommerce.Models.Address", b =>
-                {
-                    b.Property<int>("AddressId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("StreetAddress")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("AddressId");
-
-                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Category", b =>
@@ -115,90 +71,49 @@ namespace Ecommerce.Data.Migrations
 
             modelBuilder.Entity("Ecommerce.Models.Order", b =>
                 {
-                    b.Property<int>("OrderId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("OrderDate")
+                    b.Property<DateTimeOffset>("OrderDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<decimal>("TotalAmount")
+                    b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(65,30)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("char(36)");
 
-                    b.HasKey("OrderId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("Ecommerce.Models.OrderItem", b =>
+            modelBuilder.Entity("Ecommerce.Models.Order_Item", b =>
                 {
-                    b.Property<int>("OrderItemId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int?>("OrderId")
+                    b.Property<int>("OrderId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.HasKey("OrderItemId");
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
-                });
-
-            modelBuilder.Entity("Ecommerce.Models.PaymentInfo", b =>
-                {
-                    b.Property<int>("PaymentInfoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("CVV")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("CardHolderName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("CardNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("ExpiryDate")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("PaymentInfoId");
-
-                    b.ToTable("PaymentInfos");
+                    b.ToTable("Order_Items");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Product", b =>
@@ -263,12 +178,10 @@ namespace Ecommerce.Data.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
@@ -475,11 +388,22 @@ namespace Ecommerce.Data.Migrations
                         .HasForeignKey("ProductId");
                 });
 
-            modelBuilder.Entity("Ecommerce.Models.OrderItem", b =>
+            modelBuilder.Entity("Ecommerce.Models.Order", b =>
+                {
+                    b.HasOne("Ecommerce.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecommerce.Models.Order_Item", b =>
                 {
                     b.HasOne("Ecommerce.Models.Order", null)
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId");
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -535,7 +459,7 @@ namespace Ecommerce.Data.Migrations
 
             modelBuilder.Entity("Ecommerce.Models.Order", b =>
                 {
-                    b.Navigation("OrderItems");
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Ecommerce.Models.Product", b =>
