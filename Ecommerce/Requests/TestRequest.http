@@ -1,4 +1,10 @@
-GET http://localhost:5087/test
+GET https://localhost:7195/test   
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOGRjNGQ4Mi1mNTI5LTQzNGUtODE0NS00YTcwNmYxNWY3MDQiLCJnaXZlbl9uYW1lIjoibmFtZSIsImZhbWlseV9uYW1lIjoibGFzdCBuYW1lIiwiZW1haWwiOiJhZW1haWxAZW1haWwuY29tIiwibmFtZWlkIjoiMDhkYzRkODItZjUyOS00MzRlLTgxNDUtNGE3MDZmMTVmNzA0IiwianRpIjoiZDY4OTM0MjctYzhiNS00NTZhLTg0YTctNDBlOTVhMjFlOTQ0IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQ3VzdG9tZXIiLCJleHAiOjE3MTE0NTE2MTUsImlzcyI6IlJFRCIsImF1ZCI6IlJFRCJ9.9aYeTIXXu5JRgjmg_WhoJdmeWN76nRVqWLofU36Ch10
+
+
 
 ###
-GET http://localhost:5087/test/service_test 
+GET https://localhost:7195/test/service_test 
+
+###
+POST https://localhost:7195/test/sendmail  

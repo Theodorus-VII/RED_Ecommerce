@@ -16,9 +16,13 @@ bld/
 
 
 **/.vs/
+**.vscode/
+**/.vscode/
 
 
 
 # Ignore .NET temporary files
 **/obj/
 **/bin/
+
+Ecommerce/appsettings.json

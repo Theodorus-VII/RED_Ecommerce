@@ -1,0 +1,18 @@
+@Api_HostAddress = http://localhost:5271/user
+
+PATCH  {{Api_HostAddress}}/update HTTP/1.1  
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOGRjNGM5Zi00ZmI1LTQ5YTYtODQ5My1lZTZjZjEyMjZlZDMiLCJnaXZlbl9uYW1lIjoibmFtZSIsImZhbWlseV9uYW1lIjoibGFzdCBuYW1lIiwiZW1haWwiOiJ0dGltZUBlbWFpbC5jb20iLCJuYW1laWQiOiIwOGRjNGM5Zi00ZmI1LTQ5YTYtODQ5My1lZTZjZjEyMjZlZDMiLCJqdGkiOiI1ZTdhOWEzMC00NDlmLTQ1N2YtOGZjMi00YWJkN2VmOGM1MDkiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJDdXN0b21lciIsImV4cCI6MTcxMTM3MDgwMywiaXNzIjoiUkVEIiwiYXVkIjoiUkVEIn0.lLFK6fkHrGar0hyEK6yjDoRrWqGuGavhOivlMRa3vDY
+Content-Type: application/json
+
+{
+  "firstName": "string",
+  "lastName": "string",
+  "email": "someEmail@email.com",
+  "oldPassword": "randompassword",
+  "newPassword": "string",
+  "defaultShippingAddress": "string",
+  "billingAddress": "string"
+}
+### 
+DELETE {{Api_HostAddress}}/delete    
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOGRjNGU0ZS05ZjIxLTQ2ZDItOGUyZC1mMDM2MDlmZGI3YzciLCJnaXZlbl9uYW1lIjoibmFtZSIsImZhbWlseV9uYW1lIjoibGFzdCBuYW1lIiwiZW1haWwiOiJlZGE4NUBldGhlcmVhbC5lbWFpbCIsIm5hbWVpZCI6IjA4ZGM0ZTRlLTlmMjEtNDZkMi04ZTJkLWYwMzYwOWZkYjdjNyIsImp0aSI6IjYyYWFkYzRjLTExZWMtNDk2Zi1iYWM3LTg0MGZhY2UwOGQxMiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkN1c3RvbWVyIiwiZXhwIjoxNzExNTM3ODkxLCJpc3MiOiJSRUQiLCJhdWQiOiJSRUQifQ.h48QOW6QInRLe1XaSUCG_Lo9UlZfEmj0QOC9YAJ7_ys

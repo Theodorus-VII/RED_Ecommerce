@@ -1,0 +1,38 @@
+@Api_HostAddress = http://localhost:5271/auth
+
+### Controller test 
+GET {{Api_HostAddress}}/test   
+ 
+### Register a new user
+POST {{Api_HostAddress}}/register  
+Content-Type: application/json
+
+{
+  "FirstName": "name",
+  "LastName": "last name",
+  "Email": "eda85@ethereal.email",
+  "Password": "randompassword",
+  "DefaultShippingAddress": "Garfield's house", 
+  "BillingAddress": "Kizaru"
+}
+
+### Login
+
+POST {{Api_HostAddress}}/login HTTP/1.1       
+Content-Type: application/json 
+ 
+{
+  "Email": "eda85@ethereal.email", 
+  "Password": "randompassword"
+}
+
+### Refresh
+POST {{Api_HostAddress}}/refresh HTTP/1.1 
+Content-Type: application/json
+
+{
+  "AccessToken": "",
+  "RefreshToken": ""
+}
+
+
