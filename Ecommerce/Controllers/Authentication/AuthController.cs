@@ -52,7 +52,8 @@ public class AuthController : ControllerBase
                 Subject = "Welcome to _______ Commerce",
                 Message = $@"<p>Your new account at _______ Commerce has been created.</p>"
             };
-            _emailService.SendEmail(confirmationEmail);
+            _logger.LogInformation("Sending Confirmation Email...");
+            await _emailService.SendEmail(confirmationEmail);
             return Ok(user);
         }
         return BadRequest(response.Error.ToString());
@@ -109,7 +110,8 @@ public class AuthController : ControllerBase
                 Subject = "Welcome to _______ Commerce",
                 Message = $@"<p>Your new admin account at _______ Commerce has been created.</p>"
             };
-            _emailService.SendEmail(confirmationEmail);
+            _logger.LogInformation("Sending Confirmation Email...");
+            await _emailService.SendEmail(confirmationEmail);
             return Ok(user);
         }
         return BadRequest(response.Error.ToString());

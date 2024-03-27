@@ -36,11 +36,3 @@ Content-Type: application/json
 }
 
 
-### 
-POST https://localhost:7195/auth?emailConfirmationToken=System.Runtime.CompilerServices.AsyncTaskMethodBuilder%601%2BAsyncStateMachineBox%601%5BSystem.String,Ecommerce.Services.AuthService%2B%3CGenerateEmailConfirmationToken%3Ed__12%5D&email=eda85@ethereal.email HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "eda85@ethereal.email",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOGRjNGUxZC1hMDRkLTQ0YjktODViNy0xYTY5OTk0YmMyZjQiLCJnaXZlbl9uYW1lIjoibmFtZSIsImZhbWlseV9uYW1lIjoibGFzdCBuYW1lIiwiZW1haWwiOiJlZGE4NUBldGhlcmVhbC5lbWFpbCIsIm5hbWVpZCI6IjA4ZGM0ZTFkLWEwNGQtNDRiOS04NWI3LTFhNjk5OTRiYzJmNCIsImp0aSI6IjBkMGUzYWQ1LTE2OTMtNGNlMy04ODY0LTU1OTA4MGJlYWIwMyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkN1c3RvbWVyIiwiZXhwIjoxNzExNTE2ODMzLCJpc3MiOiJSRUQiLCJhdWQiOiJSRUQifQ.IyoI-Z7QCBh40QovvHjEpVBHwJk0JIuN6B7zg_Ir7qU"
-}
