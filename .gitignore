@@ -24,3 +24,5 @@ bld/
 # Ignore .NET temporary files
 **/obj/
 **/bin/
+
+Ecommerce/appsettings.json

@@ -3,7 +3,6 @@ using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services;
 using Ecommerce.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,15 +14,17 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+
 
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-
-var connectionString = "server=localhost;database=EcommerceTest;Uid=root;Pwd=";
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(
+    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -37,8 +38,13 @@ builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService,ProductService>();
+
 
 
 var app = builder.Build();
