@@ -38,6 +38,7 @@ builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IProductService,ProductService>();
 
 
 var app = builder.Build();
