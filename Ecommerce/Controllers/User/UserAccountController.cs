@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -66,6 +67,37 @@ public class UserAccountController : ControllerBase
         if (result)
         {
             return Ok("User Account Deleted");
+        }
+        return BadRequest("Server Error");
+    }
+    
+
+    [HttpPost("admin-user-delete")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> AdminUserDelete(AdminUserDeleteRequest request)
+    {
+        User? user;
+        if (request.UserId != null)
+        {
+            user = await _userAccountService.GetUserById(Guid.Parse(request.UserId));
+        }
+        else if (request.Email != null)
+        {
+            user = await _userAccountService.GetUserByEmail(request.Email);
+        }
+        else
+        {
+            return BadRequest("Please provide the User Id or email of the user to delete");
+        }
+
+        if (user is null){
+            return BadRequest("User not found");
+        }
+        var userId = user.Id;
+        var result = await _userAccountService.DeleteUser(userId);
+
+        if (result){
+            return Ok("User Deleted");
         }
         return BadRequest("Server Error");
     }
