@@ -16,7 +16,7 @@ public class ProductController:ControllerBase{
         _userService=userService;
     }
     [HttpGet]
-    public async Task<ActionResult<List<ProductDto>>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start,[FromQuery]int maxSize){
+    public async Task<ActionResult<List<ProductDto>>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start=0,[FromQuery]int maxSize=10){
         List<ProductDto>? products=await _services.GetProductByFilter(filter,start,maxSize);
         if(products==null)return BadRequest("Wrong parameter or filter property values");
         return Ok(products);
