@@ -16,7 +16,7 @@ namespace Ecommerce.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.28")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("CartItem", b =>
@@ -484,27 +484,7 @@ namespace Ecommerce.Data.Migrations
                     b.Navigation("Product");
                 });
 
-
-            modelBuilder.Entity("Ecommerce.Models.Category", b =>
-                {
-                    b.HasOne("Ecommerce.Models.Product", null)
-                        .WithMany("Categories")
-                        .HasForeignKey("ProductId");
-                });
-
             modelBuilder.Entity("Ecommerce.Models.OrderItem", b =>
-
-//             modelBuilder.Entity("Ecommerce.Models.Order", b =>
-//                 {
-//                     b.HasOne("Ecommerce.Models.User", "User")
-//                         .WithMany()
-//                         .HasForeignKey("UserId");
-
-//                     b.Navigation("User");
-//                 });
-
-//             modelBuilder.Entity("Ecommerce.Models.Order_Item", b =>
-
                 {
                     b.HasOne("Ecommerce.Models.Order", null)
                         .WithMany("OrderItems")
