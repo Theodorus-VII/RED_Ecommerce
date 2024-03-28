@@ -1,6 +1,7 @@
 using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 namespace Ecommerce.Models;
 [ApiController]
 [Route("/product")]
@@ -13,6 +14,12 @@ public class ProductController:ControllerBase{
         _services=services;
         _userService=userService;
     }
+    [HttpGet]
+    public async Task<ActionResult<List<ProductDto>>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start,[FromQuery]int maxSize){
+        List<ProductDto>? products=await _services.GetProductByFilter(filter,start,maxSize);
+        if(products==null)return BadRequest("Wrong parameter or filter property values");
+        return Ok(products);
+    }
     [HttpGet("{id}")]
     public async  Task<ActionResult<ProductDto>> GetProduct(int id){
         ProductDto? result;
@@ -22,9 +29,9 @@ public class ProductController:ControllerBase{
             return Ok(result);
         }
         catch(Exception e){
-            Console.WriteLine(e.Message);
+            _logger.LogError(e.Message);
+            return BadRequest("Invalid Id  value");
         }
-        return NotFound();
         
     }
     [HttpPost]

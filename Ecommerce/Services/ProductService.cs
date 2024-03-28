@@ -7,7 +7,7 @@ public interface IProductService{
     public Task<ProductDto> RegisterProduct(ProductDto dto);
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
-    public Task<List<ProductDto>> GetProductByFilter(FilterAttributes filterAttributes);
+    public Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
     public Task<ProductDto> ModifyProudct(ProductDto product);  
     public Task BuyProduct(int id);
     public Task<double> GetAverageRating(int id);
@@ -55,7 +55,7 @@ public class ProductService:IProductService{
         dto.Id=product.Id;
         return dto;
     }
-    public async Task<List<ProductDto>> GetProductByFilter(FilterAttributes filterAttributes){
+    public async Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
             List<Product> products=await _context.Products.Where(p=>(filterAttributes.category==null||filterAttributes.category==p.category))
                                                       .Where(p=>p.price<=filterAttributes.high&&p.price>=filterAttributes.low)
@@ -64,6 +64,9 @@ public class ProductService:IProductService{
                                                       .ToListAsync();
                                                       
             List<ProductDto> pDto=new List<ProductDto>();
+            if(start>=maxSize)throw new Exception("Invalid start index");
+            if(start+maxSize>products.Count)maxSize=products.Count-start;
+            products=products.GetRange(start,start+maxSize);
             foreach(Product product in products ){
                 pDto.Add(ToDto(product));
             }
@@ -71,8 +74,8 @@ public class ProductService:IProductService{
         }
         catch(Exception e){
             _logger.LogError(e.Message);
+            return null;
         }
-        return new List<ProductDto>();
     }
      public async Task DeleteProduct(int id){
         Product? product=await _context.Products.SingleAsync(p=>p.Id==id);
