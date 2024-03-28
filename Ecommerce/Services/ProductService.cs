@@ -17,10 +17,9 @@ public interface IProductService{
 }
 public class ProductService:IProductService{
     private ApplicationDbContext _context;
-    private ILogger _logger;
-    public ProductService(ApplicationDbContext context,ILogger logger){
+
+    public ProductService(ApplicationDbContext context){
         this._context=context;
-        this._logger=logger;
     }
     public  async Task<ProductDto?>  GetProduct(int id){
        Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id&&p.count>0);
@@ -72,8 +71,7 @@ public class ProductService:IProductService{
             }
             return pDto;
         }
-        catch(Exception e){
-            _logger.LogError(e.Message);
+        catch{
             return null;
         }
     }
