@@ -7,7 +7,6 @@ public class Product
     public string? brand{get;set;}
     public int count{get;set;}=1;
     public string details{get;set;}="None";
-    [Column(TypeName ="varchar(10)")]
     public Category? category{get;set;}
     public string? image{get;set;}="DefaultImage.jpg";
     public float price{get;set;}

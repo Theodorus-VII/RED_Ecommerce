@@ -1,7 +1,8 @@
 using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 namespace Ecommerce.Models;
 [ApiController]
 [Route("/product")]
@@ -35,6 +36,7 @@ public class ProductController:ControllerBase{
         
     }
     [HttpPost]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> PostProduct([FromBody]ProductDto dto){
         try{
             ProductDto myDto=await _services.RegisterProduct(dto);
@@ -46,11 +48,13 @@ public class ProductController:ControllerBase{
         
     }
      [HttpDelete("{id}")]
+     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> RemoveProduct(int id){
         await _services.DeleteProduct(id);
         return NoContent();
     }
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody] ProductDto dto){
         try{
             ProductDto resDto=await _services.ModifyProudct(dto);
