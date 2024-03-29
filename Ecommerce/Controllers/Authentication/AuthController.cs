@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
 using Ecommerce.Services;
 using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,7 +58,7 @@ public class AuthController : ControllerBase
             await _emailService.SendEmail(confirmationEmail);
             return Ok(user);
         }
-        return BadRequest(response.Error.ToString());
+        return StatusCode(500, response.Error.ToString());
     }
 
     //login endpoint
@@ -69,26 +71,43 @@ public class AuthController : ControllerBase
 
         if (!response.IsAuthSuccess())
         {
-            return BadRequest(response.Error);
+            return Unauthorized(response.Error);
         }
 
         return Ok(response.User);
     }
 
+    [HttpPost("logout")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> LogOut()
+    {
+        if (HttpContext.Items.TryGetValue("UserId", out var userIdObj))
+        {
+            var userId = userIdObj.ToString();
+            _logger.LogInformation(userId);
+        }
+        _logger.LogInformation("Attempting to logout user...");
+
+        return Ok();
+    }
+
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(TokenRequestModel request)
     {
-        if (request is null)
+        if (request.RefreshToken == "" || request.AccessToken == "")
         {
-            return BadRequest("Invalid client request");
+            return BadRequest("Refresh and Access token have to be provided.");
         }
-
         var response = await _authService.RefreshToken(
             expiredToken: request.AccessToken,
             refreshToken: request.RefreshToken
         );
 
-        return Ok(response.User);
+        if (response.IsAuthSuccess())
+        {
+            return Ok(response.User);
+        }
+        return Unauthorized(response.Error);
     }
 
     [HttpPost("admin-register")]

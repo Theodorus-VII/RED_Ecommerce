@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,22 +26,28 @@ public class UserAccountController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("test")]
+    public IActionResult Test()
+    {
+        var userId = ExtractUser.GetUserId(HttpContext);
+        if (userId is null)
+        {
+            return BadRequest("Invalid token");
+        }
+        _logger.LogInformation(userId.Value.ToString());
+        return Ok();
+    }
+
     [HttpPatch("update")]
     public async Task<IActionResult> UpdateUserDetails(UserPatchRequest request)
     {
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-
-        // return error if the user Id isn't in the token claims.
-        _logger.LogInformation($"{userIdClaim}");
-        if (userIdClaim == null)
+        var userId = ExtractUser.GetUserId(HttpContext);
+        if (userId is null)
         {
-            _logger.LogError("User Id claim not found within the token provided");
-            return BadRequest("Invalid user");
+            return Unauthorized();
         }
-        // extract the user Id from the claim.
-        Guid userId = Guid.Parse(userIdClaim.Value);
 
-        var result = await _userAccountService.UpdateUserDetails(userId, request);
+        var result = await _userAccountService.UpdateUserDetails(userId.Value, request);
         if (result)
         {
             return Ok("User Updated Successfully");
@@ -51,26 +58,20 @@ public class UserAccountController : ControllerBase
     [HttpDelete("delete")]
     public async Task<IActionResult> DeleteUser()
     {
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var userId = ExtractUser.GetUserId(HttpContext);
 
-        // return error if the user Id isn't in the token claims.
-        _logger.LogInformation($"{userIdClaim}");
-        if (userIdClaim == null)
+        if (userId is null)
         {
-            _logger.LogError("User Id claim not found within the token provided");
-            return BadRequest("Invalid user");
+            return Unauthorized("Invalid Token");
         }
         // extract the user Id from the claim.
-        Guid userId = Guid.Parse(userIdClaim.Value);
-
-        var result = await _userAccountService.DeleteUser(userId);
+        var result = await _userAccountService.DeleteUser(userId.Value);
         if (result)
         {
             return Ok("User Account Deleted");
         }
         return BadRequest("Server Error");
     }
-    
 
     [HttpPost("admin-user-delete")]
     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -90,13 +91,15 @@ public class UserAccountController : ControllerBase
             return BadRequest("Please provide the User Id or email of the user to delete");
         }
 
-        if (user is null){
+        if (user is null)
+        {
             return BadRequest("User not found");
         }
         var userId = user.Id;
         var result = await _userAccountService.DeleteUser(userId);
 
-        if (result){
+        if (result)
+        {
             return Ok("User Deleted");
         }
         return BadRequest("Server Error");
