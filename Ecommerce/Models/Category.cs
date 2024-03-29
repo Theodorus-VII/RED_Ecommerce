@@ -1,9 +1,13 @@
 namespace Ecommerce.Models;
 public enum Category{
     Automotive,
+    Beauty,
+    BeautyCosemtics,
     BeautySoap,
+    Books,
     BooksFiction,
     BooksNonFiction,
+    Electronics,
     ElectronicsPhone,
     ElectronicsPc,
     FashionMen,
@@ -11,6 +15,15 @@ public enum Category{
     FashionBoys,
     FashionGirls,
     FashionShoes,
-    Movies    
+    FashionBoysShoes,
+    FashionGirlsShoes,
+    Home,
+    HomeKitchen,
+    HomeToilet,
+    Movies ,
+    Other,
+    Software,
+    SoftwareGames,
+    Toys,
 
 }

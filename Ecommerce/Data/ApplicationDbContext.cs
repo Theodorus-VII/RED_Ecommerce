@@ -32,7 +32,7 @@ public class ApplicationDbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        
+        builder.Entity<Rating>().HasKey(rating=>new {rating.productId,rating.userId});
         // mysql specific stupidity
         foreach (var entityType in builder.Model.GetEntityTypes())
         {

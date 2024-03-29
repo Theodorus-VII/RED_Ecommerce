@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 namespace Ecommerce.Models;
 [ApiController]
+[Authorize]
 [Route("/product")]
 public class ProductController:ControllerBase{
     private ILogger _logger;
     private IProductService _services;
     private IUserAccountService _userService;
-    public ProductController(IProductService services, IUserAccountService userService,ILogger logger){
+    public ProductController(IProductService services, IUserAccountService userService,ILogger<ProductController> logger){
         _logger=logger;
         _services=services;
         _userService=userService;
@@ -31,7 +32,7 @@ public class ProductController:ControllerBase{
         }
         catch(Exception e){
             _logger.LogError(e.Message);
-            return BadRequest("Invalid Id  value");
+            return Problem(statusCode:500,title:"Internal server error");
         }
         
     }
@@ -43,26 +44,36 @@ public class ProductController:ControllerBase{
             return Created(string.Empty,myDto);
         }
         catch{
-            return BadRequest();
+            return BadRequest("Invlaid request! Make sure you have entered everything");
         }
         
     }
      [HttpDelete("{id}")]
      [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> RemoveProduct(int id){
-        await _services.DeleteProduct(id);
-        return NoContent();
-    }
-    [HttpPut("{id}")]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody] ProductDto dto){
         try{
-            ProductDto resDto=await _services.ModifyProudct(dto);
+            await _services.DeleteProduct(id);
+            return NoContent();
+        }
+        catch{
+            return NotFound("Product doesn't exist");
+        }
+        
+        
+    }
+    [HttpPatch("{id}")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody]ProductDto dto,int id){
+        try{
+            ProductDto resDto=await _services.ModifyProudct(dto,id);
             if(resDto!=null)return Ok(resDto);
             return NotFound();
         }
-        catch{
-            return Problem(statusCode:500);
+        catch(InvalidDataException){
+            return BadRequest("Invalid values for data");
+        }
+        catch(Exception){
+            return NotFound("Product doesn't exist");
         }
     }
     [HttpGet("{id}/rating")]
@@ -76,40 +87,60 @@ public class ProductController:ControllerBase{
         }
     }
     [HttpPut("{id}/rating")]
-    public async Task<ActionResult> AddRating(int id,[FromQuery] int rating){
+    public async Task<ActionResult> AddRating(int id,[FromBody] RatingDto ratingDto){
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
 
         // return error if the user Id isn't in the token claims.
         _logger.LogInformation($"{userIdClaim}");
         if (userIdClaim == null)
         {
-            _logger.LogError("User Id claim not found within the token provided");
-            return BadRequest("Invalid user");
+            _logger.LogError("Invalid request provided");
+            return BadRequest("Invalid request");
         }
         // extract the user Id from the claim.
         Guid userId = Guid.Parse(userIdClaim.Value);
         User? user = await _userService.GetUserById(userId);
         if(user==null)return NotFound("This user doesn't exist");
-        await _services.AddRating(id,rating,user.Email);
-        return Created(string.Empty,rating);
+        await _services.AddRating(id,ratingDto,user.Id);
+        return Created(string.Empty,ratingDto);
     }
-    [HttpPatch("{id}/rating")]
-    public async Task<ActionResult> ChangeRating(int id,[FromQuery] int rating){
+    [HttpDelete("{id}/rating")]
+    public async Task<ActionResult> DeleteRating(int id){
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
 
         // return error if the user Id isn't in the token claims.
         _logger.LogInformation($"{userIdClaim}");
         if (userIdClaim == null)
         {
-            _logger.LogError("User Id claim not found within the token provided");
-            return BadRequest("Invalid user");
+            _logger.LogError("Invalid request");
+            return BadRequest("Invalid request");
         }
         // extract the user Id from the claim.
         Guid userId = Guid.Parse(userIdClaim.Value);
         User? user = await _userService.GetUserById(userId);
         if(user==null)return NotFound("This user doesn't exist");
-        await _services.ChangeRating(id,rating,user.Email);
-        return Ok("Rating changed successfuly");
+        try{
+            await _services.DeleteRating(id,userId);
+            return Ok("Rating Deleted Successfully");
+        }
+        catch{
+            return NotFound("Rating doesn't exist");
+        }
+        
+        
+    }
+    [HttpGet("{id}/reviews")]
+    public async Task<ActionResult<List<RatingDto>>> GetReviews(int id,[FromQuery]int lowRating=0,[FromQuery]int highRating=10){
+        try{
+            List<ReviewDto> reviews; 
+            reviews=await _services.GetProductReviews(id,lowRating,highRating);
+            if(reviews==null)return NotFound("No Rating/Review Found");
+            return Ok(reviews);
+        }
+        catch{
+            return Problem(statusCode:500,title:"Server Error");
+        }
+        
     }
     
 
