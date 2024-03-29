@@ -3,6 +3,7 @@ using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +46,8 @@ builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService,ProductService>();
 
+builder.Services.AddTransient<ExtractUserIdMiddleware>();
+
 
 
 var app = builder.Build();
@@ -60,6 +63,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ExtractUserIdMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
