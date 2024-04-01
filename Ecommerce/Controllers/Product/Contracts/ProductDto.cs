@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-namespace Ecommerce.Models;
+using Ecommerce.Models;
+namespace Ecommerce.Controllers.Contracts;
 public class ProductDto{
     public int Id{get;set;}
     public string? Name{get;set;}

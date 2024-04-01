@@ -1,22 +1,9 @@
 using Ecommerce.Data;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecommerce.Services.Interfaces;
-namespace Ecommerce.Models;
-public interface IProductService{
-   public Task<ProductDto?> GetProduct(int id);
-    public Task<ProductDto> RegisterProduct(ProductDto dto);
-    public Task DeleteProduct(int id);
-    // public Task<float> GetAverageRating(int id);
-    public Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
-    public Task<ProductDto> ModifyProudct(ProductDto product,int id);  
-    public Task BuyProduct(int id);
-    public Task<double> GetAverageRating(int id);
-    public Task AddRating(int id,RatingDto dto, Guid uId);
-    public Task DeleteRating(int id, Guid uId);
-    public Task<List<ReviewDto>> GetProductReviews(int id,int low,int high);
-
-}
+using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
+namespace Ecommerce.Services;
 public class ProductService:IProductService{
     private ApplicationDbContext _context;
     private IUserAccountService _userService;
