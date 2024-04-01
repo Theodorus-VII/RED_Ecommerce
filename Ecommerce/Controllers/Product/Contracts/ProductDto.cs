@@ -8,7 +8,7 @@ public class ProductDto{
     public string? Brand{get;set;}
     public string Details{get;set;}="None";
     public int Count{get;set;}=1;
-    public string Image{get;set;}="DefaultImage.jpg";
+    public List<string> Images{get;set;}=new List<string>();
     [EnumDataType(typeof(Category))]
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public Category Category{get;set;}=Category.Other;
