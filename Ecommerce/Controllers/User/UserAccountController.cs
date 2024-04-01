@@ -38,6 +38,27 @@ public class UserAccountController : ControllerBase
         return Ok();
     }
 
+    [HttpGet()]
+    public async Task<IActionResult> GetUserDetails()
+    {
+        var userId = ExtractUser.GetUserId(HttpContext);
+
+        _logger.LogInformation(userId.ToString());
+
+        if (userId is null)
+        {
+            return BadRequest("Invalid token");
+        }
+
+        var user = await _userAccountService.GetUserById(userId.Value);
+        if (user is null)
+        {
+            return NotFound("User not found");
+        }
+        
+        return Ok(new UserDto(user));
+    }
+
     [HttpPatch("update")]
     public async Task<IActionResult> UpdateUserDetails(UserPatchRequest request)
     {
@@ -104,4 +125,6 @@ public class UserAccountController : ControllerBase
         }
         return BadRequest("Server Error");
     }
+
+    
 }

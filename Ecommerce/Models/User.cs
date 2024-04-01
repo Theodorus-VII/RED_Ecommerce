@@ -37,7 +37,7 @@ public class UserDto
     public string Email { get; set; }
     public string? DefaultShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
-    public string AccessToken { get; set; }
+    public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
     public string? PhoneNumber { get; set; }
 
@@ -73,5 +73,16 @@ public class UserDto
         PhoneNumber = user.PhoneNumber;
         AccessToken = accessToken;
         RefreshToken = refreshToken;
+    }
+
+    public UserDto(User user)
+    {
+        Id = user.Id;
+        FirstName = user.FirstName;
+        LastName = user.LastName;
+        Email = user.Email;
+        DefaultShippingAddress = user.DefaultShippingAddress;
+        BillingAddress = user.BillingAddress;
+        PhoneNumber = user.PhoneNumber;
     }
 }

@@ -80,6 +80,19 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<bool> LogoutUser(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return false;
+        }
+        user.RefreshToken = "";
+        await _userManager.UpdateAsync(user);
+
+        return true;
+    }
+
     public async Task<IAuthResponse> RegisterAdmin(RegistrationRequest request)
     {
         return await RegisterUser(request, Roles.Admin);
@@ -221,34 +234,57 @@ public class AuthService : IAuthService
         }
 
         var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (result.Succeeded)
+        {
+            return true;
+        }
+        else
+        {
+            _logger.LogError("Identity Error confirming email");
+            _logger.LogError(result.Errors.ToArray().ToString());
+            foreach (var error in result.Errors)
+            {
+                _logger.LogError(error.ToString());
+            }
+        }
         return false;
     }
 
-    // public async Task<bool> SendConfirmationEmail(UserDto userDto, string url)
-    // {
-    //     try
-    //     {
-    //         var user = await _userManager.FindByEmailAsync(userDto.Email);
+    public async Task<bool> SendConfirmationEmail(
+        UserDto user,
+        string baseUrl,
+        string scheme,
+        string action = "confirm-email"
+    )
+    {
+        try
+        {
+            _logger.LogInformation("Sending Confirmation Email...");
 
-    //         var confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user);
-    //         var confirmationEmail = new EmailDto
-    //         {
-    //             Recipient = user.Email,
-    //             Subject = "Welcome to _______ Commerce",
-    //             Message =
-    //                 $@"<p>Your new account at _______ Commerce has been created.
-    //         Please confirm your email <a href={confirmationToken}>here</a></p>"
-    //         };
-    //         _emailService.SendEmail(confirmationEmail);
-    //         _logger.LogInformation("Confirmation Email sending...");
-    //         return true;
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         _logger.LogError($"Error while sending Email: {e}");
-    //         return false;
-    //     }
-    // }
+            var confirmationToken = await GenerateEmailConfirmationToken(user.Email);
+            confirmationToken = System.Web.HttpUtility.UrlEncode(confirmationToken);
+            var callbackUrl =
+                $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={confirmationToken}";
+
+            var confirmationEmail = new EmailDto
+            {
+                Recipient = user.Email,
+                Subject = "Welcome to _______ Commerce",
+                Message =
+                    $@"<p>Your new account at  _______Commerce has been created. 
+                    Please confirm your account by <a href={callbackUrl}>clicking here.</a></p>"
+            };
+
+            _logger.LogInformation($"URL for email confirmation: {callbackUrl}");
+            await _emailService.SendEmail(confirmationEmail);
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Error sending confirmatio email: {e}");
+            return false;
+        }
+    }
 
     // public async Task<bool> SendForgotPasswordEmail(User user)
     // {

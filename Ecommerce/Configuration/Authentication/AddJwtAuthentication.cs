@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Ecommerce.Data;
 using Ecommerce.Infrastructure.Authentication;
 using Ecommerce.Models;
@@ -36,6 +37,10 @@ public static class ConfigureJwtAuthentication
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+        services.Configure<DataProtectionTokenProviderOptions>(o =>
+        {
+            o.TokenLifespan = TimeSpan.FromHours(10);
+        });
 
         services
             .AddAuthentication(options =>
@@ -58,14 +63,19 @@ public static class ConfigureJwtAuthentication
                         Encoding.UTF8.GetBytes(jwtSettings.Secret)
                     )
                 };
+                // options.Events = new JwtBearerEvents
+                // {
+                //     OnAuthenticationFailed = context =>
+                //     {
+                //         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                //         context.Response.ContentType = "application/json";
+                //         var result = JsonSerializer.Serialize(
+                //             new { message = "Authentication Failed" }
+                //         );
+                //         return context.Response.WriteAsync(result);
+                //     }
+                // };
             });
-
-        // services.AddAuthorization(
-        //     options =>
-        //     {
-        //         options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-        //     }
-        // );
 
         return services;
     }
