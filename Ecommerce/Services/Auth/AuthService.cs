@@ -286,25 +286,58 @@ public class AuthService : IAuthService
         }
     }
 
-    // public async Task<bool> SendForgotPasswordEmail(User user)
-    // {
-    //     try
-    //     {
-    //         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-    //         var passResetEmail = new EmailDto
-    //         {
-    //             Recipient = user.Email,
-    //             Subject = "Reset Password",
-    //             Message = $@"<p>Reset your password <a href={resetToken}>here</a></p>"
-    //         };
-    //         _emailService.SendEmail(passResetEmail);
-    //         _logger.LogInformation("Password reset Email sending...");
-    //         return true;
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         _logger.LogError($"Error while sending password reset email: {e}");
-    //         return false;
-    //     }
-    // }
+    public async Task<bool> SendPasswordResetEmail(
+        User user,
+        string baseUrl,
+        string scheme,
+        string action = "reset-password"
+    )
+    {
+        try
+        {
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            resetToken = System.Web.HttpUtility.UrlEncode(resetToken);
+            var callbackUrl = $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={resetToken}";
+
+            var passResetEmail = new EmailDto
+            {
+                Recipient = user.Email,
+                Subject = "Reset Password",
+                Message = $@"<p>Reset your password <a href={callbackUrl}>here</a></p>"
+            };
+            _logger.LogInformation("Password reset Email sending...");
+            await _emailService.SendEmail(passResetEmail);
+            _logger.LogInformation("Password Reset Email Sent");
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Error while sending password reset email: {e}");
+            return false;
+        }
+    }
+
+    public async Task<bool> ResetPassword(string email, string resetToken, string newPassword)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user is null)
+        {
+            _logger.LogError("User does not exist");
+            return false;
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
+        if (result.Succeeded)
+        {
+            return true;
+        }
+
+        _logger.LogError("Error resetting user password");
+        foreach (var error in result.Errors)
+        {
+            _logger.LogError(error.ToString());
+        }
+        return false;
+    }
 }

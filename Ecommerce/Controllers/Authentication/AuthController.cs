@@ -91,11 +91,9 @@ public class AuthController : ControllerBase
     [HttpPost("login-delete")]
     public async Task<IActionResult> LoginDelete(LoginRequest loginRequest)
     {
-
         IAuthResponse loginResponse = await _authService.LoginUser(loginRequest);
         var deleteResponse = await _userAccountService.DeleteUser(loginResponse.User.Id);
         return Ok(deleteResponse);
-
     }
 
     [HttpPost("logout")]
@@ -184,45 +182,50 @@ public class AuthController : ControllerBase
         }
         return StatusCode(500, "Error Confirming Account, please try again later.");
     }
-    // [HttpGet("send-confirm-email")]
-    // public async Task<IActionResult> SendConfirmationEmail()
-    // {
-    //     var id = ExtractUser.GetUserId(HttpContext);
 
-    //     if (id is null)
-    //     {
-    //         return BadRequest();
-    //     }
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var user = await _userAccountService.GetUserByEmail(email);
+        if (user is null)
+        {
+            return BadRequest("User not found");
+        }
 
-    //     Guid userId = id.Value;
+        string baseUrl = $"{Request.Host}{Request.PathBase}";
+        string action = Url.Action("ResetPassword", "auth")!;
 
-    //     var user = await _userAccountService.GetUserById(userId);
+        var result = await _authService.SendPasswordResetEmail(
+            user: user,
+            baseUrl: baseUrl,
+            action: action,
+            scheme: Request.Scheme
+        );
 
-    //     if (user is null)
-    //     {
-    //         return BadRequest();
-    //     }
+        if (result)
+        {
+            return Ok("Password Reset Email sent");
+        }
 
-    //     _logger.LogInformation("Sending Confirmation Email...");
-    //     var confirmationToken = await _authService.GenerateEmailConfirmationToken(user.Email);
+        return StatusCode(
+            500,
+            "Server Error: error sending password reset email. Try again later."
+        );
+    }
 
-    //     var callbackUrl = Url.Action(
-    //         "ConfirmEmail",
-    //         "auth",
-    //         new { userId = user.Id, token = confirmationToken },
-    //         Request.Scheme
-    //     );
-
-    //     var confirmationEmail = new EmailDto
-    //     {
-    //         Recipient = user.Email,
-    //         Subject = "Welcome to _______ Commerce",
-    //         Message =
-    //             $@"<p>Your new account at _______ Commerce has been created.
-    //                 Please confirm your account by <a href={callbackUrl}>clicking here.</a></p>"
-    //     };
-    //     _logger.LogInformation(callbackUrl);
-
-    //     return Ok(callbackUrl);
-    // }
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
+    {
+        if (
+            await _authService.ResetPassword(
+                passwordResetRequest.Email,
+                passwordResetRequest.ResetToken,
+                passwordResetRequest.Password
+            )
+        )
+        {
+            return Ok("Password has been reset successfully. Please log in with the new password.");
+        }
+        return StatusCode(500, "Server Error: Error resetting user password");
+    }
 }

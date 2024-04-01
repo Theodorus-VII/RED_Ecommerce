@@ -17,7 +17,14 @@ public interface IAuthService
         string scheme,
         string action
     );
+    public Task<bool> SendPasswordResetEmail(
+        User user,
+        string baseUrl,
+        string scheme,
+        string action
+    );
     public Task<bool> ConfirmEmail(string email, string token);
+    public Task<bool> ResetPassword(string email, string resetToken, string newPassword);
     public Task<IAuthResponse> LoginUser(LoginRequest request);
     public Task<bool> LogoutUser(string userId);
     public Task<IAuthResponse> RefreshToken(string expiredToken, string refreshToken);
