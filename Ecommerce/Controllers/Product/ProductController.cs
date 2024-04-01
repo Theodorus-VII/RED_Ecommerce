@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-namespace Ecommerce.Models;
+// using Ecommerce.Models;
+using Ecommerce.Controllers.Contracts;
+
+
 [ApiController]
 [Authorize]
 [Route("/product")]
@@ -99,9 +102,9 @@ public class ProductController:ControllerBase{
         }
         // extract the user Id from the claim.
         Guid userId = Guid.Parse(userIdClaim.Value);
-        User? user = await _userService.GetUserById(userId);
-        if(user==null)return NotFound("This user doesn't exist");
-        await _services.AddRating(id,ratingDto,user.Id);
+        // User? user = await _userService.GetUserById(userId);
+        // if(user==null)return NotFound("This user doesn't exist");
+        await _services.AddRating(id,ratingDto,userId);
         return Created(string.Empty,ratingDto);
     }
     [HttpDelete("{id}/rating")]
@@ -117,8 +120,8 @@ public class ProductController:ControllerBase{
         }
         // extract the user Id from the claim.
         Guid userId = Guid.Parse(userIdClaim.Value);
-        User? user = await _userService.GetUserById(userId);
-        if(user==null)return NotFound("This user doesn't exist");
+        // User? user = await _userService.GetUserById(userId);
+        // if(user==null)return NotFound("This user doesn't exist");
         try{
             await _services.DeleteRating(id,userId);
             return Ok("Rating Deleted Successfully");
