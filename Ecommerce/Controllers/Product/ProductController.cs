@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 // using Ecommerce.Models;
 using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
 
 
 [ApiController]
@@ -145,7 +146,17 @@ public class ProductController:ControllerBase{
         }
         
     }
-    
+    [HttpGet("{id}/images")]
+    public async Task<ActionResult<List<string>>> GetRefreshedImageList(int id){
+        try{
+            List<string>? images= await _services.RefreshImages(id)??new List<string>();;
+            return images;
+        }
+        catch{
+            return Problem(statusCode:500,detail:"Some internal error occured while processing your request");
+        }
+
+    }
 
 
 

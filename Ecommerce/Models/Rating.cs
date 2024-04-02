@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Ecommerce.Models;
 public class Rating{
     [Range(1,5,ErrorMessage ="Rating must be between 1 and 5")]
-    public int rating{get;set;}
-    public string? review{get;set;}
+    public int RatingN{get;set;}
+    public string? Review{get;set;}
 
   
-    public Guid userId{get;set;}
+    public Guid UserId{get;set;}
     public User user{get;set;}=null!;
 
   
-    public int productId{get;set;}    
-    public Product product{get;}=null!;
+    public int ProductId{get;set;}    
+    public Product Product{get;}=null!;
 }

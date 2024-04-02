@@ -12,5 +12,6 @@ public interface IProductService{
     public Task AddRating(int id,RatingDto dto, Guid uId);
     public Task DeleteRating(int id, Guid uId);
     public Task<List<ReviewDto>> GetProductReviews(int id,int low,int high);
+    public Task<List<string>?> RefreshImages(int id);
 
 }

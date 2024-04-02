@@ -13,7 +13,7 @@ public class ProductService:IProductService{
         this._userService=userService;
     }
     public  async Task<ProductDto?>  GetProduct(int id){
-       Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id&&p.count>0);
+       Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id&&p.Count>0);
        return ToDto(match);
     }
     public ProductDto? ToDto(Product? myProduct){
@@ -22,41 +22,42 @@ public class ProductService:IProductService{
             }
             ProductDto myDto=new ProductDto();
             myDto.Id=myProduct.Id;
-            myDto.Name=myProduct.name??string.Empty;
-            myDto.Brand=myProduct.brand??string.Empty;
-            myDto.Details=myProduct.details??"None";
-            myDto.Category=myProduct.category;
-            myDto.Price=myProduct.price;
-            myDto.Image=myProduct.image??myDto.Image;
+            myDto.Name=myProduct.Name??string.Empty;
+            myDto.Brand=myProduct.Brand??string.Empty;
+            myDto.Details=myProduct.Details??"None";
+            myDto.Category=myProduct.Category;
+            myDto.Price=myProduct.Price;
+            myDto.Images=myProduct.Images.Select(imgObj=>imgObj.Url).ToList()??myDto.Images;
             return myDto;
     }
      public async Task<ProductDto> RegisterProduct(ProductDto dto){
         if(dto.Name==null||dto.Brand==null)throw new Exception("Invalid request");
         Product product=new Product{
-            name=dto.Name,
-            brand=dto.Brand,
-            details=dto.Details,
-            category=dto.Category,
-            image=dto.Image,
-            price=dto.Price,
-            count=dto.Count
+            Name=dto.Name,
+            Brand=dto.Brand,
+            Details=dto.Details,
+            Category=dto.Category,
+            Price=dto.Price,
+            Count=dto.Count
         };
         _context.Products?.Add(product);
         await _context.SaveChangesAsync();
-        dto.Id=product.Id;
+        List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=product.Id}).ToList();
+        product.Images=images;
+        await _context.SaveChangesAsync();
         return dto;
     }
     public async Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
-            List<Product> products=await _context.Products.Where(p=>p.price<=filterAttributes.high&&p.price>=filterAttributes.low)
-                                                      .Where(p=>p.name.Contains(filterAttributes.name)||p.brand.Contains(filterAttributes.name))
-                                                      .Where(p=>p.count>0)
+            List<Product> products=await _context.Products.Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
+                                                      .Where(p=>p.Name.Contains(filterAttributes.name)||p.Brand.Contains(filterAttributes.name))
+                                                      .Where(p=>p.Count>0)
                                                       .ToListAsync();
             List<Product> finalProducts=new List<Product>();
             string? filterCategory=filterAttributes.category.ToString();
             if(filterCategory!=null){
                 foreach(Product product in products){
-                    string category=product.category.ToString();
+                    string category=product.Category.ToString();
                     if(category.Contains(filterCategory)){
                         finalProducts.Add(product);
                     }
@@ -85,11 +86,11 @@ public class ProductService:IProductService{
     }
     public async Task<double> GetAverageRating(int id){
         
-        List<Rating> ratings=await _context.Ratings.Where(r=>r.productId==id).ToListAsync();
+        List<Rating> ratings=await _context.Ratings.Where(r=>r.ProductId==id).ToListAsync();
         if(ratings==null)throw new Exception("Product doesn't exist");
         if(ratings.Count==0)return -1;
         double average=0;
-        foreach(Rating rating in ratings)average+=rating.rating;
+        foreach(Rating rating in ratings)average+=rating.RatingN;
         average/=ratings.Count;
         return average;
 
@@ -97,18 +98,18 @@ public class ProductService:IProductService{
     public async Task<ProductDto> ModifyProudct(ProductDto product, int id){
         Product? match=await _context.Products.FindAsync(id);
         if(match==null)throw new Exception();
-        match.name=product.Name??match.name;
-        match.brand=product.Brand??match.brand;
-        match.details=product.Details;
-        match.image=product.Image;
-        match.price=product.Price;
-        match.count=product.Count;
+        match.Name=product.Name??match.Name;
+        match.Brand=product.Brand??match.Brand;
+        match.Details=product.Details;
+        match.Price=product.Price;
+        match.Count=product.Count;
+        match.Images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
         await _context.SaveChangesAsync();
         return ToDto(match);
     }
     public async Task BuyProduct(int id){
         Product? product=await _context.Products.FindAsync(id);
-        if(product!=null)product.count-=1;
+        if(product!=null)product.Count-=1;
         await _context.SaveChangesAsync();
     }
     public async Task AddRating(int id,RatingDto dto, Guid uId){
@@ -116,15 +117,15 @@ public class ProductService:IProductService{
         if(product==null)throw new Exception("Product doesn't exist");
         Rating? rating=await _context.Ratings.FindAsync(id,uId);
         if(rating!=null){
-            rating.rating=dto.Rating;
-            rating.review=dto.Review;
+            rating.RatingN=dto.Rating;
+            rating.Review=dto.Review;
         }
         else{
-            product?.ratings.Add(new Rating{
-            rating=dto.Rating,
-            review=dto.Review,
-            productId=id,
-            userId=uId
+            product?.Ratings.Add(new Rating{
+            RatingN=dto.Rating,
+            Review=dto.Review,
+            ProductId=id,
+            UserId=uId
         });
 
         }
@@ -147,17 +148,17 @@ public class ProductService:IProductService{
     }
     public async Task<List<ReviewDto>> GetProductReviews(int id,int low,int high){
         try{
-            List<Rating>? ratings=await _context.Ratings.Where(r=>r.productId==id).ToListAsync();
+            List<Rating>? ratings=await _context.Ratings.Where(r=>r.ProductId==id).ToListAsync();
             List<ReviewDto> reviews=new List<ReviewDto>();
             if(ratings!=null){
                 foreach(Rating _rating in ratings){
                     User? user;
-                    if(_rating.rating>=low&&_rating.rating<=high){
-                        user=await _userService.GetUserById(_rating.userId);
+                    if(_rating.RatingN>=low&&_rating.RatingN<=high){
+                        user=await _userService.GetUserById(_rating.UserId);
                         string fullName=user?.FirstName+" "+user?.LastName;
                         reviews.Add(new ReviewDto{
-                        Rating=_rating.rating,
-                        Review=_rating.review,
+                        Rating=_rating.RatingN,
+                        Review=_rating.Review,
                         Name=fullName
                         });
                     }  
@@ -175,8 +176,18 @@ public class ProductService:IProductService{
         Product? product=await _context.Products.FindAsync(id);
         if(product==null)throw new Exception("Product doesn't exist");
         if(count<0)throw new InvalidDataException();
-        product.count=count;
+        product.Count=count;
         await _context.SaveChangesAsync();
+    }
+    public async Task<List<string>?> RefreshImages(int id){
+        Product? product=await _context.Products.FindAsync(id);
+        if(product==null)return null;
+        List<string> presentImages=await Task.Run(()=>{
+            return Directory.EnumerateFiles("./Public/Images","*productid",SearchOption.TopDirectoryOnly).ToList<string>();
+        });
+        product.Images=presentImages.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
+        await _context.SaveChangesAsync();
+        return presentImages;
     }
 
 
