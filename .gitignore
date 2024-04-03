@@ -25,4 +25,4 @@ bld/
 **/obj/
 **/bin/
 
-Ecommerce/appsettings.json
+publish/

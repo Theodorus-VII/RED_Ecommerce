@@ -10,20 +10,19 @@
 		<PackageReference Include="MailKit" Version="4.4.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"
-			Version="6.0.28" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.28" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.28" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.28">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.28" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSql" Version="6.0.0" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.3" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" />
 		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.35.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"
-			Version="8.0.1" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
 		<PackageReference Include="xunit" Version="2.7.0" />
 		<PackageReference Include="Moq" Version="4.20.70" />
 		<PackageReference Include="AutoMapper" Version="13.0.1" />
