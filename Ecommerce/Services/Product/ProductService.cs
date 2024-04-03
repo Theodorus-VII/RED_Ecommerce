@@ -73,14 +73,17 @@ public class ProductService:IProductService{
             }
             else finalProducts=products;
             List<ProductDto> pDto=new List<ProductDto>();
-            if(start>=maxSize)throw new Exception("Invalid start index");
+            if(start>=maxSize+start)throw new Exception("Invalid start index");
             if(start+maxSize>=finalProducts.Count){
                 maxSize=finalProducts.Count-start;
                 response.NextIndex=-1;
             }
             else response.NextIndex=start+maxSize;
             if(start==0)response.Total=finalProducts.Count;
-            finalProducts=finalProducts.GetRange(start,start+maxSize);
+            Console.WriteLine(start);
+            Console.WriteLine(maxSize);
+            Console.WriteLine("******************");
+            finalProducts=finalProducts.GetRange(start,maxSize);
             foreach(Product product in finalProducts ){
                 pDto.Add(ToDto(product));
             }
