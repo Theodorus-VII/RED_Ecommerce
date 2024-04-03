@@ -23,9 +23,24 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DockerConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(
-    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+    options =>
+    {
+        options.UseMySql(
+            connectionString,
+            ServerVersion.AutoDetect(connectionString),
+            mySqlOptionsAction: mySqlOptions =>
+            {
+                mySqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 10,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            }
+        );
+    }
 );
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -44,13 +59,15 @@ builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
 
 
 
 var app = builder.Build();
+
+app.Logger.LogInformation("Application Created...");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -66,12 +83,36 @@ app.UseAuthorization();
 
 app.UseMiddleware<ExtractUserIdMiddleware>();
 
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        app.Logger.LogWarning("Found pending Db migrations.");
+        app.Logger.LogInformation("Attempting to apply pending migrations...");
+
+        context.Database.Migrate();
+    }
+    else
+    {
+        app.Logger.LogInformation("Found no pending migrations.");
+    }
+}
+
+app.Logger.LogInformation("Creating roles...");
+
 using (var scope = app.Services.CreateScope())
 {
     var roles = new string[] { Roles.Admin, Roles.Customer };
     await scope.ServiceProvider.AddRoles(roles);
 }
 
-app.MapControllers();
+app.Logger.LogInformation("Roles created.");
+
+app.Logger.LogInformation("Starting app...");
 
 app.Run();
