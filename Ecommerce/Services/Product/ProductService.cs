@@ -78,6 +78,7 @@ public class ProductService:IProductService{
                 maxSize=finalProducts.Count-start;
                 response.NextIndex=-1;
             }
+            else response.NextIndex=start+maxSize;
             if(start==0)response.Total=finalProducts.Count;
             finalProducts=finalProducts.GetRange(start,start+maxSize);
             foreach(Product product in finalProducts ){
