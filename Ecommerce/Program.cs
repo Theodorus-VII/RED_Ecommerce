@@ -29,15 +29,12 @@ var connectionString = builder.Configuration.GetConnectionString("PostgresConnec
 builder.Services.AddDbContext<ApplicationDbContext>(
     options =>
     {
-        options.UseMySql(
+        options.UseNpgsql(
             connectionString,
-            ServerVersion.AutoDetect(connectionString),
-            mySqlOptionsAction: mySqlOptions =>
+            npgsqlOptionsAction: npgSqlOptions =>
             {
-                mySqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 10,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
-                    errorNumbersToAdd: null);
+                npgSqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 10);
             }
         );
     }
