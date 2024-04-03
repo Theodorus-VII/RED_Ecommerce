@@ -1,14 +1,29 @@
 namespace Ecommerce.Models;
-public class Category
-{
+public enum Category{
+    Automotive,
+    Beauty,
+    BeautyCosemtics,
+    BeautySoap,
+    Books,
+    BooksFiction,
+    BooksNonFiction,
+    Electronics,
+    ElectronicsPhone,
+    ElectronicsPc,
+    FashionMen,
+    FashionWomen,
+    FashionBoys,
+    FashionGirls,
+    FashionShoes,
+    FashionBoysShoes,
+    FashionGirlsShoes,
+    Home,
+    HomeKitchen,
+    HomeToilet,
+    Movies ,
+    Other,
+    Software,
+    SoftwareGames,
+    Toys,
 
-    public Category(string name, string description = "None")
-    {
-        Name = name;
-        Description = description;
-    }
-    // basically a tag
-    public int Id { get; set; }
-    public string Name { get; set; } 
-    public string? Description { get; set; }
 }

@@ -10,12 +10,14 @@ namespace Ecommerce.Data
     {
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
-        public DbSet<Address> Addresses { get; set; }
-        public DbSet<PaymentInfo> PaymentInfos { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Address> Addresses { get; set; } = null!;
+        public DbSet<PaymentInfo> PaymentInfos { get; set; } = null!;
+        public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<OrderItem> OrderItems { get; set; } = null!;
         public DbSet<CartItem> CartItems { get; set; } = null!;
         public DbSet<Cart> Carts { get; set; } = null!;
+        public DbSet<Rating> Ratings { get; set; } = null!;
+        public DbSet<Image> Images { get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -32,6 +34,8 @@ namespace Ecommerce.Data
             ConfigureOrderItem(builder);
             ConfigureCartItem(builder);
             ConfigureCart(builder);
+            ConfigureRating(builder);
+            ConfigureImage(builder);
         }
 
         private void ConfigureProduct(ModelBuilder builder)
@@ -79,6 +83,18 @@ namespace Ecommerce.Data
         private void ConfigureCart(ModelBuilder builder)
         {
             builder.Entity<Cart>().HasKey(c => c.CartId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureRating(ModelBuilder builder)
+        {
+            builder.Entity<Rating>().HasKey(r => new { r.ProductId, r.UserId });
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureImage(ModelBuilder builder)
+        {
+            builder.Entity<Image>().HasKey(i => new { i.Url, i.ProductId });
             // Configure other properties and relationships
         }
     }

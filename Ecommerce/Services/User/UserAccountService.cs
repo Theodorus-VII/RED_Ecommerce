@@ -17,11 +17,47 @@ public class UserAccountService : IUserAccountService
         _logger = logger;
     }
 
+    public async Task<User?> GetUserById(Guid UserId)
+    {
+        try
+        {
+            var user = await _userManager.FindByIdAsync(UserId.ToString());
+
+            if (user == null){
+                throw new Exception("User with specified Id not found");
+            }
+            return user;
+        }
+        catch(Exception e)
+        {
+            _logger.LogError($"User Not found. Error: {e}");
+            return null;
+        }
+    }
+
+    public async Task<User?> GetUserByEmail(string Email)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(Email);
+
+            if (user == null){
+                throw new Exception("User with specified Email not found");
+            }
+            return user;
+        }
+        catch(Exception e)
+        {
+            _logger.LogError($"User Not found. Error: {e}");
+            return null;
+        }
+    }
+
     public async Task<bool> UpdateUserDetails(Guid userId, UserPatchRequest request)
     {
         try
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await GetUserById(userId);
 
             if (user == null)
             {
@@ -63,7 +99,8 @@ public class UserAccountService : IUserAccountService
     {
         try
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await GetUserById(userId);
+            
             if (user == null)
             {
                 return false;
