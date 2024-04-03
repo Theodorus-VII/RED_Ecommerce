@@ -1,4 +1,4 @@
-﻿namespace Ecommerce.Controllers.Cart.Contracts
+﻿namespace Ecommerce.Controllers.ShoppingCart.Contracts
 {
     public class AddToCartRequest 
     {
@@ -8,18 +8,18 @@
 
     public class AddMultipleItemsToCartRequest
     {
-        public List<AddToCartRequest> Items { get; set; }
+        public List<AddToCartRequest>? Items { get; set; }
     }
 
     public class RemoveFromCartRequest
     {
-        public int ProductId { get; set; }
+        public int CartItemId { get; set; }
     }
 
 
     public class UpdateCartItemQuantityRequest
     {
-        public int ProductId { get; set; }
+        public int CartItemId { get; set; }
         public int NewQuantity { get; set; }
     }
 

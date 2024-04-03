@@ -2,48 +2,84 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Ecommerce.Models;
 using Microsoft.AspNetCore.Identity;
+using Ecommerce.Models.ShoppingCart;
 
-namespace Ecommerce.Data;
-
-
-public class ApplicationDbContext
-    : IdentityDbContext<User, IdentityRole<Guid>, Guid>
+namespace Ecommerce.Data
 {
-    public DbSet<Product> Products { get; set; } = null!;
-    public DbSet<Category> Categories { get; set; } = null!;
-    //public DbSet<Order> Orders { get; set; } = null!;
-    //public DbSet<OrderItem> Order_Items { get; set; } = null!;
-
-    public DbSet<Address> Addresses { get; set; }
-    public DbSet<PaymentInfo> PaymentInfos { get; set; }
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderItem> OrderItems { get; set; }
-    //public DbSet<Cart> Carts { get; set; } = null!;
-    //public DbSet<CartItem> Cart_Items { get; set; } = null!;
-    public DbSet<CartItem> CartItems { get; set; } = null!;
-
-    public ApplicationDbContext(
-        DbContextOptions<ApplicationDbContext> options
-        ) : base(options) { }
-
-    protected override void OnModelCreating(ModelBuilder builder)
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
-        base.OnModelCreating(builder);
-        
-        // mysql specific stupidity
-        foreach (var entityType in builder.Model.GetEntityTypes())
-        {
-            var tableName = entityType.GetTableName();
-            var schema = entityType.GetSchema();
+        public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<PaymentInfo> PaymentInfos { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<CartItem> CartItems { get; set; } = null!;
+        public DbSet<Cart> Carts { get; set; } = null!;
 
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.ClrType == typeof(string) && (property.GetMaxLength() >= 255 || property.GetMaxLength() == null))
-                {
-                    property.SetMaxLength(100);
-                }
-            }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            // Configure entities
+            ConfigureProduct(builder);
+            ConfigureCategory(builder);
+            ConfigureAddress(builder);
+            ConfigurePaymentInfo(builder);
+            ConfigureOrder(builder);
+            ConfigureOrderItem(builder);
+            ConfigureCartItem(builder);
+            ConfigureCart(builder);
+        }
+
+        private void ConfigureProduct(ModelBuilder builder)
+        {
+            builder.Entity<Product>().HasKey(p => p.Id);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureCategory(ModelBuilder builder)
+        {
+            builder.Entity<Category>().HasKey(c => c.Id);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureAddress(ModelBuilder builder)
+        {
+            builder.Entity<Address>().HasKey(a => a.AddressId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigurePaymentInfo(ModelBuilder builder)
+        {
+            builder.Entity<PaymentInfo>().HasKey(p => p.PaymentInfoId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureOrder(ModelBuilder builder)
+        {
+            builder.Entity<Order>().HasKey(o => o.OrderId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureOrderItem(ModelBuilder builder)
+        {
+            builder.Entity<OrderItem>().HasKey(oi => oi.OrderItemId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureCartItem(ModelBuilder builder)
+        {
+            builder.Entity<CartItem>().HasKey(ci => ci.CartItemId);
+            // Configure other properties and relationships
+        }
+
+        private void ConfigureCart(ModelBuilder builder)
+        {
+            builder.Entity<Cart>().HasKey(c => c.CartId);
+            // Configure other properties and relationships
         }
     }
-
 }
