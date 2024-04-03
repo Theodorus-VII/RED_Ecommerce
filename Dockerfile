@@ -3,7 +3,6 @@ EXPOSE 80
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.16 AS build
-RUN dotnet tool install --version 6.0.9 --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
 
 WORKDIR /src

@@ -24,17 +24,20 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //     options => options.UseSqlServer(connectionString)
 // );
 // var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
+var connectionString = builder.Configuration.GetConnectionString("DockerConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(
     options =>
     {
-        options.UseNpgsql(
+        options.UseMySql(
             connectionString,
-            npgsqlOptionsAction: npgSqlOptions =>
+            ServerVersion.AutoDetect(connectionString),
+            mySqlOptionsAction: mySqlOptions =>
             {
-                npgSqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 10);
+                mySqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 10,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
             }
         );
     }
