@@ -13,7 +13,7 @@ public class ProductService:IProductService{
         this._userService=userService;
     }
     public  async Task<ProductDto?>  GetProduct(int id){
-       Product? match=await _context.Products.FirstOrDefaultAsync(p=>p.Id==id&&p.Count>0);
+       Product? match=await _context.Products.Include(p=>p.Images).FirstOrDefaultAsync(p=>p.Id==id&&p.Count>0);
        return ToDto(match);
     }
     public ProductDto? ToDto(Product? myProduct){
@@ -27,7 +27,8 @@ public class ProductService:IProductService{
             myDto.Details=myProduct.Details??"None";
             myDto.Category=myProduct.Category;
             myDto.Price=myProduct.Price;
-            myDto.Images=myProduct.Images.Select(imgObj=>imgObj.Url).ToList()??myDto.Images;
+            myDto.Count=myProduct.Count;
+            myDto.Images=myProduct.Images.Select(img=>img.Url).ToList();
             return myDto;
     }
      public async Task<ProductDto> RegisterProduct(ProductDto dto){
@@ -45,33 +46,45 @@ public class ProductService:IProductService{
         List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=product.Id}).ToList();
         product.Images=images;
         await _context.SaveChangesAsync();
+        dto.Id=product.Id;
         return dto;
     }
-    public async Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
+    public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
             List<Product> products=await _context.Products.Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
                                                       .Where(p=>p.Name.Contains(filterAttributes.name)||p.Brand.Contains(filterAttributes.name))
                                                       .Where(p=>p.Count>0)
                                                       .ToListAsync();
             List<Product> finalProducts=new List<Product>();
-            string? filterCategory=filterAttributes.category.ToString();
-            if(filterCategory!=null){
+            FilterAttributesResponse response=new FilterAttributesResponse();
+            
+            if(filterAttributes.categories!=null){
+                List<string> filterCategories=filterAttributes.categories.ToList();
                 foreach(Product product in products){
                     string category=product.Category.ToString();
-                    if(category.Contains(filterCategory)){
-                        finalProducts.Add(product);
+                    foreach(string filCategory in filterCategories){
+                        if(category.Contains(filCategory)){
+                            finalProducts.Add(product);
+                            break;
+                        }
                     }
+                   
                 }
-
             }
+            else finalProducts=products;
             List<ProductDto> pDto=new List<ProductDto>();
             if(start>=maxSize)throw new Exception("Invalid start index");
-            if(start+maxSize>products.Count)maxSize=finalProducts.Count-start;
+            if(start+maxSize>=finalProducts.Count){
+                maxSize=finalProducts.Count-start;
+                response.NextIndex=-1;
+            }
+            if(start==0)response.Total=finalProducts.Count;
             finalProducts=finalProducts.GetRange(start,start+maxSize);
             foreach(Product product in finalProducts ){
                 pDto.Add(ToDto(product));
             }
-            return pDto;
+            response.ProductDtos=pDto;
+            return response;
         }
         catch(Exception e){
             Console.WriteLine(e.Message);
@@ -101,8 +114,8 @@ public class ProductService:IProductService{
         match.Name=product.Name??match.Name;
         match.Brand=product.Brand??match.Brand;
         match.Details=product.Details;
-        match.Price=product.Price;
-        match.Count=product.Count;
+        match.Price=product.Price<0?match.Price:product.Price;
+        match.Count=product.Count<0?match.Count:product.Count;
         match.Images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
         await _context.SaveChangesAsync();
         return ToDto(match);
@@ -180,15 +193,57 @@ public class ProductService:IProductService{
         await _context.SaveChangesAsync();
     }
     public async Task<List<string>?> RefreshImages(int id){
-        Product? product=await _context.Products.FindAsync(id);
+        Product? product=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
         if(product==null)return null;
         List<string> presentImages=await Task.Run(()=>{
-            return Directory.EnumerateFiles("./Public/Images","*productid",SearchOption.TopDirectoryOnly).ToList<string>();
+            return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
         });
         product.Images=presentImages.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
         await _context.SaveChangesAsync();
         return presentImages;
     }
+    public async Task<List<string>?> PutImages(int id, List<string> imgNames){
+        Product? product=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
+        if(product==null)return null;
+        try{
+            List<string> presentImages=await Task.Run(()=>{
+            return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
+            });
+            List<string> toDelete=new List<string>();
+            foreach(string prImg in presentImages){
+                if(imgNames.Contains(prImg))continue;
+                toDelete.Add(prImg);
+            }
+            await Task.Run(()=>{
+                string path="./Public/Images";
+                foreach(string toBeDeleted in toDelete){
+                    File.Delete(Path.Join(path,toBeDeleted));
+                }
+            });
+        }
+        catch{
+            throw new Exception("DeletingFileException");
+        }
+        try{
+            product.Images=imgNames.Select(imgN=>new Image{ProudctId=id,Url=imgN}).ToList();
+            await _context.SaveChangesAsync();
+        }
+        catch{
+            throw new Exception("SavingFileException");
+        }
+        
+        return imgNames;
+
+    }
+    public async Task<byte[]?> GetImage(string name){
+        byte[] b;
+        string path="./Public/Images";
+       
+        b=await File.ReadAllBytesAsync(Path.Join(path,name));
+        return b;
+    }
+    
+
 
 
 }

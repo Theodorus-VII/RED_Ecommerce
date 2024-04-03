@@ -12,5 +12,5 @@ public class ProductDto{
     [EnumDataType(typeof(Category))]
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public Category Category{get;set;}=Category.Other;
-    public float Price{get;set;}
+    public float Price{get;set;}=-1;
 }

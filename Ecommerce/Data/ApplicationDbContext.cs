@@ -35,7 +35,7 @@ public class ApplicationDbContext
         base.OnModelCreating(builder);
         builder.Entity<Rating>().HasKey(rating=>new {rating.ProductId,rating.UserId});
         builder.Entity<Image>().HasKey(image=>new {image.Url,image.ProudctId});
-        builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP()");
+        // builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         // mysql specific stupidity
         foreach (var entityType in builder.Model.GetEntityTypes())
         {
