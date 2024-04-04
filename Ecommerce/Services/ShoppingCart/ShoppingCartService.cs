@@ -4,14 +4,14 @@ using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Models.ShoppingCart;
 using Ecommerce.Services.Interfaces;
-using Microsoft.EntityFrameworkCore; // Assuming Entity Framework Core is used for database access
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Services.ShoppingCart
 {
     public class ShoppingCartService : IShoppingCartService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper; // Add AutoMapper IMapper
+        private readonly IMapper _mapper;
 
         public ShoppingCartService(ApplicationDbContext context, IMapper mapper)
         {
@@ -24,13 +24,12 @@ namespace Ecommerce.Services.ShoppingCart
         {
             var cart = await _context.Carts
                 .Where(c => c.UserId == userId)
-                .Include(c => c.Items) // Include cart items
-                    .ThenInclude(ci => ci.Product) // Include product details
+                .Include(c => c.Items) 
+                    .ThenInclude(ci => ci.Product) 
                 .FirstOrDefaultAsync();
 
             if (cart != null)
             {
-                // Map cart and cart items to DTOs
                 var cartDTO = _mapper.Map<CartResponseDTO>(cart);
                 return cartDTO;
             }

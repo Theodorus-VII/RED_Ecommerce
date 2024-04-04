@@ -2,11 +2,11 @@
 using Ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims; // Add this namespace
+using System.Security.Claims; 
 
 namespace Ecommerce.Controllers.Cart
 {
-    [Authorize] // Assuming users need to be authenticated to access the cart
+    [Authorize] 
     [ApiController]
     [Route("api/[controller]")]
     public class ShoppingCartController : ControllerBase
@@ -24,17 +24,17 @@ namespace Ecommerce.Controllers.Cart
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized(); // Or handle authentication failure appropriately
+                return Unauthorized(); 
             }
 
             var cartDTO = await _shoppingCartService.GetCartItemsAsync(userId);
             if (cartDTO.Items != null)
             {
-                return Ok(cartDTO); // Return cart DTO if found
+                return Ok(cartDTO);
             }
             else
             {
-                return NotFound("No cart found for this user."); // Or handle cart not found scenario
+                return NotFound("No cart found for this user."); 
             }
         }
 
@@ -49,17 +49,17 @@ namespace Ecommerce.Controllers.Cart
                     return BadRequest(ModelState);
                 }
 
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get userId from token
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
                 await _shoppingCartService.AddToCartAsync(userId, request.ProductId, request.Quantity);
                 return Ok("Item added to cart successfully.");
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while adding the item to the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while adding the item to the cart."); 
             }
         }
 
@@ -76,12 +76,12 @@ namespace Ecommerce.Controllers.Cart
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(); // Or handle authentication failure appropriately
+                    return Unauthorized(); 
                 }
 
                 if (request.Items == null || request.Items.Count == 0)
                 {
-                    return BadRequest("Items list is empty or null."); // Return bad request if items list is empty or null
+                    return BadRequest("Items list is empty or null.");
                 }
 
                 await _shoppingCartService.AddMultipleItemsToCartAsync(userId, request.Items);
@@ -89,11 +89,11 @@ namespace Ecommerce.Controllers.Cart
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the specific error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while adding multiple items to the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while adding multiple items to the cart.");
             }
         }
 
@@ -108,7 +108,7 @@ namespace Ecommerce.Controllers.Cart
                     return BadRequest(ModelState);
                 }
 
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get userId from token
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
                 await _shoppingCartService.UpdateCartItemQuantityAsync(userId, request.CartItemId, request.NewQuantity);
                 return Ok("Item updated to cart successfully.");
             }
@@ -118,11 +118,11 @@ namespace Ecommerce.Controllers.Cart
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while updating an item in the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while updating an item in the cart."); 
             }
         }
 
@@ -141,12 +141,12 @@ namespace Ecommerce.Controllers.Cart
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(); // Or handle authentication failure appropriately
+                    return Unauthorized(); 
                 }
 
                 if (request.CartItemId <= 0)
                 {
-                    return BadRequest("Invalid CartItemId."); // Return bad request if CartItemsId is invalid
+                    return BadRequest("Invalid CartItemId."); 
                 }
 
                 await _shoppingCartService.RemoveFromCartAsync(userId, request.CartItemId);
@@ -158,11 +158,11 @@ namespace Ecommerce.Controllers.Cart
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while updating an item in the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while updating an item in the cart."); 
             }
         }
 
@@ -184,7 +184,7 @@ namespace Ecommerce.Controllers.Cart
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(); // Or handle authentication failure appropriately
+                    return Unauthorized();
                 }
                 if (request.CartItemIds != null)
                 {
@@ -202,11 +202,11 @@ namespace Ecommerce.Controllers.Cart
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while updating an item in the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while updating an item in the cart."); 
             }
         }
 
@@ -218,18 +218,18 @@ namespace Ecommerce.Controllers.Cart
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(); // Or handle authentication failure appropriately
+                    return Unauthorized(); 
                 }
                 await _shoppingCartService.ClearCartAsync(userId);
                 return Ok("Cart cleared successfully.");
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // Return a bad request with the error message
+                return BadRequest(ex.Message); 
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while updating an item in the cart."); // Return a server error status code with a generic error message
+                return StatusCode(500, "An error occurred while updating an item in the cart."); 
             }
         }
     }

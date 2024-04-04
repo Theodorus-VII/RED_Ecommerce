@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Ecommerce.Controllers.Checkout.Contracts;
-using Ecommerce.Data; // Update namespace to Ecommerce.Data
-using Ecommerce.Models;
-using Ecommerce.Utilities;
-using Microsoft.EntityFrameworkCore; // Update namespace to Ecommerce.Models
+using Ecommerce.Data; 
+using Microsoft.EntityFrameworkCore; 
 
 namespace Ecommerce.Services.Checkout
 {
