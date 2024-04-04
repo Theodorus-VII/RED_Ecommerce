@@ -13,6 +13,7 @@ public interface IProductService{
     public Task DeleteRating(int id, Guid uId);
     public Task<List<ReviewDto>> GetProductReviews(int id,int low,int high);
     public Task<List<string>?> RefreshImages(int id);
-     public Task<byte[]?> GetImage(string name);
+   // public Task<byte[]?> GetImage(string name);
+   public Task DeleteImages(int id, List<string> imgNames);
 
 }
