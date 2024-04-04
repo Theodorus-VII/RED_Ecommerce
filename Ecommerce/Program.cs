@@ -67,6 +67,8 @@ var app = builder.Build();
 app.Logger.LogInformation("Application Created...");
 
 // Configure the HTTP request pipeline.
+app.UseSwagger();
+app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
