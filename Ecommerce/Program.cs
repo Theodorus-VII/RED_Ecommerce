@@ -2,9 +2,12 @@ using Ecommerce.Configuration;
 using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services;
+using Ecommerce.Services.Checkout;
 using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
+using Ecommerce.Services.ShoppingCart;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 
 
@@ -140,7 +143,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Logger.LogInformation("Creating roles...");
+app.UseStaticFiles(new StaticFileOptions{
+    FileProvider=new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath,"./Public/Images")),
+    RequestPath="/images"
 
+});
 using (var scope = app.Services.CreateScope())
 {
     var roles = new string[] { Roles.Admin, Roles.Customer };

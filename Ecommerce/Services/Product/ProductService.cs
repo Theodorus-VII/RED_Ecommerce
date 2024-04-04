@@ -13,7 +13,7 @@ public class ProductService:IProductService{
         this._userService=userService;
     }
     public  async Task<ProductDto?>  GetProduct(int id){
-       Product? match=await _context.Products.Include(p=>p.Images).FirstOrDefaultAsync(p=>p.Id==id&&p.Count>0);
+       Product? match=await _context.Products.Include(p=>p.Images).FirstOrDefaultAsync(p=>p.Id==id&&p.Count>-1);
        return ToDto(match);
     }
     public ProductDto? ToDto(Product? myProduct){
@@ -32,22 +32,33 @@ public class ProductService:IProductService{
             return myDto;
     }
      public async Task<ProductDto> RegisterProduct(ProductDto dto){
-        if(dto.Name==null||dto.Brand==null)throw new Exception("Invalid request");
-        Product product=new Product{
-            Name=dto.Name,
-            Brand=dto.Brand,
-            Details=dto.Details,
-            Category=dto.Category,
-            Price=dto.Price,
-            Count=dto.Count
-        };
-        _context.Products?.Add(product);
-        await _context.SaveChangesAsync();
-        List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=product.Id}).ToList();
-        product.Images=images;
-        await _context.SaveChangesAsync();
-        dto.Id=product.Id;
-        return dto;
+        try{
+            List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl}).ToList();
+            if(dto.Name==null||dto.Brand==null)throw new Exception("Invalid request");
+            Product product=new Product{
+                Name=dto.Name,
+                Brand=dto.Brand,
+                Details=dto.Details,
+                Category=dto.Category,
+                Price=dto.Price,
+                Count=dto.Count,
+                Images=images
+            };
+            _context.Products?.Add(product);
+            await _context.SaveChangesAsync();
+            _context.Products=null!;
+            // Product? registeredProduct=await _context.Products.Include(p=>p.Images).FirstOrDefaultAsync(p=>p.Id==product.Id);
+            // Console.WriteLine("*****************");
+            // if(registeredProduct!=null)registeredProduct.Images=images;
+            // await _context.SaveChangesAsync();
+            dto.Id=product.Id;
+            return dto;
+        }
+        catch(Exception e){
+            Console.WriteLine(e);
+            throw new Exception("Invalid input for products");
+        }
+        
     }
     public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
@@ -80,9 +91,6 @@ public class ProductService:IProductService{
             }
             else response.NextIndex=start+maxSize;
             if(start==0)response.Total=finalProducts.Count;
-            Console.WriteLine(start);
-            Console.WriteLine(maxSize);
-            Console.WriteLine("******************");
             finalProducts=finalProducts.GetRange(start,maxSize);
             foreach(Product product in finalProducts ){
                 pDto.Add(ToDto(product));
@@ -120,7 +128,7 @@ public class ProductService:IProductService{
         match.Details=product.Details;
         match.Price=product.Price<0?match.Price:product.Price;
         match.Count=product.Count<0?match.Count:product.Count;
-        match.Images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
+        match.Images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProductId=id}).ToList();
         await _context.SaveChangesAsync();
         return ToDto(match);
     }
@@ -202,42 +210,38 @@ public class ProductService:IProductService{
         List<string> presentImages=await Task.Run(()=>{
             return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
         });
-        product.Images=presentImages.Select(imgUrl=>new Image{Url=imgUrl,ProudctId=id}).ToList();
+        product.Images=presentImages.Select(imgUrl=>new Image{Url=Path.GetFileName(imgUrl),ProductId=id}).ToList();
         await _context.SaveChangesAsync();
         return presentImages;
     }
-    public async Task<List<string>?> PutImages(int id, List<string> imgNames){
+    public async Task DeleteImages(int id, List<string> imgNames){
         Product? product=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
-        if(product==null)return null;
+        if(product==null)return;
         try{
-            List<string> presentImages=await Task.Run(()=>{
-            return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
+            List<string>? presentImages=await Task.Run(()=>{
+                return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
             });
-            List<string> toDelete=new List<string>();
-            foreach(string prImg in presentImages){
-                if(imgNames.Contains(prImg))continue;
-                toDelete.Add(prImg);
-            }
-            await Task.Run(()=>{
-                string path="./Public/Images";
-                foreach(string toBeDeleted in toDelete){
-                    File.Delete(Path.Join(path,toBeDeleted));
+            List<string>? dbImages=product.Images.Select(img=>img.Url).ToList()??new List<string>();
+            presentImages=presentImages.Select(imgPath=>Path.GetFileName(imgPath)).ToList();
+            foreach(string imgName in imgNames){
+                if(dbImages.Contains(imgName)){
+                      product.Images.RemoveAll(img=>img.ProductId==id&img.Url.Equals(imgName));
                 }
-            });
+                if(presentImages.Contains(imgName)){
+                    await Task.Run(()=>{
+                        string path="./Public/Images";
+                        File.Delete(Path.Join(path,imgName));
+                    });
+                    
+                }
+              
+            }
+            
+            await _context.SaveChangesAsync();
         }
         catch{
             throw new Exception("DeletingFileException");
         }
-        try{
-            product.Images=imgNames.Select(imgN=>new Image{ProudctId=id,Url=imgN}).ToList();
-            await _context.SaveChangesAsync();
-        }
-        catch{
-            throw new Exception("SavingFileException");
-        }
-        
-        return imgNames;
-
     }
     public async Task<byte[]?> GetImage(string name){
         byte[] b;
