@@ -5,6 +5,7 @@ using Ecommerce.Services;
 using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,7 +66,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ExtractUserIdMiddleware>();
+app.UseStaticFiles(new StaticFileOptions{
+    FileProvider=new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath,"./Public/Images")),
+    RequestPath="/images"
 
+});
 using (var scope = app.Services.CreateScope())
 {
     var roles = new string[] { Roles.Admin, Roles.Customer };
