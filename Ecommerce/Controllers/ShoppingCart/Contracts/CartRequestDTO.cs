@@ -11,11 +11,6 @@
         public List<AddToCartRequest>? Items { get; set; }
     }
 
-    public class RemoveFromCartRequest
-    {
-        public int CartItemId { get; set; }
-    }
-
 
     public class UpdateCartItemQuantityRequest
     {

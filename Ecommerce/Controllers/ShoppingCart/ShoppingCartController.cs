@@ -49,7 +49,11 @@ namespace Ecommerce.Controllers.Cart
                     return BadRequest(ModelState);
                 }
 
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized();
+                }
                 await _shoppingCartService.AddToCartAsync(userId, request.ProductId, request.Quantity);
                 return Ok("Item added to cart successfully.");
             }
@@ -108,7 +112,11 @@ namespace Ecommerce.Controllers.Cart
                     return BadRequest(ModelState);
                 }
 
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized();
+                }
                 await _shoppingCartService.UpdateCartItemQuantityAsync(userId, request.CartItemId, request.NewQuantity);
                 return Ok("Item updated to cart successfully.");
             }
@@ -127,8 +135,8 @@ namespace Ecommerce.Controllers.Cart
         }
 
 
-        [HttpDelete("remove")]
-        public async Task<IActionResult> RemoveFromCart([FromBody] RemoveFromCartRequest request)
+        [HttpDelete("remove/{cartItemId}")]
+        public async Task<IActionResult> RemoveFromCart(int cartItemId)
         {
             try
             {
@@ -144,12 +152,12 @@ namespace Ecommerce.Controllers.Cart
                     return Unauthorized(); 
                 }
 
-                if (request.CartItemId <= 0)
+                if (cartItemId <= 0)
                 {
                     return BadRequest("Invalid CartItemId."); 
                 }
 
-                await _shoppingCartService.RemoveFromCartAsync(userId, request.CartItemId);
+                await _shoppingCartService.RemoveFromCartAsync(userId, cartItemId);
                 return Ok("Cart item removed successfully.");
             }
             catch (UnauthorizedAccessException ex)
