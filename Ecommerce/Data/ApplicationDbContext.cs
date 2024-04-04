@@ -34,9 +34,9 @@ public class ApplicationDbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.Entity<Rating>().HasKey(rating=>new {rating.ProductId,rating.UserId});
-        builder.Entity<Image>().HasKey(image=>new {image.ProductId,image.Url});
-        // builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Entity<Rating>().HasKey(rating => new { rating.ProductId, rating.UserId });
+        builder.Entity<Image>().HasKey(image => new { image.ProductId , image.Url});
+        builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
         // mysql specific stupidity
         foreach (var entityType in builder.Model.GetEntityTypes())
         {
