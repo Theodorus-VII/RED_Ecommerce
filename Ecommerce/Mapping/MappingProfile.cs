@@ -1,10 +1,17 @@
 ﻿using AutoMapper;
-using Ecommerce.Controllers.Cart.Contracts;
+using Ecommerce.Controllers.Checkout.Contracts;
+using Ecommerce.Controllers.ShoppingCart.Contracts;
+using Ecommerce.Models;
+using Ecommerce.Models.ShoppingCart;
 
-public class MappingProfile : Profile
+namespace Ecommerce.Mapping
 {
-    public MappingProfile()
+    public class MappingProfile : Profile
     {
-        CreateMap<CartItem, CartItemResponseDTO>();
+        public MappingProfile()
+        {
+            CreateMap<Cart, CartResponseDTO>();
+            CreateMap<Address, AddressResponseDTO>();
+        }
     }
 }
