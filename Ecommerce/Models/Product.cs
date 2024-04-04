@@ -11,6 +11,6 @@ public class Product
     public List<Image> Images{get;set;}=new List<Image>();
     public float Price{get;set;}
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime CreatedAt{get;set;}
+    public DateTime? CreatedAt{get;set;}
     public List<Rating> Ratings{get; set;}=new List<Rating>();
 }

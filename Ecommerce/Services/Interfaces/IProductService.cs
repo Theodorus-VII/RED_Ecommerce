@@ -5,7 +5,7 @@ public interface IProductService{
     public Task<ProductDto> RegisterProduct(ProductDto dto);
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
-    public Task<List<ProductDto>?> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
+    public Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
     public Task<ProductDto> ModifyProudct(ProductDto product,int id);  
     public Task BuyProduct(int id);
     public Task<double> GetAverageRating(int id);
@@ -13,5 +13,6 @@ public interface IProductService{
     public Task DeleteRating(int id, Guid uId);
     public Task<List<ReviewDto>> GetProductReviews(int id,int low,int high);
     public Task<List<string>?> RefreshImages(int id);
+     public Task<byte[]?> GetImage(string name);
 
 }

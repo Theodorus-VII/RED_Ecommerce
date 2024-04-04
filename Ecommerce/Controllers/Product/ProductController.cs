@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 // using Ecommerce.Models;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
+using Org.BouncyCastle.Asn1.Cmp;
 
 
 [ApiController]
@@ -21,8 +22,8 @@ public class ProductController:ControllerBase{
         _userService=userService;
     }
     [HttpGet]
-    public async Task<ActionResult<List<ProductDto>>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start=0,[FromQuery]int maxSize=10){
-        List<ProductDto>? products=await _services.GetProductByFilter(filter,start,maxSize);
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start=0,[FromQuery]int maxSize=10){
+        FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
         if(products==null)return BadRequest("Wrong parameter or filter property values");
         return Ok(products);
     }
@@ -41,7 +42,7 @@ public class ProductController:ControllerBase{
         
     }
     [HttpPost]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> PostProduct([FromBody]ProductDto dto){
         try{
             ProductDto myDto=await _services.RegisterProduct(dto);
@@ -53,7 +54,7 @@ public class ProductController:ControllerBase{
         
     }
      [HttpDelete("{id}")]
-     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //  [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> RemoveProduct(int id){
         try{
             await _services.DeleteProduct(id);
@@ -66,7 +67,7 @@ public class ProductController:ControllerBase{
         
     }
     [HttpPatch("{id}")]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody]ProductDto dto,int id){
         try{
             ProductDto resDto=await _services.ModifyProudct(dto,id);
@@ -156,6 +157,19 @@ public class ProductController:ControllerBase{
             return Problem(statusCode:500,detail:"Some internal error occured while processing your request");
         }
 
+    }
+    [HttpGet("{id}/images/{url}")]
+    public async Task<ActionResult?> GetImage(int id, string picId){
+        byte[]? imgBytes;
+        string name=$"PID{id}_picId.jpg";
+        try{
+            imgBytes=await _services.GetImage(name);
+            if(imgBytes==null)imgBytes=await System.IO.File.ReadAllBytesAsync("./Public/Images/DefaultImage.jpg");
+            return File(imgBytes,"image/jpeg");
+        }
+        catch{
+            return Problem(statusCode:500,detail:"Server error while processing request");
+        }
     }
 
 
