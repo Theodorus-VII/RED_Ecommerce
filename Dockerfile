@@ -18,8 +18,12 @@ FROM base AS runtime
 WORKDIR /app
 COPY --from=publish /app .
 
+WORKDIR /app/Public/Images
+COPY "./Ecommerce/Public/Images" .
+
 # Run EF Migrations
 
 FROM runtime as migrations
+WORKDIR /app
 
 ENTRYPOINT [ "dotnet", "Ecommerce.dll" ]
