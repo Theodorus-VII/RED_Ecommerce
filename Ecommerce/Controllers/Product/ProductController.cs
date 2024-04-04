@@ -134,7 +134,7 @@ public class ProductController:ControllerBase{
         
         
     }
-    [HttpGet("{id}/reviews")]
+    [HttpGet("{id}/review")]
     public async Task<ActionResult<List<RatingDto>>> GetReviews(int id,[FromQuery]int lowRating=0,[FromQuery]int highRating=10){
         try{
             List<ReviewDto> reviews; 
@@ -147,7 +147,7 @@ public class ProductController:ControllerBase{
         }
         
     }
-    [HttpGet("{id}/images")]
+    [HttpGet("{id}/image")]
     public async Task<ActionResult<List<string>>> GetRefreshedImageList(int id){
         try{
             List<string>? images= await _services.RefreshImages(id)??new List<string>();;
@@ -158,17 +158,28 @@ public class ProductController:ControllerBase{
         }
 
     }
-    [HttpGet("{id}/images/{url}")]
-    public async Task<ActionResult?> GetImage(int id, string picId){
-        byte[]? imgBytes;
-        string name=$"PID{id}_picId.jpg";
+    // [HttpGet("{id}/image/{picId}")]
+    // public async Task<ActionResult?> GetImage(int id, string picId){
+    //     byte[]? imgBytes;
+    //     string name=$"PID{id}_{picId}.jpg";
+    //     try{
+    //         imgBytes=await _services.GetImage(name);
+    //         if(imgBytes==null)imgBytes=await System.IO.File.ReadAllBytesAsync("./Public/Images/DefaultImage.jpg");
+    //         return File(imgBytes,"image/jpeg");
+    //     }
+    //     catch{
+    //         imgBytes=await System.IO.File.ReadAllBytesAsync("./Public/Images/DefaultImage.jpg");
+    //         return File(imgBytes,"image/jpeg");
+    //     }
+    // }
+    [HttpDelete("{id}/image")]
+    public async Task<ActionResult> DeleteImages(int id,[FromBody]List<string> imgNames){
         try{
-            imgBytes=await _services.GetImage(name);
-            if(imgBytes==null)imgBytes=await System.IO.File.ReadAllBytesAsync("./Public/Images/DefaultImage.jpg");
-            return File(imgBytes,"image/jpeg");
+            await _services.DeleteImages(id,imgNames);
+            return NoContent();
         }
         catch{
-            return Problem(statusCode:500,detail:"Server error while processing request");
+            return NotFound("Image doesn't exist");
         }
     }
 

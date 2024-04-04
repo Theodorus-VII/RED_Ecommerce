@@ -26,4 +26,4 @@ bld/
 **/bin/
 
 Ecommerce/appsettings.json
-Ecommerce/Data/Migrations/*
+*/Migrations/
