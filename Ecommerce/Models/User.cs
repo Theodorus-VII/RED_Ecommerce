@@ -11,6 +11,13 @@ public class User : IdentityUser<Guid>
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
 
+    public override DateTimeOffset? LockoutEnd
+    {
+        get => base.LockoutEnd.Value.ToUniversalTime(); 
+        set => base.LockoutEnd = value?.ToUniversalTime();
+    }
+
+
     public User(
         string email,
         string firstName,
