@@ -111,6 +111,10 @@ app.UseAuthorization();
 
 app.UseMiddleware<ExtractUserIdMiddleware>();
 
+app.UseCors(
+    options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+);
+
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
