@@ -67,7 +67,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // );
 // var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
+var connectionString = builder.Configuration.GetConnectionString("PostgresLocal");
 
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(
