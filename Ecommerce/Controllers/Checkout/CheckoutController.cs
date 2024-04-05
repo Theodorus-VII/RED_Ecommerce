@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Ecommerce.Controllers.Checkout.Contracts;
 using Ecommerce.Services.Interfaces;
-using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace Ecommerce.Controllers.Checkout
 {
