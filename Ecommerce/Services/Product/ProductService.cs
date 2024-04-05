@@ -62,7 +62,7 @@ public class ProductService:IProductService{
     }
     public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
-            List<Product> products=await _context.Products.Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
+            List<Product> products=await _context.Products.Include(product=>product.Images).Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
                                                       .Where(p=>p.Name.Contains(filterAttributes.name)||p.Brand.Contains(filterAttributes.name))
                                                       .Where(p=>p.Count>0)
                                                       .ToListAsync();
