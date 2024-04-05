@@ -1,11 +1,12 @@
-﻿namespace Ecommerce.Models
+﻿using Ecommerce.Models;
+
+namespace Ecommerce.Controllers.Checkout.Contracts
 {
-    public class Address
+    public class AddressResponseDTO
     {
-        public int AddressId { get; set; } 
-        public string? UserId { get; set; } 
-        public AddressType AddressType { get; set; } // Shipping or Billing
+        public int AddressId { get; set; }
         public string? Street { get; set; }
+        public AddressType AddressType { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
         public string? Country { get; set; }
