@@ -13,7 +13,7 @@ public class User : IdentityUser<Guid>
 
     public override DateTimeOffset? LockoutEnd
     {
-        get => base.LockoutEnd.Value.ToUniversalTime(); 
+        get => base.LockoutEnd?.ToUniversalTime();
         set => base.LockoutEnd = value?.ToUniversalTime();
     }
 
