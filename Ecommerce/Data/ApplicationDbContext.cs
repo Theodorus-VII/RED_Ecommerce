@@ -36,7 +36,7 @@ public class ApplicationDbContext
         base.OnModelCreating(builder);
         builder.Entity<Rating>().HasKey(rating=>new {rating.ProductId,rating.UserId});
         builder.Entity<Image>().HasKey(image=>new {image.Url,image.ProductId});
-        builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
+        // builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
     }
 
 }

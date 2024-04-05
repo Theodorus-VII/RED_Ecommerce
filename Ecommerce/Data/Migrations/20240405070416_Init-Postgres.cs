@@ -134,7 +134,7 @@ namespace Ecommerce.Data.Migrations
                     Details = table.Column<string>(type: "text", nullable: false),
                     Category = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<float>(type: "real", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValue: new DateTime(2024, 4, 4, 15, 36, 18, 340, DateTimeKind.Utc).AddTicks(3945))
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {

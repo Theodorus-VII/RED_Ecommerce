@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ecommerce.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240404153618_Init-Postgres")]
+    [Migration("20240405070416_Init-Postgres")]
     partial class InitPostgres
     {
         /// <inheritdoc />
@@ -181,8 +181,7 @@ namespace Ecommerce.Data.Migrations
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2024, 4, 4, 15, 36, 18, 340, DateTimeKind.Utc).AddTicks(3945));
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Details")
                         .IsRequired()

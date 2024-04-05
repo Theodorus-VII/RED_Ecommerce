@@ -178,8 +178,7 @@ namespace Ecommerce.Data.Migrations
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2024, 4, 4, 15, 36, 18, 340, DateTimeKind.Utc).AddTicks(3945));
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Details")
                         .IsRequired()
