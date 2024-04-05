@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Org.BouncyCastle.Asn1.Cmp;
+using Org.BouncyCastle.Utilities;
+using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 
 [ApiController]
@@ -22,9 +25,20 @@ public class ProductController:ControllerBase{
         _userService=userService;
     }
     [HttpGet]
-    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts( [FromBody] FilterAttributes filter,[FromQuery] int start=0,[FromQuery]int maxSize=10){
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts([FromQuery]string Categories,string name,int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
+        string[] categories=Categories.Split(",");
+        // List<Category> catList=new List<Category>();
+        // Category toAdd;
+        // foreach(string strCategory in categories){
+        //     if(Enum.TryParse<Category>(strCategory,out toAdd))catList.Add(toAdd);
+        //     Console.WriteLine(toAdd);
+        // }
+        FilterAttributes filter=new FilterAttributes{categories=categories,name=name,low=low,high=high};
         FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
-        if(products==null)return BadRequest("Wrong parameter or filter property values");
+        // if(products==null)return BadRequest("Wrong parameter or filter property values");
+        // return Ok(products);
+        
+
         return Ok(products);
     }
     [HttpGet("{id}")]
@@ -106,8 +120,15 @@ public class ProductController:ControllerBase{
         Guid userId = Guid.Parse(userIdClaim.Value);
         // User? user = await _userService.GetUserById(userId);
         // if(user==null)return NotFound("This user doesn't exist");
-        await _services.AddRating(id,ratingDto,userId);
-        return Created(string.Empty,ratingDto);
+        try{
+            await _services.AddRating(id,ratingDto,userId);
+        }
+        catch(DbUpdateException exception){
+            Console.WriteLine(exception);
+            return Problem(statusCode:500,detail:"Something went wrong. Couldn't add rating");
+        }
+        
+        return NoContent();
     }
     [HttpDelete("{id}/rating")]
     public async Task<ActionResult> DeleteRating(int id){
@@ -173,7 +194,8 @@ public class ProductController:ControllerBase{
     //     }
     // }
     [HttpDelete("{id}/image")]
-    public async Task<ActionResult> DeleteImages(int id,[FromBody]List<string> imgNames){
+    public async Task<ActionResult> DeleteImages(int id,string images){
+        List<string> imgNames=new List<string>(images.Split(","));
         try{
             await _services.DeleteImages(id,imgNames);
             return NoContent();
