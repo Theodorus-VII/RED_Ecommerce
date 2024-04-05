@@ -25,15 +25,15 @@ public class ProductController:ControllerBase{
         _userService=userService;
     }
     [HttpGet]
-    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts([FromQuery]string Categories,string name,int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
-        string[] categories=Categories.Split(",");
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
+        string[]? categories=Categories?.Split(",");
         // List<Category> catList=new List<Category>();
         // Category toAdd;
         // foreach(string strCategory in categories){
         //     if(Enum.TryParse<Category>(strCategory,out toAdd))catList.Add(toAdd);
         //     Console.WriteLine(toAdd);
         // }
-        FilterAttributes filter=new FilterAttributes{categories=categories,name=name,low=low,high=high};
+        FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high};
         FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
         // if(products==null)return BadRequest("Wrong parameter or filter property values");
         // return Ok(products);
