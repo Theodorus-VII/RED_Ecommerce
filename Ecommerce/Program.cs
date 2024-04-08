@@ -10,10 +10,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using System.Runtime.CompilerServices;
+using System.Reflection;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration
+    .AddEnvironmentVariables()
+    .AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 // Add services to the container.
 
@@ -56,9 +61,6 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-
-
 
 
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";

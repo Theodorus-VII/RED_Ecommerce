@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using System.Security.Policy;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Services;
@@ -10,6 +10,7 @@ namespace Ecommerce.Services;
 public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
@@ -20,10 +21,12 @@ public class AuthService : IAuthService
         RoleManager<IdentityRole<Guid>> roleManager,
         IJwtTokenGenerator tokenGenerator,
         IEmailService emailService,
-        ILogger<AuthService> logger
+        ILogger<AuthService> logger,
+        SignInManager<User> signInManager
     )
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;
@@ -40,19 +43,34 @@ public class AuthService : IAuthService
         return _tokenGenerator.GetPrincipalFromExpiredToken(token);
     }
 
-    public async Task<IAuthResponse> LoginUser(LoginRequest request)
+    public async Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request)
     {
+        var response = new ServiceResponse<UserDto>();
         try
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
             {
-                throw new Exception("User not found");
+                response.Error = new ErrorResponse()
+                {
+                    ErrorCode = 404,
+                    ErrorDescription = "User not found"
+                };
+                response.IsSuccess = false;
+
+                return response;
             }
             if (!await _userManager.CheckPasswordAsync(user, request.Password))
             {
-                throw new Exception("Invalid Password");
+                response.Error = new ErrorResponse()
+                {
+                    ErrorCode = 401,
+                    ErrorDescription = "Invalid Password"
+                };
+                response.IsSuccess = false;
+
+                return response;
             }
 
             var claims = new List<Claim>();
@@ -70,75 +88,112 @@ public class AuthService : IAuthService
             user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
 
             await _userManager.UpdateAsync(user);
+            response.Data = new UserDto(user, token, refreshToken);
+            response.StatusCode = 200;
+            response.IsSuccess = true;
 
-            return new AuthSucessResponse(new UserDto(user, token, refreshToken));
+            return response;
         }
         catch (Exception e)
         {
             _logger.LogError($"Login Error: {e}");
-            return new AuthFailResponse(error: "Invalid Username or Password");
+            response.StatusCode = 500;
+            response.Error = new ErrorResponse()
+            {
+                ErrorCode = 500,
+                ErrorDescription = e.Message
+            };
+            response.IsSuccess = false;
+
+            return response;
         }
     }
 
-    public async Task<bool> LogoutUser(string userId)
+    public async Task<IServiceResponse<bool>> LogoutUser(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return false;
+            return new ServiceResponse<bool>()
+            {
+                Data = false,
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 404,
+                    ErrorDescription = "User not found."
+                }
+            };
         }
         user.RefreshToken = "";
         await _userManager.UpdateAsync(user);
 
-        return true;
+        return new ServiceResponse<bool>()
+        {
+            Data = true,
+            IsSuccess = true,
+        };
     }
 
-    public async Task<IAuthResponse> RegisterAdmin(RegistrationRequest request)
+    public async Task<IServiceResponse<UserDto>> RegisterAdmin(RegistrationRequest request)
     {
         return await RegisterUser(request, Roles.Admin);
     }
 
-    public async Task<IAuthResponse> RegisterCustomer(RegistrationRequest request)
+    public async Task<IServiceResponse<UserDto>> RegisterCustomer(RegistrationRequest request)
     {
         return await RegisterUser(request, Roles.Customer);
     }
 
-    public async Task<IAuthResponse> RegisterUser(RegistrationRequest request, string Role)
+    public async Task<IServiceResponse<UserDto>> RegisterUser(RegistrationRequest request, string Role)
     {
         try
         {
             // check if user alerady exists.
             if (await _userManager.FindByEmailAsync(request.Email) != null)
             {
-                throw new Exception("Email already exists.");
+                // throw new Exception("Email already exists.");
+                return new ServiceResponse<UserDto>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 409,
+                        ErrorDescription = "Email already in use"
+                    }
+                };
             }
             _logger.LogInformation("Creating user...");
-            User user =
-                new(
+            User user = new(
                     request.Email,
                     request.FirstName,
                     request.LastName,
                     request.DefaultShippingAddress,
                     request.BillingAddress
-                );
+            );
+
             var result = await _userManager.CreateAsync(user, request.Password);
+
             if (!result.Succeeded)
             {
-                _logger.LogError($"Encountered Identity Errors: {result.Errors}");
+                _logger.LogError("Encountered Identity Errors: {}", result.Errors);
                 throw new Exception("Server Error");
             }
+
             _logger.LogInformation("User added to server.");
+
             var assignRoleResult = await _userManager.AddToRoleAsync(user, Role);
             if (!assignRoleResult.Succeeded)
             {
-                _logger.LogError($"Encountered Role Assignment Error: {assignRoleResult.Errors}");
+                _logger.LogError("Encountered Role Assignment Error: {}", assignRoleResult.Errors);
+                // non terminal so proceeding.
             }
 
             var claims = new List<Claim>();
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
             {
-                _logger.LogInformation($"User Role: {role}");
+                _logger.LogInformation("User Role: {}", role);
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
@@ -150,19 +205,35 @@ public class AuthService : IAuthService
 
             await _userManager.UpdateAsync(user);
 
-            return new AuthSucessResponse(new UserDto(user, token, refreshToken));
+            // return new AuthSucessResponse(new UserDto(user, token, refreshToken));
+            return new ServiceResponse<UserDto>()
+            {
+                Data = new UserDto(user, token, refreshToken),
+                IsSuccess = true,
+                StatusCode = 201
+            };
         }
         catch (Exception e)
         {
             _logger.LogError($"Registration Error: {e}");
-            return new AuthFailResponse(e.Message);
+            // return new AuthFailResponse(e.Message);
+            return new ServiceResponse<UserDto>()
+            {
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error"
+                }
+            };
         }
     }
 
-    public async Task<IAuthResponse> RefreshToken(string expiredToken, string refreshToken)
+    public async Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken)
     {
         try
         {
+
             // extract user data from the expired token
             var principal = GetClaimsPrincipalFromExpiredToken(expiredToken);
 
@@ -173,7 +244,16 @@ public class AuthService : IAuthService
             _logger.LogInformation($"{userIdClaim}");
             if (userIdClaim is null)
             {
-                throw new Exception("Invalid User. Claim corresponding to Id not found");
+                // throw new Exception("Invalid User. Claim corresponding to Id not found");
+                return new ServiceResponse<UserDto>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 404,
+                        ErrorDescription = "User Not Found"
+                    }
+                };
             }
 
             Guid userId = Guid.Parse(userIdClaim.Value);
@@ -184,15 +264,31 @@ public class AuthService : IAuthService
 
             if (user is null)
             {
-                throw new Exception("Invalid user");
+                return new ServiceResponse<UserDto>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 404,
+                        ErrorDescription = "User Not Found"
+                    }
+                };
             }
             if (user.RefreshToken != refreshToken || user.RefreshTokenExpiry <= DateTime.Now)
             {
-                _logger.LogInformation($"User refresh token: {user.RefreshToken}");
-                _logger.LogInformation($"Supplied refresh token: {refreshToken}");
-                _logger.LogInformation($"Token Expiry: {user.RefreshTokenExpiry}");
+                _logger.LogDebug($"User refresh token: {user.RefreshToken}");
+                _logger.LogDebug($"Supplied refresh token: {refreshToken}");
+                _logger.LogDebug($"Token Expiry: {user.RefreshTokenExpiry}");
 
-                throw new Exception("Invalid or Expired Refresh Token");
+                return new ServiceResponse<UserDto>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 401,
+                        ErrorDescription = "Invalid or Expired Refresh Token"
+                    }
+                };
             }
             var newAccessToken = _tokenGenerator.GenerateToken(user, principal.Claims);
             var newRefreshToken = _tokenGenerator.GenerateRefreshToken();
@@ -202,41 +298,94 @@ public class AuthService : IAuthService
 
             await _userManager.UpdateAsync(user);
 
-            return new AuthSucessResponse(new UserDto(user, newAccessToken, newRefreshToken));
+            // return new AuthSucessResponse(new UserDto(user, newAccessToken, newRefreshToken));
+            return new ServiceResponse<UserDto>()
+            {
+                Data = new UserDto(user, newAccessToken, newRefreshToken),
+                IsSuccess = true
+            };
         }
+
         catch (Exception e)
         {
             _logger.LogError($"Refresh Token Error: {e}");
-            return new AuthFailResponse("Invalid Client Request");
+            // return new AuthFailResponse("Invalid Client Request");
+            return new ServiceResponse<UserDto>()
+            {
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error"
+                }
+            };
         }
     }
 
-    public async Task<string?> GenerateEmailConfirmationToken(string email)
+    public async Task<IServiceResponse<string>> GenerateEmailConfirmationToken(string email)
     {
         try
         {
             var user = await _userManager.FindByEmailAsync(email);
-            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var response = new ServiceResponse<string>();
+
+            if (confirmationToken == null)
+            {
+                response.StatusCode = 500;
+                response.Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error Generating Confirmation Token"
+                };
+                return response;
+            }
+            response.StatusCode = 200;
+            response.Data = confirmationToken;
+
+            return response;
         }
         catch (Exception e)
         {
             _logger.LogError($"Error encountered while creating email confirmation token: {e}");
-            return null;
+            return new ServiceResponse<string>()
+            {
+                StatusCode = 500,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error Generating Confirmation Token"
+                }
+            };
         }
     }
 
-    public async Task<bool> ConfirmEmail(string email, string token)
+    public async Task<IServiceResponse<bool>> ConfirmEmail(string email, string token)
     {
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null)
         {
-            return false;
+            return new ServiceResponse<bool>()
+            {
+                Data = false,
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 403,
+                    ErrorDescription = "User Not Found"
+                }
+            };
         }
 
         var result = await _userManager.ConfirmEmailAsync(user, token);
         if (result.Succeeded)
         {
-            return true;
+            return new ServiceResponse<bool>()
+            {
+                Data = true,
+                IsSuccess = true,
+                StatusCode = 200
+            };
         }
         else
         {
@@ -246,11 +395,21 @@ public class AuthService : IAuthService
             {
                 _logger.LogError(error.ToString());
             }
+
+            return new ServiceResponse<bool>()
+            {
+                Data = false,
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Error confirming email"
+                }
+            };
         }
-        return false;
     }
 
-    public async Task<bool> SendConfirmationEmail(
+    public async Task<IServiceResponse<bool>> SendConfirmationEmail(
         UserDto user,
         string baseUrl,
         string scheme,
@@ -261,10 +420,20 @@ public class AuthService : IAuthService
         {
             _logger.LogInformation("Sending Confirmation Email...");
 
-            var confirmationToken = await GenerateEmailConfirmationToken(user.Email);
-            confirmationToken = System.Web.HttpUtility.UrlEncode(confirmationToken);
+            var genConfirmationToken = await GenerateEmailConfirmationToken(user.Email);
+            if (!genConfirmationToken.IsSuccess)
+            {
+                return new ServiceResponse<bool>()
+                {
+                    IsSuccess = false,
+                    Error = genConfirmationToken.Error
+                };
+            }
+            var stringConfirmationToken = genConfirmationToken.Data;
+
+            var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
             var callbackUrl =
-                $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={confirmationToken}";
+                $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}";
 
             var confirmationEmail = new EmailDto
             {
@@ -277,16 +446,28 @@ public class AuthService : IAuthService
 
             _logger.LogInformation($"URL for email confirmation: {callbackUrl}");
             await _emailService.SendEmail(confirmationEmail);
-            return true;
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = true,
+                Data = true
+            };
         }
         catch (Exception e)
         {
-            _logger.LogError($"Error sending confirmatio email: {e}");
-            return false;
+            _logger.LogError($"Error sending confirmation email: {e}");
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = $"Error sending confirmation email: {e}"
+                }
+            };
         }
     }
 
-    public async Task<bool> SendPasswordResetEmail(
+    public async Task<IServiceResponse<string>> SendPasswordResetEmail(
         User user,
         string baseUrl,
         string scheme,
@@ -308,36 +489,73 @@ public class AuthService : IAuthService
             _logger.LogInformation("Password reset Email sending...");
             await _emailService.SendEmail(passResetEmail);
             _logger.LogInformation("Password Reset Email Sent");
-            return true;
+            return new ServiceResponse<string>()
+            {
+                StatusCode = 200,
+                IsSuccess = true,
+                Data = "Confirmation Email sent"
+            };
         }
         catch (Exception e)
         {
             _logger.LogError($"Error while sending password reset email: {e}");
-            return false;
+            return new ServiceResponse<string>()
+            {
+                Data = "Confirmation email not sent",
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Server Error while sending password reset email"
+                }
+            };
         }
     }
 
-    public async Task<bool> ResetPassword(string email, string resetToken, string newPassword)
+    public async Task<IServiceResponse<string>> ResetPassword(string email, string resetToken, string newPassword)
     {
         var user = await _userManager.FindByEmailAsync(email);
 
         if (user is null)
         {
             _logger.LogError("User does not exist");
-            return false;
+            return new ServiceResponse<string>()
+            {
+                IsSuccess = false,
+                Data = "User Not found",
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 404,
+                    ErrorDescription = "User not found"
+                }
+            };
         }
 
         var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
         if (result.Succeeded)
         {
-            return true;
+            return new ServiceResponse<string>()
+            {
+                StatusCode = 200,
+                IsSuccess = true,
+                Data = "Password Reset Successfully."
+            };
         }
 
-        _logger.LogError("Error resetting user password");
+        _logger.LogError("Error resetting user password.");
         foreach (var error in result.Errors)
         {
             _logger.LogError(error.ToString());
         }
-        return false;
+        return new ServiceResponse<string>()
+        {
+            Data = "Confirmation email not sent.",
+            IsSuccess = false,
+            Error = new ErrorResponse()
+            {
+                ErrorCode = 500,
+                ErrorDescription = "Server Error while resetting user password."
+            }
+        };
     }
 }

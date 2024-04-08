@@ -44,32 +44,35 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Attempting to register a new user...");
 
-        IAuthResponse response = await _authService.RegisterCustomer(registrationRequest);
+        IServiceResponse<UserDto> response = await _authService.RegisterCustomer(registrationRequest);
 
-        if (response.IsAuthSuccess())
+        if (!response.IsSuccess || response.Data is null)
         {
-            _logger.LogInformation("User Successfully Created.");
-            UserDto user = response.User;
-            string baseUrl = $"{Request.Host}{Request.PathBase}";
-            string action = Url.Action("ConfirmEmail", "auth")!;
-            if (
-                !await _authService.SendConfirmationEmail(
-                    user: user,
-                    baseUrl: baseUrl,
-                    scheme: Request.Scheme,
-                    action: action
-                )
-            )
-            {
-                _logger.LogInformation("Unable to send confirmation email");
-            }
-            else
-            {
-                _logger.LogInformation("Confirmation email sent");
-            }
-            return Ok(user);
+            return Problem(
+                statusCode: 500,
+                detail: response.Error.ToString());
         }
-        return StatusCode(500, response.Error.ToString());
+        _logger.LogInformation("User Successfully Created.");
+        UserDto user = response.Data;
+        string baseUrl = $"{Request.Host}{Request.PathBase}";
+        string action = Url.Action("ConfirmEmail", "auth")!;
+        var result = await _authService.SendConfirmationEmail(
+                user: user,
+                baseUrl: baseUrl,
+                scheme: Request.Scheme,
+                action: action
+            );
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogInformation("Unable to send confirmation email.");
+            _logger.LogError("Error sending confirmation email: {}", result.Error.ErrorDescription);
+        }
+        else
+        {
+            _logger.LogInformation("Confirmation email sent");
+        }
+        return Ok(user);
     }
 
     //login endpoint
@@ -80,20 +83,28 @@ public class AuthController : ControllerBase
 
         var response = await _authService.LoginUser(loginRequest);
 
-        if (!response.IsAuthSuccess())
+        if (!response.IsSuccess)
         {
-            return Unauthorized(response.Error);
+            return StatusCode(response.Error.ErrorCode, response?.Error?.ErrorDescription);
         }
 
-        return Ok(response.User);
+        return Ok(response.Data);
     }
 
     [HttpPost("login-delete")]
     public async Task<IActionResult> LoginDelete(LoginRequest loginRequest)
     {
-        IAuthResponse loginResponse = await _authService.LoginUser(loginRequest);
-        var deleteResponse = await _userAccountService.DeleteUser(loginResponse.User.Id);
-        return Ok(deleteResponse);
+        var loginResponse = await _authService.LoginUser(loginRequest);
+        if (loginResponse.IsSuccess)
+        {
+            if (loginResponse.Data is null)
+            {
+                return StatusCode(500, "Internal server error.");
+            }
+            var deleteResponse = await _userAccountService.DeleteUser(loginResponse.Data.Id);
+            return Ok(deleteResponse);
+        }
+        return BadRequest();
     }
 
     [HttpPost("logout")]
@@ -125,11 +136,11 @@ public class AuthController : ControllerBase
             refreshToken: request.RefreshToken
         );
 
-        if (response.IsAuthSuccess())
+        if (!response.IsSuccess || response.Data is null)
         {
-            return Ok(response.User);
+            return Unauthorized(response.Error.ErrorDescription);
         }
-        return Unauthorized(response.Error);
+        return Ok(response.Data);
     }
 
     [HttpPost("admin-register")]
@@ -140,22 +151,26 @@ public class AuthController : ControllerBase
 
         var response = await _authService.RegisterAdmin(request);
 
-        if (response.IsAuthSuccess())
+        if (!response.IsSuccess || response.Data is null)
         {
-            _logger.LogInformation("Admin Successfully Created.");
-
-            var user = response.User;
-            var confirmationEmail = new EmailDto
-            {
-                Recipient = user.Email,
-                Subject = "Welcome to _______ Commerce",
-                Message = $@"<p>Your new admin account at _______ Commerce has been created.</p>"
-            };
-            _logger.LogInformation("Sending Confirmation Email...");
-            await _emailService.SendEmail(confirmationEmail);
-            return Ok(user);
+            return Problem(
+                statusCode: response.Error.ErrorCode,
+                detail: response.Error.ErrorDescription
+            );
         }
-        return BadRequest(response.Error.ToString());
+
+        _logger.LogInformation("Admin Successfully Created.");
+
+        var user = response.Data;
+        var confirmationEmail = new EmailDto
+        {
+            Recipient = user.Email,
+            Subject = "Welcome to _______ Commerce",
+            Message = $@"<p>Your new admin account at _______ Commerce has been created.</p>"
+        };
+        _logger.LogInformation("Sending Confirmation Email...");
+        await _emailService.SendEmail(confirmationEmail);
+        return Ok(user);
     }
 
     [HttpPost("confirm-email")]
@@ -165,14 +180,14 @@ public class AuthController : ControllerBase
 
         if (user is null)
         {
-            return BadRequest("User not found.");
+            return NotFound("User not found.");
         }
 
         _logger.LogInformation(user.Email);
 
         var result = await _authService.ConfirmEmail(user.Email, token);
         _logger.LogDebug(result.ToString());
-        if (result)
+        if (result.IsSuccess)
         {
             user = await _userAccountService.GetUserById(userId);
             if (user != null && user.EmailConfirmed)
@@ -180,8 +195,8 @@ public class AuthController : ControllerBase
                 return Ok("Email Confirmed");
             }
         }
-        return StatusCode(500, "Error Confirming Account, please try again later.");
-    }
+        return Problem(statusCode: 500, detail: "Error Confirming Account, please try again later.");
+}
 
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(string email)
@@ -202,7 +217,7 @@ public class AuthController : ControllerBase
             scheme: Request.Scheme
         );
 
-        if (result)
+        if (result.IsSuccess)
         {
             return Ok("Password Reset Email sent");
         }
@@ -216,13 +231,12 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
     {
-        if (
-            await _authService.ResetPassword(
-                passwordResetRequest.Email,
-                passwordResetRequest.ResetToken,
-                passwordResetRequest.Password
-            )
-        )
+        var result = await _authService.ResetPassword(
+            passwordResetRequest.Email,
+            passwordResetRequest.ResetToken,
+            passwordResetRequest.Password
+        );
+        if (result.IsSuccess)
         {
             return Ok("Password has been reset successfully. Please log in with the new password.");
         }

@@ -1,31 +1,32 @@
 using System.Security.Policy;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
+using Ecommerce.Utilities;
 
 namespace Ecommerce.Services;
 
 public interface IAuthService
 {
     public IEnumerable<User> GetUsers();
-    public Task<IAuthResponse> RegisterCustomer(RegistrationRequest request);
-    public Task<IAuthResponse> RegisterAdmin(RegistrationRequest request);
-    public Task<string?> GenerateEmailConfirmationToken(string email);
+    public Task<IServiceResponse<UserDto>> RegisterCustomer(RegistrationRequest request);
+    public Task<IServiceResponse<UserDto>> RegisterAdmin(RegistrationRequest request);
 
-    public Task<bool> SendConfirmationEmail(
+    public Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request);
+    public Task<IServiceResponse<bool>> LogoutUser(string userId);
+    public Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken);
+    public Task<IServiceResponse<string>> GenerateEmailConfirmationToken(string email);
+    public Task<IServiceResponse<bool>> ConfirmEmail(string email, string token);
+    public Task<IServiceResponse<bool>> SendConfirmationEmail(
         UserDto user,
         string baseUrl,
         string scheme,
         string action
     );
-    public Task<bool> SendPasswordResetEmail(
+    public Task<IServiceResponse<string>> SendPasswordResetEmail(
         User user,
         string baseUrl,
         string scheme,
         string action
     );
-    public Task<bool> ConfirmEmail(string email, string token);
-    public Task<bool> ResetPassword(string email, string resetToken, string newPassword);
-    public Task<IAuthResponse> LoginUser(LoginRequest request);
-    public Task<bool> LogoutUser(string userId);
-    public Task<IAuthResponse> RefreshToken(string expiredToken, string refreshToken);
+    public Task<IServiceResponse<string>> ResetPassword(string email, string resetToken, string newPassword);
 }
