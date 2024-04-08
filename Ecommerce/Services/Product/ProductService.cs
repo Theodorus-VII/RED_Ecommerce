@@ -62,7 +62,7 @@ public class ProductService:IProductService{
     }
     public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
         try{
-            List<Product> products=await _context.Products.Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
+            List<Product> products=await _context.Products.Include(product=>product.Images).Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
                                                       .Where(p=>p.Name.Contains(filterAttributes.name)||p.Brand.Contains(filterAttributes.name))
                                                       .Where(p=>p.Count>0)
                                                       .ToListAsync();
@@ -72,9 +72,9 @@ public class ProductService:IProductService{
             if(filterAttributes.categories!=null){
                 List<string> filterCategories=filterAttributes.categories.ToList();
                 foreach(Product product in products){
-                    string category=product.Category.ToString();
+                    string category=product.Category.ToString().ToLower();
                     foreach(string filCategory in filterCategories){
-                        if(category.Contains(filCategory)){
+                        if(category.Contains(filCategory.ToLower())){
                             finalProducts.Add(product);
                             break;
                         }
@@ -121,14 +121,15 @@ public class ProductService:IProductService{
 
     }
     public async Task<ProductDto> ModifyProudct(ProductDto product, int id){
-        Product? match=await _context.Products.FindAsync(id);
+        Product? match=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
         if(match==null)throw new Exception();
         match.Name=product.Name??match.Name;
         match.Brand=product.Brand??match.Brand;
         match.Details=product.Details;
         match.Price=product.Price<0?match.Price:product.Price;
         match.Count=product.Count<0?match.Count:product.Count;
-        match.Images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProductId=id}).ToList();
+        List<Image> images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProductId=id}).ToList();
+        match.Images.AddRange(images);
         await _context.SaveChangesAsync();
         return ToDto(match);
     }
