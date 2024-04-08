@@ -27,3 +27,4 @@ bld/
 
 Ecommerce/appsettings.json
 */Migrations/
+.env
