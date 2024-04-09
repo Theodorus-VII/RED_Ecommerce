@@ -31,14 +31,58 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-    //test route
+    /// <summary>
+    /// Test Route
+    /// </summary>
+    /// <returns>
+    /// List of users
+    /// </returns>
     [HttpGet("test")]
     public IActionResult GetUsers()
     {
         return Ok(_authService.GetUsers());
     }
 
-    //registration endpoint
+
+    /// <summary>
+    /// Registration Endpoint
+    /// </summary>
+    /// <remarks>
+    /// Registration Request:
+    /// 
+    ///     POST /auth/register
+    ///     {   
+    ///         "FirstName": "first name",
+    ///         "LastName": "last name",
+    ///         "Email": "somemeail@email.email",
+    ///         "Password": "randompassword",
+    ///         "ConfirmPassword": "randompassword",
+    ///         "DefaultShippingAddress": "Garfield's house", 
+    ///         "BillingAddress": "Kizaru"
+    ///      }   
+    /// </remarks>
+    /// <param name="registrationRequest"></param>
+    /// <response code="201">
+    ///  User Created. Returns the user with the access and refresh tokens
+    ///     <returns>
+    ///     A User Object with access and refresh tokens
+    ///     
+    ///         {
+    ///           "id": "563e447c-d64d-44ae-a00b-3800802e3498",
+    ///           "firstName": "first name",
+    ///           "lastName": "last name",
+    ///           "email": "somemeail@email.email",
+    ///           "defaultShippingAddress": "Garfield's house",
+    ///           "billingAddress": "Kizaru",
+    ///           "accessToken": "Some access token",
+    ///           "refreshToken": "Some refresh token",
+    ///           "phoneNumber": null
+    ///         }
+    ///     </returns>
+    /// </response>
+    /// <response code="400">Bad Request. Some field is input incorrectly</response>
+    /// <response code="409">Email already in use</response>
+    /// <response code="500">Other Internal Server Error</response>
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegistrationRequest registrationRequest)
     {
@@ -75,7 +119,32 @@ public class AuthController : ControllerBase
         return Ok(user);
     }
 
-    //login endpoint
+    /// <summary>
+    ///     Login Endpoint
+    /// </summary>
+    /// <response code="200">
+    /// Successful Login
+    ///     <returns>
+    ///         A User Object with access and refresh tokens
+    ///     
+    ///         {
+    ///           "id": "563e447c-d64d-44ae-a00b-3800802e3498",
+    ///           "firstName": "first name",
+    ///           "lastName": "last name",
+    ///           "email": "somemeail@email.email",
+    ///           "defaultShippingAddress": "Garfield's house",
+    ///           "billingAddress": "Kizaru",
+    ///           "accessToken": "Some access token",
+    ///           "refreshToken": "Some refresh token",
+    ///           "phoneNumber": null
+    ///         }
+    ///     </returns>
+    /// </response>
+    /// <response code="401">Invalid Password</response>
+    /// <response code="404">User Not Found(Incorrect Email)</response>
+    /// <response code="500">Some other Internal Server Error</response>
+    /// <param name="loginRequest"></param>
+    /// <returns></returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
@@ -196,7 +265,7 @@ public class AuthController : ControllerBase
             }
         }
         return Problem(statusCode: 500, detail: "Error Confirming Account, please try again later.");
-}
+    }
 
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(string email)

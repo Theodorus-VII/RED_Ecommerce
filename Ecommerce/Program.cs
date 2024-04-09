@@ -34,6 +34,9 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Authorization",
@@ -75,7 +78,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(
         connectionString,
         npgsqlOptionsAction:
-            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 10)
+            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 50)
     )
 );
 
@@ -107,7 +110,13 @@ app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(
+        options =>
+        {
+            // options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+            // options.RoutePrefix = string.Empty;
+        }
+    );
 }
 
 app.UseHttpsRedirection();
