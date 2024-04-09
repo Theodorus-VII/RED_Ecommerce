@@ -18,6 +18,7 @@ bld/
 **/.vs/
 **.vscode/
 **/.vscode/
+**/.env
 
 
 
@@ -27,3 +28,6 @@ bld/
 
 publish/
 */Migrations/
+
+
+*/appsettings.*.json

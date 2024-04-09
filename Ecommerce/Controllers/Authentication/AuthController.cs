@@ -34,9 +34,9 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Test Route
     /// </summary>
-    /// <returns>
-    /// List of users
-    /// </returns>
+    /// <remarks>
+    /// Returns a list of all users. Not going to be in the final version.
+    /// </remarks>
     [HttpGet("test")]
     public IActionResult GetUsers()
     {
@@ -161,8 +161,8 @@ public class AuthController : ControllerBase
         return Ok(response.Data);
     }
 
-    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("login-delete")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> LoginDelete(LoginRequest loginRequest)
     {
         var loginResponse = await _authService.LoginUser(loginRequest);
@@ -178,9 +178,14 @@ public class AuthController : ControllerBase
         return BadRequest();
     }
 
+
+
     /// <summary>
     ///     Logout Endpoint
     /// </summary>
+    /// <remarks>
+    ///      Deletes the refresh token for the user saved on the server.
+    /// </remarks>
     /// <response code="200">Logged Out Successfully</response>
     /// <response code="404">User Not Found</response>
     /// <returns></returns>
@@ -201,15 +206,47 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
+
+
     /// <summary>
     ///     Refresh Token Endpoint
     /// </summary>
-    /// <response code="200"></response>
-    /// <response code="401">Invalid or Expired Refresh oken</response>
+    /// <remarks>
+    ///     Recieves expired access token and refresh token, 
+    ///     returns new access token and refresh token.
+    ///     
+    ///     Request:
+    ///     
+    ///     POST /auth/refresh
+    ///     
+    ///     {
+    ///           "accessToken": "string",
+    ///           "refreshToken": "string"
+    ///     }
+    /// </remarks>
+    /// <response code="200">
+    ///     Token refreshed successfully
+    ///     
+    ///     <returns>
+    ///         New User with new Access and Refresh Tokens
+    ///         
+    ///         {
+    ///           "id": "563e447c-d64d-44ae-a00b-3800802e3498",
+    ///           "firstName": "first name",
+    ///           "lastName": "last name",
+    ///           "email": "somemeail@email.email",
+    ///           "defaultShippingAddress": "Garfield's house",
+    ///           "billingAddress": "Kizaru",
+    ///           "accessToken": "Some access token",
+    ///           "refreshToken": "Some refresh token",
+    ///           "phoneNumber": null
+    ///         }
+    ///     </returns>
+    /// </response>
+    /// <response code="401">Invalid or Expired Refresh token</response>
     /// <response code="404">User Not Found</response>
     /// <response code="500">Some other Internal Server Error</response>
     /// <param name="request"></param>
-    /// <returns></returns>
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(TokenRequestModel request)
     {
@@ -229,6 +266,46 @@ public class AuthController : ControllerBase
         return Ok(response.Data);
     }
 
+
+    /// <summary>
+    ///     Register A New Administrator Account
+    /// </summary>
+    /// <remarks>
+    /// Admin Registration Request:
+    /// 
+    ///     POST /auth/admin-register
+    ///     
+    ///     {   
+    ///         "FirstName": "first name",
+    ///         "LastName": "last name",
+    ///         "Email": "somemeail@email.email",
+    ///         "Password": "randompassword",
+    ///         "ConfirmPassword": "randompassword",
+    ///         "DefaultShippingAddress": "Garfield's house", 
+    ///         "BillingAddress": "Kizaru"
+    ///      }   
+    /// </remarks>
+    /// <response code="201">
+    ///  User Created. Returns the user with the access and refresh tokens
+    ///     <returns>
+    ///     A User Object with access and refresh tokens
+    ///     
+    ///         {
+    ///           "id": "563e447c-d64d-44ae-a00b-3800802e3498",
+    ///           "firstName": "first name",
+    ///           "lastName": "last name",
+    ///           "email": "somemeail@email.email",
+    ///           "defaultShippingAddress": "Garfield's house",
+    ///           "billingAddress": "Kizaru",
+    ///           "accessToken": "Some access token",
+    ///           "refreshToken": "Some refresh token",
+    ///           "phoneNumber": null
+    ///         }
+    ///     </returns>
+    /// </response>
+    /// <response code="400">Bad Request. Some field is input incorrectly</response>
+    /// <response code="409">Email already in use</response>
+    /// <response code="500">Other Internal Server Error</response>
     [HttpPost("admin-register")]
     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> AdminCreate(RegistrationRequest request)
@@ -256,9 +333,18 @@ public class AuthController : ControllerBase
         };
         _logger.LogInformation("Sending Confirmation Email...");
         await _emailService.SendEmail(confirmationEmail);
-        return Ok(user);
+        return StatusCode(statusCode: 201, user);
     }
 
+    /// <summary>
+    ///     Endpoint for Account Email Confirmation
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="token"></param>
+    /// <response code="200">Email Confirmed</response>
+    /// <response code="404">User Not Found</response>
+    /// <response code="500">Server Error</response>
+    /// <returns></returns>
     [HttpPost("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token)
     {
@@ -284,13 +370,25 @@ public class AuthController : ControllerBase
         return Problem(statusCode: 500, detail: "Error Confirming Account, please try again later.");
     }
 
+
+    /// <summary>
+    ///     Request Password Reset Email Endpoint
+    /// </summary>
+    /// <remarks>
+    ///     Sends a password reset email to the given email address if a 
+    ///     user exists with that email.
+    /// </remarks>
+    /// <response code="200">Successfully sent password reset email</response>
+    /// <response code="404">User Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <param name="email"></param>
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(string email)
     {
         var user = await _userAccountService.GetUserByEmail(email);
         if (user is null)
         {
-            return BadRequest("User not found");
+            return NotFound("User not found");
         }
 
         string baseUrl = $"{Request.Host}{Request.PathBase}";
@@ -314,6 +412,29 @@ public class AuthController : ControllerBase
         );
     }
 
+
+
+    /// <summary>
+    ///     Reset Password Endpoint
+    /// </summary>
+    /// <remarks>
+    ///     Uses reset token sent from the "Request Password Reset Email"
+    ///     (forgot-password) endpoint and resets the user's password.
+    ///     
+    ///     Request: 
+    ///         
+    ///         POST /auth/reset-password
+    ///         
+    ///         {
+    ///             Email = email;
+    ///             ResetToken = resetToken;
+    ///             Password = newPassword;
+    ///             ConfirmPassword = confirmnewPassword;
+    ///         }
+    /// </remarks>
+    /// <response code="200">Successfully Reset User Password</response>
+    /// <response code="500">Server Error Confirming Password</response>
+    /// <param name="passwordResetRequest"></param>
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
     {
