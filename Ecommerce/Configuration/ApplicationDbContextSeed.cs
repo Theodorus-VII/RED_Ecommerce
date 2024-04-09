@@ -32,7 +32,7 @@ public static class ApplicationDbContextSeed
                                 Count = 10, // Example count
                                 Details = $"Seed product details for {category}",
                                 Category = category,
-                                Price = 10.0f, // Example price
+                                Price = 10.5f, // Example price
                             }
                         );
                     }

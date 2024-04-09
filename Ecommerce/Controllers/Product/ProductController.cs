@@ -38,21 +38,24 @@ public class ProductController : ControllerBase
     /// <returns> List of filtered product with their details </returns>
     /// <response code="200">
     /// Successfully  fetched results
-    ///     A an object contatining a list of results
+    ///     A an object contatining a list of results:
+    ///     
+    /// ```
     ///     {
     ///         "productDtos":[{
     ///              "id": 14,
-    /// "name": "Name",
-    /// "brand": "cat",
-    /// "details": "None",
-    /// "count": 6000,
-    /// "images": [
-    ///     "img2.jpg"
-    /// ],
-    /// "category": "HomeCleaning",
-    /// "price": 1200
+    ///               "name": "Name",
+    ///               "brand": "cat",
+    ///               "details": "None",
+    ///               "count": 6000,
+    ///               "images": [
+    ///                   "img2.jpg"
+    ///               ],
+    ///               "category": "HomeCleaning",
+    ///               "price": 1200
     ///          },...]
     ///     }
+    /// ``` 
     /// </response>
     [HttpGet]
     public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories = "", string? name = "", int start = 0, int maxSize = 10, int low = 0, int high = int.MaxValue)
@@ -80,19 +83,19 @@ public class ProductController : ControllerBase
     /// <response code="200">
     /// Successfully  fetched product
     ///    
-    ///     A an object contatining the product details
-    ///     {
+    /// A an object contatining the product details:
+    /// ```    
+    ///     {   
     ///         "id": 14,
-    /// "name": "Name",
-    /// "brand": "cat",
-    /// "details": "product characteristics description",
-    /// "count": 6000,
-    /// "images": [
-    ///     "img2.jpg"
-    /// ],
-    /// "category": "HomeCleaning",
-    /// "price": 1200
+    ///         "name": "Name",
+    ///         "brand": "cat",
+    ///         "details": "product characteristics description",
+    ///         "count": 6000,
+    ///         "images": ["img2.jpg"],
+    ///         "category": "HomeCleaning",
+    ///         "price": 1200
     ///     }
+    /// ```
     /// </response>
     /// <response code="404">
     ///     Product is not found
@@ -124,6 +127,8 @@ public class ProductController : ControllerBase
     /// Add a new product
     /// </summary>
     /// <param name="dto">This is an object included in the body with the following format
+    /// 
+    /// ```
     /// {
     ///     "name":"Jordan Monogram bag",  //product name/model
     ///     "brand":"Nike",  //Brand name of the company that manufactured the product,
@@ -133,23 +138,27 @@ public class ProductController : ControllerBase
     ///     "images":["img2.jpg"],  //list of product images
     ///     "cateogry":"Fashion" //Category in which the product is included
     /// }
+    /// ```
     /// </param>
     /// <returns> Product details</returns>
     /// <response code="201">
     /// Product has been created successfully
     /// An object contatining the product details is returned
+    /// 
+    /// ```
     ///     {
     ///         "id": 12,
-    /// "name": "Jordan Monogram bag",
-    /// "brand": "Nike",
-    /// "details": "A very big comfortable bag",
-    /// "count": 60,
-    /// "images": [
-    ///     "img2.jpg"
-    /// ],
-    /// "category": "Fashion",
-    /// "price": 120
-    ///     }
+    ///         "name": "Jordan Monogram bag",
+    ///         "brand": "Nike",
+    ///         "details": "A very big comfortable bag",
+    ///         "count": 60,
+    ///         "images": [
+    ///             "img2.jpg"
+    ///         ],
+    ///         "category": "Fashion",
+    ///         "price": 120
+    ///      }
+    /// ```
     /// </response>
     /// <response code="400">
     ///     Invalid request format
@@ -198,34 +207,41 @@ public class ProductController : ControllerBase
     /// <summary>
     /// Update product details
     /// </summary>
-    /// <param name="dto">This is an object included in the body with the following format.
-    /// {
-    ///     "name":"Jordan Monogram bag",  //product name/model
-    ///     "brand":"Nike",  //Brand name of the company that manufactured the product,
-    ///     "details":"A very big comfortable bag",  //A description of the characteristics of the product
-    ///     "count":59, // An INTEGER number that specifies the number of products available for purchase
-    ///     "price":120, //A FLOAT number that specifies the price of the product
-    ///     "images":["img2.jpg"],  //list of product images
-    ///     "cateogry":"Fashion" //Category in which the product is included
-    /// }
+    /// <param name="dto">
+    /// This is an object included in the body with the following format.
+    ///
+    /// ```
+    ///     {
+    ///         "name":"Jordan Monogram bag",  //product name/model
+    ///         "brand":"Nike",  //Brand name of the company that manufactured the product,
+    ///         "details":"A very big comfortable bag",  //A description of the characteristics of the product
+    ///         "count":59, // An INTEGER number that specifies the number of products available for purchase
+    ///         "price":120, //A FLOAT number that specifies the price of the product
+    ///         "images":["img2.jpg"],  //list of product images
+    ///         "cateogry":"Fashion" //Category in which the product is included
+    ///     }
+    /// ```
     /// </param>
     /// <param name="id">ID of the product to be updated</param>
     /// <returns> Updated product details are returned </returns>
     /// <response code="200">
     /// Product has been created successfully
     ///     A an object contatining the updated product details:
-    ///     {
-    ///         "id": 12,
-    /// "name": "Jordan Monogram bag",
-    /// "brand": "Nike",
-    /// "details": "A very big comfortable bag",
-    /// "count": 59,
-    /// "images": [
-    ///     "img2.jpg"
-    /// ],
-    /// "category": "Fashion",
-    /// "price": 120
-    ///     }
+    ///     ```     
+    ///         {
+    ///             "id": 12,
+    ///             "name": "Jordan Monogram bag",
+    ///             "brand": "Nike",
+    ///             "details": "A very big comfortable bag",
+    ///             "count": 59,
+    ///             "images": 
+    ///                 [
+    ///                 "img2.jpg"
+    ///                 ],
+    ///             "category": "Fashion",
+    ///             "price": 120
+    ///         }
+    ///     ```
     /// </response>
     /// <response code="400">
     ///     Invalid request format
@@ -282,10 +298,12 @@ public class ProductController : ControllerBase
     /// </summary>
     /// <param name="id"></param>
     /// <param name="ratingDto">RatingDto Object in body with form:
+    /// 
     /// {
     ///     "rating":5, //A number from 1 to 10 given as a rating out of 10 for the product
     ///     "review": "A mediocre product with few good qualities" //Review for the product. This is optional
     /// }
+    /// 
     /// </param>
     /// <response code="204">No content. Rating added successfully</response>
     /// <response code="401">Credentials not found. Authentication problem</response>
