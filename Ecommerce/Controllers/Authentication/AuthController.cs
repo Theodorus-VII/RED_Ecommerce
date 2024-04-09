@@ -37,6 +37,12 @@ public class AuthController : ControllerBase
     /// <returns>
     /// List of users
     /// </returns>
+    /// <summary>
+    /// Test Route
+    /// </summary>
+    /// <returns>
+    /// List of users
+    /// </returns>
     [HttpGet("test")]
     public IActionResult GetUsers()
     {
@@ -282,6 +288,7 @@ public class AuthController : ControllerBase
             }
         }
         return Problem(statusCode: 500, detail: "Error Confirming Account, please try again later.");
+    }
     }
 
     [HttpPost("forgot-password")]
