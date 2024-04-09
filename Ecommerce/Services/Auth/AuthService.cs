@@ -250,7 +250,7 @@ public class AuthService : IAuthService
                     IsSuccess = false,
                     Error = new ErrorResponse()
                     {
-                        ErrorCode = 404,
+                        ErrorCode = 401,
                         ErrorDescription = "User Not Found"
                     }
                 };
@@ -269,7 +269,7 @@ public class AuthService : IAuthService
                     IsSuccess = false,
                     Error = new ErrorResponse()
                     {
-                        ErrorCode = 404,
+                        ErrorCode = 401,
                         ErrorDescription = "User Not Found"
                     }
                 };
