@@ -406,9 +406,9 @@ public class AuthController : ControllerBase
             return Ok("Password Reset Email sent");
         }
 
-        return StatusCode(
-            500,
-            "Server Error: error sending password reset email. Try again later."
+        return Problem(
+            statusCode: 500,
+            detail: "Server Error: error sending password reset email. Try again later."
         );
     }
 
