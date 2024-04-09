@@ -1,6 +1,9 @@
 namespace Ecommerce.Models;
 public enum Category{
     Automotive,
+    AutomotiveCarCare,
+    AutomotiveReplacementParts,
+    AutomotiveToolsAndEquipments,
     Beauty,
     BeautyCosemtics,
     BeautySoap,
@@ -18,12 +21,22 @@ public enum Category{
     FashionBoysShoes,
     FashionGirlsShoes,
     Home,
+    HomeCleaning,
+    HomeDecor,
+    HomeFurniture,
     HomeKitchen,
     HomeToilet,
+    HomeWallArt,
     Movies ,
     Other,
     Software,
+    SoftwareEducation,
     SoftwareGames,
+    SoftwareLifestyle,
+    SoftwareOffice,
+    SoftwarePhotography,
+    SoftwareSecurity,
+    SoftwareVideo,
     Toys,
 
 }
