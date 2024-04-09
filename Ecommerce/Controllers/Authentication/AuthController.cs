@@ -93,9 +93,9 @@ public class AuthController : ControllerBase
 
         if (!response.IsSuccess || response.Data is null)
         {
-            return Problem(
-                statusCode: 500,
-                detail: response.Error.ToString());
+            return StatusCode(
+                response.Error.ErrorCode,
+                response.Error.ErrorDescription);
         }
         _logger.LogInformation("User Successfully Created.");
         UserDto user = response.Data;
@@ -124,8 +124,8 @@ public class AuthController : ControllerBase
     ///     Login Endpoint
     /// </summary>
     /// <response code="200">
-    ///     Successful Login
-    ///     <returns>
+    /// Successful Login
+    /// <returns>
     ///         A User Object with access and refresh tokens
     ///     
     ///         {
@@ -139,13 +139,13 @@ public class AuthController : ControllerBase
     ///           "refreshToken": "Some refresh token",
     ///           "phoneNumber": null
     ///         }
-    ///     </returns>
+    /// </returns>
     /// </response>
     /// <response code="401">Invalid Password</response>
     /// <response code="404">User Not Found(Incorrect Email)</response>
     /// <response code="500">Some other Internal Server Error</response>
     /// <param name="loginRequest"></param>
-    /// <returns></returns>
+    
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
@@ -316,9 +316,9 @@ public class AuthController : ControllerBase
 
         if (!response.IsSuccess || response.Data is null)
         {
-            return Problem(
-                statusCode: response.Error.ErrorCode,
-                detail: response.Error.ErrorDescription
+            return StatusCode(
+                response.Error.ErrorCode,
+                response.Error.ErrorDescription
             );
         }
 
@@ -367,7 +367,9 @@ public class AuthController : ControllerBase
                 return Ok("Email Confirmed");
             }
         }
-        return Problem(statusCode: 500, detail: "Error Confirming Account, please try again later.");
+        return StatusCode(
+            500,
+            "Error Confirming Account, please try again later.");
     }
 
 
@@ -406,9 +408,9 @@ public class AuthController : ControllerBase
             return Ok("Password Reset Email sent");
         }
 
-        return Problem(
-            statusCode: 500,
-            detail: "Server Error: error sending password reset email. Try again later."
+        return StatusCode(
+            500,
+            "Server Error: error sending password reset email. Try again later."
         );
     }
 

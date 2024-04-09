@@ -15,98 +15,120 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 [Authorize]
 [Route("/product")]
-public class ProductController:ControllerBase{
+public class ProductController : ControllerBase
+{
     private ILogger _logger;
     private IProductService _services;
     private IUserAccountService _userService;
-    public ProductController(IProductService services, IUserAccountService userService,ILogger<ProductController> logger){
-        _logger=logger;
-        _services=services;
-        _userService=userService;
+    public ProductController(IProductService services, IUserAccountService userService, ILogger<ProductController> logger)
+    {
+        _logger = logger;
+        _services = services;
+        _userService = userService;
     }
     [HttpGet]
-    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
-        string[]? categories=Categories?.Split(",");
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories = "", string? name = "", int start = 0, int maxSize = 10, int low = 0, int high = int.MaxValue)
+    {
+        string[]? categories = Categories?.Split(",");
         // List<Category> catList=new List<Category>();
         // Category toAdd;
         // foreach(string strCategory in categories){
         //     if(Enum.TryParse<Category>(strCategory,out toAdd))catList.Add(toAdd);
         //     Console.WriteLine(toAdd);
         // }
-        FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high};
-        FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
+        FilterAttributes filter = new FilterAttributes { categories = categories, name = name ?? "", low = low, high = high };
+        FilterAttributesResponse? products = await _services.GetProductByFilter(filter, start, maxSize);
         // if(products==null)return BadRequest("Wrong parameter or filter property values");
         // return Ok(products);
-        
+
 
         return Ok(products);
     }
     [HttpGet("{id}")]
-    public async  Task<ActionResult<ProductDto>> GetProduct(int id){
+    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+    {
         ProductDto? result;
-        try{
-            result= await _services.GetProduct(id);
-            if(result is null)return NotFound();
+        try
+        {
+            result = await _services.GetProduct(id);
+            if (result is null) return NotFound();
             return Ok(result);
         }
-        catch(Exception e){
+        catch (Exception e)
+        {
             _logger.LogError(e.Message);
-            return Problem(statusCode:500,title:"Internal server error");
+            return StatusCode(
+                500,
+                "Internal server error");
         }
-        
+
     }
     [HttpPost]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> PostProduct([FromBody]ProductDto dto){
-        try{
-            ProductDto myDto=await _services.RegisterProduct(dto);
-            return Created(string.Empty,myDto);
+    public async Task<ActionResult> PostProduct([FromBody] ProductDto dto)
+    {
+        try
+        {
+            ProductDto myDto = await _services.RegisterProduct(dto);
+            return Created(string.Empty, myDto);
         }
-        catch{
+        catch
+        {
             return BadRequest("Invlaid request! Make sure you have entered everything");
         }
-        
+
     }
-     [HttpDelete("{id}")]
+    [HttpDelete("{id}")]
     //  [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> RemoveProduct(int id){
-        try{
+    public async Task<ActionResult> RemoveProduct(int id)
+    {
+        try
+        {
             await _services.DeleteProduct(id);
             return NoContent();
         }
-        catch{
+        catch
+        {
             return NotFound("Product doesn't exist");
         }
-        
-        
+
+
     }
     [HttpPatch("{id}")]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody]ProductDto dto,int id){
-        try{
-            ProductDto resDto=await _services.ModifyProudct(dto,id);
-            if(resDto!=null)return Ok(resDto);
+    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody] ProductDto dto, int id)
+    {
+        try
+        {
+            ProductDto resDto = await _services.ModifyProudct(dto, id);
+            if (resDto != null) return Ok(resDto);
             return NotFound();
         }
-        catch(InvalidDataException){
+        catch (InvalidDataException)
+        {
             return BadRequest("Invalid values for data");
         }
-        catch(Exception){
+        catch (Exception)
+        {
             return NotFound("Product doesn't exist");
         }
     }
     [HttpGet("{id}/rating")]
-    public async Task<ActionResult<double>>  GetRating(int id){
-        try{
-            double average=await _services.GetAverageRating(id);
+    public async Task<ActionResult<double>> GetRating(int id)
+    {
+        try
+        {
+            double average = await _services.GetAverageRating(id);
             return Ok(average);
         }
-        catch{
+        catch
+        {
             return NotFound();
         }
     }
     [HttpPut("{id}/rating")]
-    public async Task<ActionResult> AddRating(int id,[FromBody] RatingDto ratingDto){
+    public async Task<ActionResult> AddRating(int id, [FromBody] RatingDto ratingDto)
+    {
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
 
         // return error if the user Id isn't in the token claims.
@@ -120,18 +142,24 @@ public class ProductController:ControllerBase{
         Guid userId = Guid.Parse(userIdClaim.Value);
         // User? user = await _userService.GetUserById(userId);
         // if(user==null)return NotFound("This user doesn't exist");
-        try{
-            await _services.AddRating(id,ratingDto,userId);
+        try
+        {
+            await _services.AddRating(id, ratingDto, userId);
         }
-        catch(DbUpdateException exception){
+        catch (DbUpdateException exception)
+        {
             Console.WriteLine(exception);
-            return Problem(statusCode:500,detail:"Something went wrong. Couldn't add rating");
+            return StatusCode(
+                500,
+                "Something went wrong. Couldn't add rating"
+            );
         }
-        
+
         return NoContent();
     }
     [HttpDelete("{id}/rating")]
-    public async Task<ActionResult> DeleteRating(int id){
+    public async Task<ActionResult> DeleteRating(int id)
+    {
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
 
         // return error if the user Id isn't in the token claims.
@@ -145,37 +173,51 @@ public class ProductController:ControllerBase{
         Guid userId = Guid.Parse(userIdClaim.Value);
         // User? user = await _userService.GetUserById(userId);
         // if(user==null)return NotFound("This user doesn't exist");
-        try{
-            await _services.DeleteRating(id,userId);
+        try
+        {
+            await _services.DeleteRating(id, userId);
             return Ok("Rating Deleted Successfully");
         }
-        catch{
+        catch
+        {
             return NotFound("Rating doesn't exist");
         }
-        
-        
+
+
     }
     [HttpGet("{id}/review")]
-    public async Task<ActionResult<List<RatingDto>>> GetReviews(int id,[FromQuery]int lowRating=0,[FromQuery]int highRating=10){
-        try{
-            List<ReviewDto> reviews; 
-            reviews=await _services.GetProductReviews(id,lowRating,highRating);
-            if(reviews==null)return NotFound("No Rating/Review Found");
+    public async Task<ActionResult<List<RatingDto>>> GetReviews(int id, [FromQuery] int lowRating = 0, [FromQuery] int highRating = 10)
+    {
+        try
+        {
+            List<ReviewDto> reviews;
+            reviews = await _services.GetProductReviews(id, lowRating, highRating);
+            if (reviews == null) return NotFound("No Rating/Review Found");
             return Ok(reviews);
         }
-        catch{
-            return Problem(statusCode:500,title:"Server Error");
+        catch
+        {
+            return StatusCode(
+                500,
+                "Server Error"
+            );
         }
-        
+
     }
     [HttpGet("{id}/image")]
-    public async Task<ActionResult<List<string>>> GetRefreshedImageList(int id){
-        try{
-            List<string>? images= await _services.RefreshImages(id)??new List<string>();;
+    public async Task<ActionResult<List<string>>> GetRefreshedImageList(int id)
+    {
+        try
+        {
+            List<string>? images = await _services.RefreshImages(id) ?? new List<string>(); ;
             return images;
         }
-        catch{
-            return Problem(statusCode:500,detail:"Some internal error occured while processing your request");
+        catch
+        {
+            return StatusCode(
+                500,
+                "Some internal error occured while processing your request"
+            );
         }
 
     }
@@ -194,13 +236,16 @@ public class ProductController:ControllerBase{
     //     }
     // }
     [HttpDelete("{id}/image")]
-    public async Task<ActionResult> DeleteImages(int id,string images){
-        List<string> imgNames=new List<string>(images.Split(","));
-        try{
-            await _services.DeleteImages(id,imgNames);
+    public async Task<ActionResult> DeleteImages(int id, string images)
+    {
+        List<string> imgNames = new List<string>(images.Split(","));
+        try
+        {
+            await _services.DeleteImages(id, imgNames);
             return NoContent();
         }
-        catch{
+        catch
+        {
             return NotFound("Image doesn't exist");
         }
     }

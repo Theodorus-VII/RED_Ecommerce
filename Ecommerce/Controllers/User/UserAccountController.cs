@@ -6,6 +6,7 @@ using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Ecommerce.Configuration;
 
@@ -38,7 +39,19 @@ public class UserAccountController : ControllerBase
         return Ok();
     }
 
+
+    /// <summary>
+    /// Get user details
+    /// </summary>
+    /// <remarks>
+    /// Retrieves the details of the user identified by the token.
+    /// </remarks>
+    /// <response code="401">Invalid Token</response>
+    /// <response code="404">User Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+
     [HttpGet()]
+    [SwaggerResponse(200, "User Details retrieved successfully", typeof(UserDto))]
     public async Task<IActionResult> GetUserDetails()
     {
         var userId = ExtractUser.GetUserId(HttpContext);
@@ -47,18 +60,33 @@ public class UserAccountController : ControllerBase
 
         if (userId is null)
         {
-            return BadRequest("Invalid token");
+            return StatusCode(
+                401,
+                "Invalid token"
+            );
         }
-
         var user = await _userAccountService.GetUserById(userId.Value);
+
         if (user is null)
         {
-            return NotFound("User not found");
+            return StatusCode(404, "User not found");
         }
-        
+
         return Ok(new UserDto(user));
     }
 
+
+    /// <summary>
+    /// Update User Details
+    /// </summary>
+    /// <remarks>
+    ///      User Patch Request
+    /// </remarks>
+    /// <response code="200">Successfully Updated</response>
+    /// <response code="401">Invalid Token</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPatch("update")]
     public async Task<IActionResult> UpdateUserDetails(UserPatchRequest request)
     {
@@ -69,13 +97,26 @@ public class UserAccountController : ControllerBase
         }
 
         var result = await _userAccountService.UpdateUserDetails(userId.Value, request);
-        if (result)
+        if (result.IsSuccess)
         {
             return Ok("User Updated Successfully");
         }
-        return BadRequest();
+        return StatusCode(
+            result.Error.ErrorCode,
+            result.Error.ErrorDescription
+        );
     }
 
+
+
+    /// <summary>
+    /// Delete User Account
+    /// </summary>
+    /// <response code="200">User Account deleted</response>
+    /// <response code="401">Invalid token</response>
+    /// <response code="404">User Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <returns></returns>
     [HttpDelete("delete")]
     public async Task<IActionResult> DeleteUser()
     {
@@ -87,13 +128,25 @@ public class UserAccountController : ControllerBase
         }
         // extract the user Id from the claim.
         var result = await _userAccountService.DeleteUser(userId.Value);
-        if (result)
+        if (result.IsSuccess)
         {
             return Ok("User Account Deleted");
         }
-        return BadRequest("Server Error");
+        return StatusCode(
+            result.Error.ErrorCode,
+            result.Error.ErrorDescription
+            );
     }
 
+
+    /// <summary>
+    /// Admin - User Delete Endpoint
+    /// </summary>
+    /// <response code="200">User Deleted Successfully</response>
+    /// <response code="403">Insufficient Priveledges(User tried to access this admin endpoint)</response>
+    /// <response code="404">User Not Found</response>
+    /// <response code="500">Server Error</response>
+    /// <param name="request"></param>
     [HttpPost("admin-user-delete")]
     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> AdminUserDelete(AdminUserDeleteRequest request)
@@ -114,17 +167,21 @@ public class UserAccountController : ControllerBase
 
         if (user is null)
         {
-            return BadRequest("User not found");
+            return StatusCode(
+                404,
+                "User Not Found"
+            );
         }
         var userId = user.Id;
         var result = await _userAccountService.DeleteUser(userId);
 
-        if (result)
+        if (result.IsSuccess)
         {
             return Ok("User Deleted");
         }
-        return BadRequest("Server Error");
+        return StatusCode(
+            result.Error.ErrorCode,
+            result.Error.ErrorDescription
+            );
     }
-
-    
 }

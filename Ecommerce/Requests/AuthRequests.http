@@ -1,7 +1,7 @@
 @Api_HostAddress = http://localhost:5271/auth
 
 ### Controller test 
-GET {{Api_HostAddress}}/test   
+GET {{Api_HostAddress}}/test    
  
 ### Register a new user 
 POST {{Api_HostAddress}}/register     
