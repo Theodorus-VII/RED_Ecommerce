@@ -325,9 +325,9 @@ public class ProductController : ControllerBase
         Guid userId = Guid.Parse(userIdClaim.Value);
         // User? user = await _userService.GetUserById(userId);
         // if(user==null)return NotFound("This user doesn't exist");
-        try
-        {
-            await _services.AddRating(id, ratingDto, userId);
+        try{
+            if(ratingDto.Rating>5||ratingDto.Rating<1)return BadRequest("Invalid rating value");
+            await _services.AddRating(id,ratingDto,userId);
             return NoContent();
         }
         catch (DbUpdateException exception)
@@ -387,13 +387,22 @@ public class ProductController : ControllerBase
     /// <response code="200"> A list of reviews </response>
     /// <response code="500"> Internal server has occurred </response>
     [HttpGet("{id}/review")]
-    public async Task<ActionResult<List<RatingDto>>> GetReviews(int id, [FromQuery] int lowRating = 0, [FromQuery] int highRating = 10)
-    {
-        try
+    public async Task<ActionResult<List<RatingDto>>> GetReviews(int id,[FromQuery]int lowRating=0,[FromQuery]int highRating=10){
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        // return error if the user Id isn't in the token claims.
+        _logger.LogInformation($"{userIdClaim}");
+        if (userIdClaim == null)
         {
-            List<ReviewDto> reviews;
-            reviews = await _services.GetProductReviews(id, lowRating, highRating);
-            if (reviews == null) return NotFound("No Rating/Review Found");
+            _logger.LogError("Invalid request");
+            return Unauthorized("Invalid request");
+        }
+        // extract the user Id from the claim.
+        Guid userId = Guid.Parse(userIdClaim.Value);
+        try{
+            List<ReviewDto> reviews; 
+            reviews=await _services.GetProductReviews(id,lowRating,highRating,userId);
+            if(reviews==null)return NotFound("No Rating/Review Found");
             return Ok(reviews);
         }
         catch
