@@ -1,4 +1,6 @@
-﻿namespace Ecommerce.Models
+﻿using static ChapaNET.Chapa.ValidityReport;
+
+namespace Ecommerce.Models
 {
     public class PaymentResponse
     {
@@ -26,13 +28,6 @@
         public object Meta { get; set; }
         public DateTime? Created_at { get; set; }
         public DateTime? Updated_at { get; set; }
-    }
-
-    public class Customization
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Logo { get; set; }
     }
 
 }

@@ -1,28 +1,25 @@
 ﻿using Ecommerce.Controllers.Payment.Contracts;
-using Ecommerce.Models;
-using Ecommerce.Services.Payment;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Ecommerce.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Ecommerce.Util;
 using Newtonsoft.Json;
-using ChapaNET;
-using static ChapaNET.Chapa;
+
 
 namespace Ecommerce.Controllers.Payment
 {
     [Authorize]
     [ApiController]
-    [Route("api/payment")]
+    [Route("payment")]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-        private readonly HttpClient _httpClient;
 
-        public PaymentController(IPaymentService paymentService, HttpClient httpClient)
+        public PaymentController(IPaymentService paymentService)
         {
             _paymentService = paymentService;
-            _httpClient = httpClient;
         }
 
         [HttpPost("makePayment")]
@@ -34,9 +31,10 @@ namespace Ecommerce.Controllers.Payment
                 {
                     return BadRequest(ModelState);
                 }
-                if (request == null)
+                if (request == null || request.Currency == null)
                 {
-                    return BadRequest("Invalid request");
+                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Invalid request", null));
+                    return BadRequest(errorResponse);
                 }
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var email = User.FindFirstValue(ClaimTypes.Email);
@@ -44,25 +42,22 @@ namespace Ecommerce.Controllers.Payment
                 var lastName = User.FindFirstValue(ClaimTypes.Surname);
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
                 {
-                    return Unauthorized();
+                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Unauthorized access.", null));
+                    return Unauthorized(errorResponse);
                 }
-
-                var response = await _paymentService.MakePaymentAsync(request, email, firstName, lastName);
-                return Ok(new { responsedto = response });
-            }
-            catch(ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                var response = await _paymentService.MakePaymentAsync(userId, email, firstName, lastName, request.Currency, request.ReturnUrl, request.PhoneNumber);
+                return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", response));
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var response = JsonConvert.SerializeObject(new ApiResponse<object>(false, ex.Message, null));
+                return BadRequest(response);
             }
             
         }
 
-        [HttpPost("verifypayment")]
-        public async Task<IActionResult> VerifyPaymentAsync([FromBody] PaymentVerifyDTO request)
+        [HttpGet("verifypayment/{TxRef}")]
+        public async Task<IActionResult> VerifyPaymentAsync(string TxRef , PaymentVerifyDTO request)
         {
             try
             {
@@ -73,34 +68,21 @@ namespace Ecommerce.Controllers.Payment
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized();
+                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Unauthorized access.", null));
+                    return Unauthorized(errorResponse);
                 }
-                if (request.TxRef == null)
+                if(request.Equals(null) || request.ShippingAddressId <= 0 || request.BillingAddressId <= 0)
                 {
-                    return BadRequest("Invalid request");
-                }
-                //var apiUrl = "https://api.chapa.co/v1/transaction/verify/" + request.TxRef;
-                //var requesttochapa = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-                //requesttochapa.Headers.Add("Authorization", "Bearer CHASECK_TEST-vQSKrHiFWiiwQaqJmxb0pEbSQrVsHZgT ");
-                //var response = await _httpClient.SendAsync(requesttochapa);
-                //if (!response.IsSuccessStatusCode)
-                //{
-                //    return BadRequest("An error occurred while verifying payment");
-                //}
-                //var content = await response.Content.ReadAsStringAsync();
-                //PaymentResponse paymentResponse = JsonConvert.DeserializeObject<PaymentResponse>(content);
-
-                //return Ok(paymentResponse);
-
-
-
-
-                await _paymentService.VerifyTransactionAsync(userId, request.TxRef);
-                return Ok("payment successfull.");
+                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Invalid request", null));
+                    return BadRequest(errorResponse);
+                }   
+                var response = await _paymentService.VerifyTransactionAsync(userId, TxRef, request.ShippingAddressId, request.BillingAddressId);
+                return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", new { OrderNumber = response }));
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var response = JsonConvert.SerializeObject(new ApiResponse<object>(false, ex.Message, null));
+                return BadRequest(response);
             }
             
         }
