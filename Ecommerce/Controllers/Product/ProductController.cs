@@ -264,6 +264,7 @@ public class ProductController:ControllerBase{
 /// }
 /// </param>
 /// <response code="204">No content. Rating added successfully</response>
+/// <response code="400">Invalid Request. Rating not in range</response>
 /// <response code="401">Credentials not found. Authentication problem</response>
 /// <response code="404">Product not found</response>
 /// <response code="500">An error has occurred in the server</response>
@@ -283,6 +284,7 @@ public class ProductController:ControllerBase{
         // User? user = await _userService.GetUserById(userId);
         // if(user==null)return NotFound("This user doesn't exist");
         try{
+            if(ratingDto.Rating>5||ratingDto.Rating<1)return BadRequest("Invalid rating value");
             await _services.AddRating(id,ratingDto,userId);
             return NoContent();
         }
@@ -337,9 +339,20 @@ public class ProductController:ControllerBase{
 /// <response code="500"> Internal server has occurred </response>
     [HttpGet("{id}/review")]
     public async Task<ActionResult<List<RatingDto>>> GetReviews(int id,[FromQuery]int lowRating=0,[FromQuery]int highRating=10){
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        // return error if the user Id isn't in the token claims.
+        _logger.LogInformation($"{userIdClaim}");
+        if (userIdClaim == null)
+        {
+            _logger.LogError("Invalid request");
+            return Unauthorized("Invalid request");
+        }
+        // extract the user Id from the claim.
+        Guid userId = Guid.Parse(userIdClaim.Value);
         try{
             List<ReviewDto> reviews; 
-            reviews=await _services.GetProductReviews(id,lowRating,highRating);
+            reviews=await _services.GetProductReviews(id,lowRating,highRating,userId);
             if(reviews==null)return NotFound("No Rating/Review Found");
             return Ok(reviews);
         }

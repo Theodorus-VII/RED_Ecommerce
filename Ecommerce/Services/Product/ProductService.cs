@@ -172,7 +172,7 @@ public class ProductService:IProductService{
         else throw new Exception("Your review wasn't found");
         await _context.SaveChangesAsync();
     }
-    public async Task<List<ReviewDto>> GetProductReviews(int id,int low,int high){
+    public async Task<List<ReviewDto>> GetProductReviews(int id,int low,int high, Guid userId){
         try{
             List<Rating>? ratings=await _context.Ratings.Where(r=>r.ProductId==id).ToListAsync();
             List<ReviewDto> reviews=new List<ReviewDto>();
@@ -183,6 +183,7 @@ public class ProductService:IProductService{
                         user=await _userService.GetUserById(_rating.UserId);
                         string fullName=user?.FirstName+" "+user?.LastName;
                         reviews.Add(new ReviewDto{
+                        IsMine=userId.Equals(_rating.UserId),
                         Rating=_rating.RatingN,
                         Review=_rating.Review,
                         Name=fullName
