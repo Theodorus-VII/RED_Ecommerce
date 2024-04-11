@@ -28,6 +28,7 @@ bld/
 
 publish/
 */Migrations/
+.env
 
 
 */appsettings.*.json

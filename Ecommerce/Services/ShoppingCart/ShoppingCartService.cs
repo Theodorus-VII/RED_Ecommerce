@@ -2,7 +2,6 @@
 using Ecommerce.Controllers.ShoppingCart.Contracts;
 using Ecommerce.Data;
 using Ecommerce.Models;
-using Ecommerce.Models.ShoppingCart;
 using Ecommerce.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,19 +21,25 @@ namespace Ecommerce.Services.ShoppingCart
 
         public async Task<CartResponseDTO> GetCartItemsAsync(string userId)
         {
-            var cart = await _context.Carts
-                .Where(c => c.UserId == userId)
-                .Include(c => c.Items) 
-                    .ThenInclude(ci => ci.Product) 
-                .FirstOrDefaultAsync();
-
-            if (cart != null)
+            try
             {
+                var cart = await _context.Carts
+                .Where(c => c.UserId == userId)
+                .Include(c => c.Items)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found.");
                 var cartDTO = _mapper.Map<CartResponseDTO>(cart);
                 return cartDTO;
+                
             }
-
-            return new CartResponseDTO();
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw new Exception("An error occurred while fetching cart items.");
+            }
         }
 
 
@@ -49,12 +54,14 @@ namespace Ecommerce.Services.ShoppingCart
 
                 if (existingCart != null)
                 {
+                    existingCart.UpdatedAt = DateTime.Now;
                     var existingCartItem = existingCart?.Items?.FirstOrDefault(ci => ci.ProductId == productId);
 
                     if (existingCartItem != null)
                     {
                         existingCartItem.Quantity += quantity;
                         existingCartItem.Price += quantity * product.Price;
+                        existingCartItem.UpdatedAt = DateTime.Now;
                     }
                     else
                     {
@@ -73,16 +80,13 @@ namespace Ecommerce.Services.ShoppingCart
                     var newCart = new Cart
                     {
                         UserId = userId,
-                        Items = new List<CartItem>()
+                        Items = new List<CartItem>
+                            { new() {
+                                ProductId = productId,
+                                Quantity = quantity,
+                                Price = quantity * product.Price
+                            } },
                     };
-                    newCart.Items.Add(
-                        new CartItem
-                        {
-                            CartId = newCart.CartId,
-                            ProductId = productId,
-                            Quantity = quantity,
-                            Price = quantity * product.Price
-                        });
                     newCart.UpdateTotalPrice();
                     _context.Carts.Add(newCart);
                 }
@@ -130,6 +134,8 @@ namespace Ecommerce.Services.ShoppingCart
                             var product = await _context.Products.FindAsync(cartItemToUpdate.ProductId) ?? throw new ArgumentException("Invalid product ID.");
                             cartItemToUpdate.Quantity = newQuantity;
                             cartItemToUpdate.Price = newQuantity * product?.Price ?? 0;
+                            cartItemToUpdate.UpdatedAt = DateTime.Now;
+                            cart.UpdatedAt = DateTime.Now;
                             cart?.UpdateTotalPrice();
                             await _context.SaveChangesAsync();
                         }
@@ -186,6 +192,12 @@ namespace Ecommerce.Services.ShoppingCart
                     {
                         throw new ArgumentException("Cart item not found.");
                     }
+                    if (cart.Items.Count == 0)
+                    {
+                        _context.Carts.Remove(cart);
+                        await _context.SaveChangesAsync();
+                    }
+
                 }
                 else
                 {

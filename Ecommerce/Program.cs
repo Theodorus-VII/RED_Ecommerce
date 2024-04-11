@@ -12,6 +12,12 @@ using Microsoft.OpenApi.Models;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 
+using Ecommerce.Services.Payment;
+using DotNetEnv;
+using Ecommerce.Services.Orders;
+
+
+Env.Load();
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,14 +70,16 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddHttpClient();
+
 
 
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+// var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(
@@ -92,8 +100,14 @@ builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
-builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+
+
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
