@@ -3,11 +3,11 @@
     public class PaymentInfo
     {
         public int PaymentInfoId { get; set; }
-        public string UserId { get; set; }
-        public string CardNumber { get; set; }
-        public string CardHolderName { get; set; }
-        public string ExpiryDate { get; set; }
-        public string CVV { get; set; }
-        // Other payment-related properties as needed
+        public string? UserId { get; set; }
+        public float Amount { get; set; }
+        public string? Currency { get; set; }    
+        public string? TxRef { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

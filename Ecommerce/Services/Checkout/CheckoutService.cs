@@ -20,19 +20,34 @@ namespace Ecommerce.Services.Checkout
             _mapper = mapper;
         }
 
-        public async Task<List<AddressResponseDTO>> GetAddressesAsync(string userId)
+        public async Task<List<AddressResponseDTO>> GetAddressesAsync(string userId, AddressType addressType)
         {
             try
             {
-                var Addresses = await _context.Addresses
-                .Where(o => o.UserId == userId)
-                .ToListAsync();
-                if (Addresses.Count == 0)
+                if (addressType == AddressType.Shipping)
                 {
-                    throw new ArgumentException("No addresses found for this user");
-                }
+                    var Addresses = await _context.ShippingAddresses
+                        .Where(o => o.UserId == userId)
+                        .ToListAsync();
+                    if (Addresses.Count == 0)
+                    {
+                        throw new ArgumentException("No addresses found for this user");
+                    }
 
-                return _mapper.Map<List<AddressResponseDTO>>(Addresses);
+                    return _mapper.Map<List<AddressResponseDTO>>(Addresses);
+                }
+                else
+                {
+                    var Addresses = await _context.BillingAddresses
+                        .Where(o => o.UserId == userId)
+                        .ToListAsync();
+                    if (Addresses.Count == 0)
+                    {
+                        throw new ArgumentException("No addresses found for this user");
+                    }
+
+                    return _mapper.Map<List<AddressResponseDTO>>(Addresses);
+                }
             }
             catch(ArgumentException)
             {
@@ -44,17 +59,30 @@ namespace Ecommerce.Services.Checkout
             }
             
         }
-        public async Task<AddressResponseDTO> GetAddressByIdAsync(string userId,int addressId)
+        public async Task<AddressResponseDTO> GetAddressByIdAsync(string userId,int addressId, AddressType addressType)
         {
             try
             {
-                var address = await _context.Addresses
-                .FirstOrDefaultAsync(o => o.AddressId == addressId) ?? throw new ArgumentException("Address not found");
-                if (address.UserId != userId)
+                if(addressType == AddressType.Shipping)
                 {
-                    throw new UnauthorizedAccessException("Address does not belong to user");
+                    var address = await _context.ShippingAddresses
+                        .FirstOrDefaultAsync(o => o.ShippingAddressId == addressId) ?? throw new ArgumentException("Address not found");
+                    if (address.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    return _mapper.Map<AddressResponseDTO>(address);
                 }
-                return _mapper.Map<AddressResponseDTO>(address);
+                else
+                {
+                    var address = await _context.BillingAddresses
+                        .FirstOrDefaultAsync(o => o.BillingAddressId == addressId) ?? throw new ArgumentException("Address not found");
+                    if (address.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    return _mapper.Map<AddressResponseDTO>(address);
+                }
             }
             catch(UnauthorizedAccessException)
             {
@@ -72,46 +100,83 @@ namespace Ecommerce.Services.Checkout
         }
 
 
-        public async Task<AddressResponseDTO> AddAddressAsync(string userId, AddressRequestDTO address, string addressType)
+        public async Task<AddressResponseDTO> AddAddressAsync(string userId, AddressRequestDTO address, AddressType addressType)
         {
             try
             {
-                var newAddress = new Address
+                
+                if (addressType == AddressType.Shipping)
                 {
-                    UserId = userId,
-                    AddressType = addressType == "shipping" ? AddressType.Shipping : AddressType.Billing,
-                    Street = address.Street,
-                    City = address.City,
-                    State = address.State,
-                    Country = address.Country,
-                    PostalCode = address.PostalCode
-                };
-                _context.Addresses.Add(newAddress);
-                await _context.SaveChangesAsync();
-                return _mapper.Map<AddressResponseDTO>(newAddress);
+                    var newAddress = new ShippingAddress
+                    {
+                        UserId = userId,
+                        Street = address.Street,
+                        City = address.City,
+                        State = address.State,
+                        Country = address.Country,
+                        PostalCode = address.PostalCode
+                    };
+                    _context.ShippingAddresses.Add(newAddress);
+                    await _context.SaveChangesAsync();
+                    return _mapper.Map<AddressResponseDTO>(newAddress);
+                }
+                else
+                {
+                    var newAddress = new BillingAddress
+                    {
+                        UserId = userId,
+                        Street = address.Street,
+                        City = address.City,
+                        State = address.State,
+                        Country = address.Country,
+                        PostalCode = address.PostalCode
+                    };
+                    _context.BillingAddresses.Add(newAddress);
+                    await _context.SaveChangesAsync();
+                    return _mapper.Map<AddressResponseDTO>(newAddress);
+                }
             }
             catch (Exception ex)
             {
                 throw new Exception("An error occurred while entering shipping address", ex);
             }
         }
-        public async Task<AddressResponseDTO> UpdateAddressAsync(string userId, UpdateAddressRequestDTO address)
+        public async Task<AddressResponseDTO> UpdateAddressAsync(string userId, UpdateAddressRequestDTO address, AddressType addressType)
         {
             try
             {
-                var existingAddress = await _context.Addresses
-                .FirstOrDefaultAsync(o => o.AddressId == address.AddressId) ?? throw new ArgumentException("Address not found");
-                if (existingAddress.UserId != userId)
+                if(addressType == AddressType.Shipping)
                 {
-                    throw new UnauthorizedAccessException("Address does not belong to user");
+                    var existingAddress = await _context.ShippingAddresses
+                    .FirstOrDefaultAsync(o => o.ShippingAddressId == address.AddressId) ?? throw new ArgumentException("Address not found");
+                    if (existingAddress.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    existingAddress.Street = address.Street;
+                    existingAddress.City = address.City;
+                    existingAddress.State = address.State;
+                    existingAddress.Country = address.Country;
+                    existingAddress.PostalCode = address.PostalCode;
+                    await _context.SaveChangesAsync();
+                    return _mapper.Map<AddressResponseDTO>(existingAddress);
                 }
-                existingAddress.Street = address.Street;
-                existingAddress.City = address.City;
-                existingAddress.State = address.State;
-                existingAddress.Country = address.Country;
-                existingAddress.PostalCode = address.PostalCode;
-                await _context.SaveChangesAsync();
-                return _mapper.Map<AddressResponseDTO>(existingAddress);
+                else
+                {
+                    var existingAddress = await _context.BillingAddresses
+                    .FirstOrDefaultAsync(o => o.BillingAddressId == address.AddressId) ?? throw new ArgumentException("Address not found");
+                    if (existingAddress.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    existingAddress.Street = address.Street;
+                    existingAddress.City = address.City;
+                    existingAddress.State = address.State;
+                    existingAddress.Country = address.Country;
+                    existingAddress.PostalCode = address.PostalCode;
+                    await _context.SaveChangesAsync();
+                    return _mapper.Map<AddressResponseDTO>(existingAddress);
+                }
             }
             catch(UnauthorizedAccessException)
             {
@@ -127,17 +192,30 @@ namespace Ecommerce.Services.Checkout
             }
         }
 
-        public async Task RemoveAddressAsync(string userId, int addressId)
+        public async Task RemoveAddressAsync(string userId, int addressId, AddressType addressType)
         {
             try
             {
-                var address = await _context.Addresses
-                .FirstOrDefaultAsync(o => o.AddressId == addressId) ?? throw new ArgumentException("Address not found");
-                if (address.UserId != userId)
+                if (addressType == AddressType.Shipping)
                 {
-                    throw new UnauthorizedAccessException("Address does not belong to user");
+                    var address = await _context.ShippingAddresses
+                    .FirstOrDefaultAsync(o => o.ShippingAddressId == addressId) ?? throw new ArgumentException("Address not found");
+                    if (address.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    _context.ShippingAddresses.Remove(address);
                 }
-                _context.Addresses.Remove(address);
+                else
+                {
+                    var address = await _context.BillingAddresses
+                    .FirstOrDefaultAsync(o => o.BillingAddressId == addressId) ?? throw new ArgumentException("Address not found");
+                    if (address.UserId != userId)
+                    {
+                        throw new UnauthorizedAccessException("Address does not belong to user");
+                    }
+                    _context.BillingAddresses.Remove(address);
+                }
                 await _context.SaveChangesAsync();
             }
             catch(UnauthorizedAccessException)
@@ -154,13 +232,13 @@ namespace Ecommerce.Services.Checkout
             }
         }
 
-        public async Task RemoveMultipleAddresses(string userId, List<int> addressIds)
+        public async Task RemoveMultipleAddresses(string userId, List<int> addressIds, AddressType addressType)
         {
             try
             {
                 foreach (var addressId in addressIds)
                 {
-                    await RemoveAddressAsync(userId, addressId);
+                    await RemoveAddressAsync(userId, addressId, addressType);
                 }
             }
             catch(UnauthorizedAccessException)
@@ -177,18 +255,24 @@ namespace Ecommerce.Services.Checkout
             }
         }
 
-        public async Task ClearAddressesAsync(string userId)
+        public async Task ClearAddressesAsync(string userId, AddressType addressType)
         {
             try
             {
-                var addresses = await _context.Addresses
-                .Where(o => o.UserId == userId)
-                .ToListAsync();
-                if (addresses.Count == 0)
+                if (addressType == AddressType.Shipping)
                 {
-                    throw new ArgumentException("No addresses found for this user");
+                    var addresses = await _context.ShippingAddresses
+                    .Where(o => o.UserId == userId)
+                    .ToListAsync() ?? throw new ArgumentException("No addresses found for this user");
+                    _context.ShippingAddresses.RemoveRange(addresses);
                 }
-                _context.Addresses.RemoveRange(addresses);
+                else
+                {
+                    var addresses = await _context.BillingAddresses
+                    .Where(o => o.UserId == userId)
+                    .ToListAsync() ?? throw new ArgumentException("No addresses found for this user");
+                    _context.BillingAddresses.RemoveRange(addresses);
+                }
                 await _context.SaveChangesAsync();
             }
             catch(ArgumentException)
