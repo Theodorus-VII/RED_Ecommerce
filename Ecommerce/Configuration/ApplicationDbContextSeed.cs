@@ -1,6 +1,5 @@
 using Ecommerce.Data;
 using Ecommerce.Models;
-using Ecommerce.Models.ShoppingCart;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -130,53 +129,53 @@ public static class ApplicationDbContextSeed
 
             }
 
-            if (!context.Orders.Any())
-            {
-                var orders = new List<Order>();
-                for (int i = 0; i < 50; i++) // Example: creating 50 orders
-                {
-                    var order = new Order
-                    {
-                        UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
-                        OrderDate = DateTime.UtcNow.AddDays(-i), // Example order date
-                        TotalAmount = 100.0m // Example total amount
-                    };
+            // if (!context.Orders.Any())
+            // {
+            //     var orders = new List<Order>();
+            //     for (int i = 0; i < 50; i++) // Example: creating 50 orders
+            //     {
+            //         var order = new Order
+            //         {
+            //             UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
+            //             OrderDate = DateTime.UtcNow.AddDays(-i), // Example order date
+            //             TotalAmount = 100.0m // Example total amount
+            //         };
 
-                    var orderItems = new List<OrderItem>();
-                    for (int j = 0; j < 5; j++) // Example: each order has 5 items
-                    {
-                        orderItems.Add(new OrderItem
-                        {
-                            ProductId = products[j % products.Count].Id, // Assuming products is a list of Product entities
-                            ProductName = products[j % products.Count].Name, // Example product name
-                            Price = new decimal(products[j % products.Count].Price), // Example price
-                            Quantity = 1 // Example quantity
-                        });
-                    }
-                    order.OrderItems = orderItems;
-                    orders.Add(order);
-                }
-                context.Orders.AddRange(orders);
-                context.SaveChanges();
-            }
+            //         var orderItems = new List<OrderItem>();
+            //         for (int j = 0; j < 5; j++) // Example: each order has 5 items
+            //         {
+            //             orderItems.Add(new OrderItem
+            //             {
+            //                 ProductId = products[j % products.Count].Id, // Assuming products is a list of Product entities
+            //                 ProductName = products[j % products.Count].Name, // Example product name
+            //                 Price = new decimal(products[j % products.Count].Price), // Example price
+            //                 Quantity = 1 // Example quantity
+            //             });
+            //         }
+            //         order.OrderItems = orderItems;
+            //         orders.Add(order);
+            //     }
+            //     context.Orders.AddRange(orders);
+            //     context.SaveChanges();
+            // }
 
-            if (!context.PaymentInfos.Any())
-            {
-                var paymentInfos = new List<PaymentInfo>();
-                for (int i = 0; i < 50; i++) // Example: creating 50 payment info records
-                {
-                    paymentInfos.Add(new PaymentInfo
-                    {
-                        UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
-                        CardNumber = "1234567890123456", // Example card number
-                        CardHolderName = "John Doe", // Example card holder name
-                        ExpiryDate = "12/25", // Example expiry date
-                        CVV = "123" // Example CVV
-                    });
-                }
-                context.PaymentInfos.AddRange(paymentInfos);
-                context.SaveChanges();
-            }
+            // if (!context.PaymentInfos.Any())
+            // {
+            //     var paymentInfos = new List<PaymentInfo>();
+            //     for (int i = 0; i < 50; i++) // Example: creating 50 payment info records
+            //     {
+            //         paymentInfos.Add(new PaymentInfo
+            //         {
+            //             UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
+            //             CardNumber = "1234567890123456", // Example card number
+            //             CardHolderName = "John Doe", // Example card holder name
+            //             ExpiryDate = "12/25", // Example expiry date
+            //             CVV = "123" // Example CVV
+            //         });
+            //     }
+            //     context.PaymentInfos.AddRange(paymentInfos);
+            //     context.SaveChanges();
+            // }
         }
         return services;
     }
