@@ -7,8 +7,8 @@ namespace Ecommerce.Services.Interfaces
     {
         Task<string> MakeOrderAsync(string userId, int paymentInfoId, int shippingAddressId, int billingAddressId);
         Task<List<OrderResponseDTO>> GetOrdersAsync(string userId);
-        Task<OrderItemResponseDTO> GetOrderAsync(string userId, int orderId);
-        Task<OrderItemResponseDTO> GetOrderByOrderNumberAsync(string orderNumber);
+        Task<OrderResponseDTO> GetOrderAsync(string userId, int orderId);
+        Task<OrderResponseDTO> GetOrderByOrderNumberAsync(string orderNumber);
         Task UpdateOrderStatusAsync(int orderId, string status);
 
     }

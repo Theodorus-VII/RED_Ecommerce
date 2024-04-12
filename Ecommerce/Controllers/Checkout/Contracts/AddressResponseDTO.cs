@@ -1,6 +1,4 @@
-﻿using Ecommerce.Models;
-
-namespace Ecommerce.Controllers.Checkout.Contracts
+﻿namespace Ecommerce.Controllers.Checkout.Contracts
 {
     public class AddressResponseDTO
     {

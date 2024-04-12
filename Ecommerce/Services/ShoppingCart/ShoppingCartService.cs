@@ -49,6 +49,10 @@ namespace Ecommerce.Services.ShoppingCart
             try
             {
                 var product = await _context.Products.FindAsync(productId) ?? throw new ArgumentException("Invalid product ID.");
+                if (quantity <= 0)
+                {
+                    throw new ArgumentException("Quantity must be greater than 0.");
+                }
                 var existingCart = await _context.Carts.Include(c => c.Items)
                                                        .FirstOrDefaultAsync(c => c.UserId == userId);
 
@@ -121,6 +125,10 @@ namespace Ecommerce.Services.ShoppingCart
         {
             try
             {
+                if (newQuantity <= 0)
+                {
+                    throw new ArgumentException("Quantity must be greater than 0.");
+                }
                 var cart = await _context.Carts
                     .Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
 

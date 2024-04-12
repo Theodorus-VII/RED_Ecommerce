@@ -19,6 +19,7 @@ namespace Ecommerce.Mapping
                 .ForMember(dest => dest.AddressId, opt => opt.MapFrom(src => src.ShippingAddressId));
             CreateMap<BillingAddress, AddressResponseDTO>()
                 .ForMember(dest => dest.AddressId, opt => opt.MapFrom(src => src.BillingAddressId));
+            CreateMap<PaymentInfo, PaymentInfoDTO>();
         }
     }
 }
