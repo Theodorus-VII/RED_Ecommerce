@@ -286,7 +286,7 @@ public class ProductController : ControllerBase
         try
         {
             double average = await _services.GetAverageRating(id);
-            return Ok(average);
+            return Ok(Math.Round(average, 2));
         }
         catch
         {
