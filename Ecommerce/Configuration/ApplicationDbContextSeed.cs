@@ -100,34 +100,34 @@ public static class ApplicationDbContextSeed
             }
 
 
-            if (!context.Carts.Any())
-            {
-                var carts = new List<Cart>();
-                for (int i = 0; i < 50; i++) // Example: creating 50 carts
-                {
-                    var cart = new Cart
-                    {
-                        UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
-                        TotalPrice = 100.0f // Example total price
-                    };
+            // if (!context.Carts.Any())
+            // {
+            //     var carts = new List<Cart>();
+            //     for (int i = 0; i < 50; i++) // Example: creating 50 carts
+            //     {
+            //         var cart = new Cart
+            //         {
+            //             UserId = users[i % users.Count].Id.ToString(), // Assuming users is a list of User entities
+            //             TotalPrice = 100.0f // Example total price
+            //         };
 
-                    var cartItems = new List<CartItem>();
-                    for (int j = 0; j < 5; j++) // Example: each cart has 5 items
-                    {
-                        cartItems.Add(new CartItem
-                        {
-                            ProductId = products[j % products.Count].Id, // Assuming products is a list of Product entities
-                            Quantity = 1, // Example quantity
-                            Price = products[j % products.Count].Price // Example price
-                        });
-                    }
-                    cart.Items = cartItems;
-                    carts.Add(cart);
-                }
-                context.Carts.AddRange(carts);
-                context.SaveChanges();
+            //         var cartItems = new List<CartItem>();
+            //         for (int j = 0; j < 5; j++) // Example: each cart has 5 items
+            //         {
+            //             cartItems.Add(new CartItem
+            //             {
+            //                 ProductId = products[j % products.Count].Id, // Assuming products is a list of Product entities
+            //                 Quantity = 1, // Example quantity
+            //                 Price = products[j % products.Count].Price // Example price
+            //             });
+            //         }
+            //         cart.Items = cartItems;
+            //         carts.Add(cart);
+            //     }
+            //     context.Carts.AddRange(carts);
+            //     context.SaveChanges();
 
-            }
+            // }
 
             // if (!context.Orders.Any())
             // {
