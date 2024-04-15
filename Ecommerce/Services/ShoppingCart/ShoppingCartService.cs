@@ -43,6 +43,25 @@ namespace Ecommerce.Services.ShoppingCart
         }
 
 
+        public async Task<CartItemResponseDTO> GetCartItemsById(string userId, int cartItemId)
+        {
+            try
+            {
+                var cart = await _context.Carts.FirstOrDefaultAsync(c => c.UserId == userId) ?? throw new ArgumentException("Cart not found.");
+                Console.WriteLine(cart.CartId);
+                var cartItem = await _context.CartItems.Where(ci => ci.CartItemId == cartItemId && ci.CartId == cart.CartId).Include(ci => ci.Product).FirstOrDefaultAsync() ?? throw new ArgumentException("Cart item not found.");
+                return _mapper.Map<CartItemResponseDTO>(cartItem); 
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw new Exception("An error occurred while fetching cart item.");
+            }
+        }
+
 
         public async Task AddToCartAsync(string userId, int productId, int quantity)
         {
