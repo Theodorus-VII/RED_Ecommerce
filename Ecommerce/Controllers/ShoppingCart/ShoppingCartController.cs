@@ -63,6 +63,50 @@ namespace Ecommerce.Controllers.Cart
             
         }
 
+
+        /// <summary>
+        /// Get cart item by id
+        /// </summary>
+        /// <param name="cartItemId">Id of the cart item to fetch</param>
+        /// <returns>returns a cart item in apiresponse object</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /cart/1
+        /// </remarks>
+        /// <response code="200">Returns the cart item in an apiresponse object</response>
+        /// <response code="401">Unauthorized access</response>
+        /// <response code="404">Cart item not found</response>
+        /// <response code="404">Cart not found</response>
+        /// <response code="500">Internal server error</response>
+        [HttpGet("{cartItemId}")]
+        public async Task<IActionResult> GetCartItemById(int cartItemId)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    var errorResponse = new ApiResponse<object>(false, "Unauthorized access.", null);
+                    return Unauthorized(errorResponse);
+                }
+
+                var cartItemDTO = await _shoppingCartService.GetCartItemsById(userId, cartItemId);
+                var response = new ApiResponse<object>(true, "Cart item fetched successfully.", cartItemDTO);
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                var errorResponse = new ApiResponse<object>(false, ex.Message, null);
+                return NotFound(errorResponse);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new ApiResponse<object>(false, ex.Message, null);
+                return StatusCode(500, errorResponse);
+            }
+        }
+
+
         /// <summary>
         /// Add item to cart
         /// </summary>
