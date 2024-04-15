@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json;
-
-namespace Ecommerce.Util
+﻿namespace Ecommerce.Util
 {
-    [JsonConverter(typeof(NullableDataJsonConverter))]
     public class ApiResponse<T>
     {
         public bool Success { get; set; }

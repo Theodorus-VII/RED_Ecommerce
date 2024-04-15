@@ -3,20 +3,23 @@ using Ecommerce.Controllers.Orders.Contracts;
 using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Services.Orders
 {
     public class OrderService : IOrderService
     {
+        private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
-        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper)
+        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper, UserManager<User> userManager)
         {
             _context = context;
             _emailService = emailService;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         public async Task<string> MakeOrderAsync(string userId, int paymentInfoId, int shippingAddressId, int billingAddressId)
@@ -55,12 +58,12 @@ namespace Ecommerce.Services.Orders
                 }
                 _context.Orders.Add(newOrder);
                 await _context.SaveChangesAsync();
-
-                string message = newOrder.GenerateOrderEmailMessage();
+                var user = await _userManager.FindByIdAsync(userId);
+                string message = newOrder.GenerateOrderEmailMessage(user.FirstName);
                 await _emailService.SendEmail(new EmailDto
                 {
-                    Subject = "Order Confirmation",
-                    Recipient = "zekariyasteshager@gmail.com",
+                    Subject = $"Order Confirmation - Order Number: {newOrder.OrderNumber}",
+                    Recipient = user.Email,
                     Message = message
                 });
                 return newOrder.OrderNumber;
@@ -89,12 +92,12 @@ namespace Ecommerce.Services.Orders
             }
         }
 
-        public async Task<OrderItemResponseDTO> GetOrderAsync(string userId, int orderId)
+        public async Task<OrderResponseDTO> GetOrderAsync(string userId, int orderId)
         {
             try
             {
                 var order = await _context.Orders.Where(o => o.UserId == userId && o.OrderId == orderId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderItemResponseDTO>(order);
+                return _mapper.Map<OrderResponseDTO>(order);
             }
             catch (Exception)
             {
@@ -102,12 +105,12 @@ namespace Ecommerce.Services.Orders
             }
         }
 
-        public async Task<OrderItemResponseDTO> GetOrderByOrderNumberAsync(string orderNumber)
+        public async Task<OrderResponseDTO> GetOrderByOrderNumberAsync(string orderNumber)
         {
             try
             {
                 var order = await _context.Orders.Where(o => o.OrderNumber == orderNumber).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderItemResponseDTO>(order);
+                return _mapper.Map<OrderResponseDTO>(order);
             }
             catch (Exception)
             {

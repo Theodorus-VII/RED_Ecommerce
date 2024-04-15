@@ -3,16 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Ecommerce.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Ecommerce.Util;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
 namespace Ecommerce.Controllers.Payment
 {
-    [Authorize]
     [ApiController]
     [Route("payment")]
+    [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
@@ -22,6 +22,26 @@ namespace Ecommerce.Controllers.Payment
             _paymentService = paymentService;
         }
 
+        /// <summary>
+        /// Make payment request to chapa
+        /// </summary>
+        /// <param name="request">the request object used to make a payment request to chapa</param>
+        /// <returns>returns the txref and checoutUrl in apiresponse object</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     POST /payment/makePayment
+        ///         request body:
+        ///             {
+        ///                 "currency": "ETB",
+        ///                 "returnUrl": "https://example.com",
+        ///                 "phoneNumber": "0912345678"
+        ///             }
+        /// </remarks>
+        /// <response code="200">Returns the txref and checoutUrl in an apiresponse object</response>
+        /// <response code="400">Invalid request</response>
+        /// <response code="400">Product out of stock</response>
+        /// <response code="401">Unauthorized access</response>
+        /// <response code="500">Internal server error</response>
         [HttpPost("makePayment")]
         public async Task<IActionResult> MakePaymentAsync([FromBody] PaymentRequestDTO request)
         {
@@ -31,9 +51,9 @@ namespace Ecommerce.Controllers.Payment
                 {
                     return BadRequest(ModelState);
                 }
-                if (request == null || request.Currency == null)
+                if (request == null || request.Currency == null || request.ReturnUrl == null)
                 {
-                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Invalid request", null));
+                    var errorResponse = new ApiResponse<object>(false, "Invalid request", null);
                     return BadRequest(errorResponse);
                 }
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -42,22 +62,46 @@ namespace Ecommerce.Controllers.Payment
                 var lastName = User.FindFirstValue(ClaimTypes.Surname);
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
                 {
-                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Unauthorized access.", null));
+                    var errorResponse = new ApiResponse<object>(false, "Unauthorized access.", null);
                     return Unauthorized(errorResponse);
                 }
                 var response = await _paymentService.MakePaymentAsync(userId, email, firstName, lastName, request.Currency, request.ReturnUrl, request.PhoneNumber);
                 return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", response));
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
-                var response = JsonConvert.SerializeObject(new ApiResponse<object>(false, ex.Message, null));
+                var response = new ApiResponse<object>(false, ex.Message, null);
                 return BadRequest(response);
             }
-            
+            catch (Exception ex)
+            {
+                var response = new ApiResponse<object>(false, ex.Message, null);
+                return StatusCode(500, response);
+            }
+
         }
 
-        [HttpGet("verifypayment/{TxRef}")]
-        public async Task<IActionResult> VerifyPaymentAsync(string TxRef , PaymentVerifyDTO request)
+        /// <summary>
+        /// Verify payment transaction
+        /// </summary>
+        /// <param name="request">the request object used to verify a payment transaction and create Order</param>
+        /// <returns>returns the order number in apiresponse object</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /payment/verifypayment
+        ///         request body:
+        ///             {
+        ///                 "txRef": "tx638485309250761188",
+        ///                 "shippingAddressId": 1,
+        ///                 "billingAddressId": 1
+        ///             }
+        /// </remarks>
+        /// <response code="200">Returns the order number in an apiresponse object</response>
+        /// <response code="400">Invalid request</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="401">Unauthorized access</response>
+        [HttpGet("verifypayment")]
+        public async Task<IActionResult> VerifyPaymentAsync(PaymentVerifyDTO request)
         {
             try
             {
@@ -68,20 +112,25 @@ namespace Ecommerce.Controllers.Payment
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Unauthorized access.", null));
+                    var errorResponse = new ApiResponse<object>(false, "Unauthorized access.", null);
                     return Unauthorized(errorResponse);
                 }
                 if(request.Equals(null) || request.ShippingAddressId <= 0 || request.BillingAddressId <= 0)
                 {
-                    var errorResponse = JsonConvert.SerializeObject(new ApiResponse<object>(false, "Invalid request", null));
+                    var errorResponse = new ApiResponse<object>(false, "Invalid request", null);
                     return BadRequest(errorResponse);
                 }   
-                var response = await _paymentService.VerifyTransactionAsync(userId, TxRef, request.ShippingAddressId, request.BillingAddressId);
+                if (string.IsNullOrEmpty(request.TxRef))
+                {
+                    var errorResponse = new ApiResponse<object>(false, "Invalid transaction reference.", null);
+                    return BadRequest(errorResponse);
+                }
+                var response = await _paymentService.VerifyTransactionAsync(userId, request.TxRef, request.ShippingAddressId, request.BillingAddressId);
                 return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", new { OrderNumber = response }));
             }
             catch (Exception ex)
             {
-                var response = JsonConvert.SerializeObject(new ApiResponse<object>(false, ex.Message, null));
+                var response = new ApiResponse<object>(false, ex.Message, null);
                 return BadRequest(response);
             }
             
