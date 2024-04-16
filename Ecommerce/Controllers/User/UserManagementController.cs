@@ -13,17 +13,20 @@ namespace Ecommerce.Configuration;
 [ApiController]
 [Route("user")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-public class UserAccountController : ControllerBase
+public class UserManagementController : ControllerBase
 {
     private readonly IUserAccountService _userAccountService;
-    private readonly ILogger<UserAccountController> _logger;
+    private readonly IUserManagementService _userManagementService;
+    private readonly ILogger<UserManagementController> _logger;
 
-    public UserAccountController(
+    public UserManagementController(
+        IUserManagementService userManagementService,
         IUserAccountService userAccountService,
-        ILogger<UserAccountController> logger
+        ILogger<UserManagementController> logger
     )
     {
         _userAccountService = userAccountService;
+        _userManagementService = userManagementService;
         _logger = logger;
     }
 
@@ -49,7 +52,6 @@ public class UserAccountController : ControllerBase
     /// <response code="401">Invalid Token</response>
     /// <response code="404">User Not Found</response>
     /// <response code="500">Internal Server Error</response>
-
     [HttpGet()]
     [SwaggerResponse(200, "User Details retrieved successfully", typeof(UserDto))]
     public async Task<IActionResult> GetUserDetails()
@@ -96,7 +98,7 @@ public class UserAccountController : ControllerBase
             return Unauthorized();
         }
 
-        var result = await _userAccountService.UpdateUserDetails(userId.Value, request);
+        var result = await _userManagementService.UpdateUserDetails(userId.Value, request);
         if (result.IsSuccess)
         {
             return Ok("User Updated Successfully");
@@ -127,7 +129,7 @@ public class UserAccountController : ControllerBase
             return Unauthorized("Invalid Token");
         }
         // extract the user Id from the claim.
-        var result = await _userAccountService.DeleteUser(userId.Value);
+        var result = await _userManagementService.DeleteUser(userId.Value);
         if (result.IsSuccess)
         {
             return Ok("User Account Deleted");
@@ -173,7 +175,7 @@ public class UserAccountController : ControllerBase
             );
         }
         var userId = user.Id;
-        var result = await _userAccountService.DeleteUser(userId);
+        var result = await _userManagementService.DeleteUser(userId);
 
         if (result.IsSuccess)
         {

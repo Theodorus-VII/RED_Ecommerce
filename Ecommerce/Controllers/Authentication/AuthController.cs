@@ -15,18 +15,15 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IUserAccountService _userAccountService;
-    private readonly IEmailService _emailService;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         IAuthService authService,
-        IEmailService emailService,
         IUserAccountService userAccountService,
         ILogger<AuthController> logger
     )
     {
         _authService = authService;
-        _emailService = emailService;
         _userAccountService = userAccountService;
         _logger = logger;
     }
@@ -97,8 +94,11 @@ public class AuthController : ControllerBase
                 response.Error.ErrorCode,
                 response.Error.ErrorDescription);
         }
+        
         _logger.LogInformation("User Successfully Created.");
+        
         UserDto user = response.Data;
+
         string baseUrl = $"{Request.Host}{Request.PathBase}";
         string action = Url.Action("ConfirmEmail", "auth")!;
         var result = await _authService.SendConfirmationEmail(
@@ -160,25 +160,6 @@ public class AuthController : ControllerBase
 
         return Ok(response.Data);
     }
-
-    [HttpPost("login-delete")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> LoginDelete(LoginRequest loginRequest)
-    {
-        var loginResponse = await _authService.LoginUser(loginRequest);
-        if (loginResponse.IsSuccess)
-        {
-            if (loginResponse.Data is null)
-            {
-                return StatusCode(500, "Internal server error.");
-            }
-            var deleteResponse = await _userAccountService.DeleteUser(loginResponse.Data.Id);
-            return Ok(deleteResponse);
-        }
-        return BadRequest();
-    }
-
-
 
     /// <summary>
     ///     Logout Endpoint
@@ -324,15 +305,18 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("Admin Successfully Created.");
 
-        var user = response.Data;
-        var confirmationEmail = new EmailDto
-        {
-            Recipient = user.Email,
-            Subject = "Welcome to _______ Commerce",
-            Message = $@"<p>Your new admin account at _______ Commerce has been created.</p>"
-        };
+        UserDto user = response.Data;
+
+        string baseUrl = $"{Request.Host}{Request.PathBase}";
+        string action = Url.Action("ConfirmEmail", "auth")!;
+
         _logger.LogInformation("Sending Confirmation Email...");
-        await _emailService.SendEmail(confirmationEmail);
+        await _authService.SendConfirmationEmail(
+            user: user,
+            baseUrl: baseUrl,
+            scheme: Request.Scheme,
+            action: action
+        );
         return StatusCode(statusCode: 201, user);
     }
 

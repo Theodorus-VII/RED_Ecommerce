@@ -10,7 +10,6 @@ namespace Ecommerce.Services;
 public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
@@ -21,12 +20,10 @@ public class AuthService : IAuthService
         RoleManager<IdentityRole<Guid>> roleManager,
         IJwtTokenGenerator tokenGenerator,
         IEmailService emailService,
-        ILogger<AuthService> logger,
-        SignInManager<User> signInManager
+        ILogger<AuthService> logger
     )
     {
         _userManager = userManager;
-        _signInManager = signInManager;
         _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;

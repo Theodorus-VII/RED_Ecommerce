@@ -8,6 +8,4 @@ public interface IUserAccountService{
     public Task<User?> GetUserById(Guid UserId);
 
     public Task<User?> GetUserByEmail(string Email);
-    public Task<IServiceResponse<bool>> UpdateUserDetails(Guid userId, UserPatchRequest request);
-    public Task<IServiceResponse<bool>> DeleteUser(Guid userId);
 }

@@ -34,6 +34,19 @@ public class User : IdentityUser<Guid>
         DefaultShippingAddress = defaultShippingAddress;
         BillingAddress = billingAddress;
     }
+
+    public User(
+        string email,
+        string firstName,
+        string lastName
+    )
+    {
+        Id = new Guid();
+        UserName = email;
+        Email = email;
+        FirstName = firstName;
+        LastName = lastName;
+    }
 }
 
 public class UserDto
