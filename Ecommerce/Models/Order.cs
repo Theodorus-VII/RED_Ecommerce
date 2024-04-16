@@ -10,7 +10,7 @@ namespace Ecommerce.Models
         public string? Status { get; set; }
         public int ShippingAddressId { get; set; }
         public ShippingAddress? ShippingAddress { get; set; }
-        public int BillingAddressId { get; set; }
+        public int? BillingAddressId { get; set; }
         public BillingAddress? BillingAddress { get; set; }
         public List<OrderItem> OrderItems { get; set; }
         public int PaymentInfoId { get; set; }
