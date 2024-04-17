@@ -14,12 +14,14 @@ public class AuthService : IAuthService
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
+    private readonly IUserAccountService _userAccountService;
 
     public AuthService(
         UserManager<User> userManager,
         RoleManager<IdentityRole<Guid>> roleManager,
         IJwtTokenGenerator tokenGenerator,
         IEmailService emailService,
+        IUserAccountService userAccountService,
         ILogger<AuthService> logger
     )
     {
@@ -27,6 +29,7 @@ public class AuthService : IAuthService
         _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;
+        _userAccountService = userAccountService;
         _logger = logger;
     }
 
@@ -35,74 +38,96 @@ public class AuthService : IAuthService
         return _userManager.Users;
     }
 
-    public ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
+    private ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
     {
         return _tokenGenerator.GetPrincipalFromExpiredToken(token);
     }
 
     public async Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request)
     {
-        var response = new ServiceResponse<UserDto>();
+        IServiceResponse<UserDto> successResponse;
+        IServiceResponse<UserDto> failResponse;
+
         try
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
             {
-                response.Error = new ErrorResponse()
+                failResponse = new ServiceResponse<UserDto>()
                 {
-                    ErrorCode = 404,
-                    ErrorDescription = "User not found"
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 404,
+                        ErrorDescription = "User not found"
+                    },
                 };
-                response.IsSuccess = false;
-
-                return response;
+                return failResponse;
             }
             if (!await _userManager.CheckPasswordAsync(user, request.Password))
             {
-                response.Error = new ErrorResponse()
+                failResponse = new ServiceResponse<UserDto>()
                 {
-                    ErrorCode = 401,
-                    ErrorDescription = "Invalid Password"
+                    IsSuccess = false,
+                    StatusCode = 401,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 401,
+                        ErrorDescription = "Invalid Password"
+                    }
                 };
-                response.IsSuccess = false;
-
-                return response;
+                return failResponse;
             }
 
             var claims = new List<Claim>();
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
             {
-                _logger.LogInformation($"User Role: {role}");
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
+
             string token = _tokenGenerator.GenerateToken(user, claims);
             string refreshToken = _tokenGenerator.GenerateRefreshToken();
+
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
 
             await _userManager.UpdateAsync(user);
-            response.Data = new UserDto(user, token, refreshToken);
-            response.StatusCode = 200;
-            response.IsSuccess = true;
 
-            return response;
+            string userRole = await _userAccountService.GetUserRole(user);
+            _logger.LogInformation("UserRole: {}", userRole);
+            successResponse = new ServiceResponse<UserDto>()
+            {
+                IsSuccess = true,
+                StatusCode = 200,
+                Data = new UserDto(
+                    user: user,
+                    accessToken: token,
+                    refreshToken: refreshToken,
+                    role: userRole
+                ),
+            };
+
+            return successResponse;
         }
         catch (Exception e)
         {
             _logger.LogError($"Login Error: {e}");
-            response.StatusCode = 500;
-            response.Error = new ErrorResponse()
+            failResponse = new ServiceResponse<UserDto>()
             {
-                ErrorCode = 500,
-                ErrorDescription = e.Message
+                IsSuccess = false,
+                StatusCode = 500,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = e.Message
+                }
             };
-            response.IsSuccess = false;
-
-            return response;
+            return failResponse;
         }
     }
 
@@ -115,6 +140,7 @@ public class AuthService : IAuthService
             {
                 Data = false,
                 IsSuccess = false,
+                StatusCode = 404,
                 Error = new ErrorResponse()
                 {
                     ErrorCode = 404,
@@ -128,6 +154,7 @@ public class AuthService : IAuthService
         return new ServiceResponse<bool>()
         {
             Data = true,
+            StatusCode = 200,
             IsSuccess = true,
         };
     }
@@ -144,31 +171,38 @@ public class AuthService : IAuthService
 
     public async Task<IServiceResponse<UserDto>> RegisterUser(RegistrationRequest request, string Role)
     {
+        IServiceResponse<UserDto> successResponse;
+        IServiceResponse<UserDto> failResponse;
+
         try
         {
             // check if user alerady exists.
             if (await _userManager.FindByEmailAsync(request.Email) != null)
             {
                 // throw new Exception("Email already exists.");
-                return new ServiceResponse<UserDto>()
+                failResponse = new ServiceResponse<UserDto>()
                 {
                     IsSuccess = false,
+                    StatusCode = 409,
                     Error = new ErrorResponse()
                     {
                         ErrorCode = 409,
                         ErrorDescription = "Email already in use"
                     }
                 };
-            }
-            _logger.LogInformation("Creating user...");
-            User user = new(
-                    request.Email,
-                    request.FirstName,
-                    request.LastName,
-                    request.DefaultShippingAddress,
-                    request.BillingAddress
-            );
 
+                return failResponse;
+            }
+
+            _logger.LogInformation("Creating user...");
+
+            User user = new User(
+                request.Email,
+                request.FirstName,
+                request.LastName,
+                request.DefaultShippingAddress,
+                request.BillingAddress
+            );
             var result = await _userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
@@ -180,6 +214,7 @@ public class AuthService : IAuthService
             _logger.LogInformation("User added to server.");
 
             var assignRoleResult = await _userManager.AddToRoleAsync(user, Role);
+
             if (!assignRoleResult.Succeeded)
             {
                 _logger.LogError("Encountered Role Assignment Error: {}", assignRoleResult.Errors);
@@ -202,66 +237,81 @@ public class AuthService : IAuthService
 
             await _userManager.UpdateAsync(user);
 
-            // return new AuthSucessResponse(new UserDto(user, token, refreshToken));
-            return new ServiceResponse<UserDto>()
+            var userRole = await _userAccountService.GetUserRole(user);
+            successResponse = new ServiceResponse<UserDto>()
             {
-                Data = new UserDto(user, token, refreshToken),
+                Data = new UserDto(
+                    user: user,
+                    accessToken: token,
+                    refreshToken: refreshToken,
+                    role: userRole),
                 IsSuccess = true,
                 StatusCode = 201
             };
+
+            return successResponse;
         }
         catch (Exception e)
         {
             _logger.LogError($"Registration Error: {e}");
             // return new AuthFailResponse(e.Message);
-            return new ServiceResponse<UserDto>()
+            failResponse = new ServiceResponse<UserDto>()
             {
                 IsSuccess = false,
+                StatusCode = 500,
                 Error = new ErrorResponse()
                 {
                     ErrorCode = 500,
                     ErrorDescription = "Internal Server Error"
                 }
             };
+            return failResponse;
         }
     }
 
     public async Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken)
     {
+        IServiceResponse<UserDto> successResponse;
+        IServiceResponse<UserDto> failResponse;
         try
         {
 
+            _logger.LogInformation("Refreshing User Token");
+
             // extract user data from the expired token
             var principal = GetClaimsPrincipalFromExpiredToken(expiredToken);
-
             var userIdClaim = principal.Claims.FirstOrDefault(c =>
                 c.Type == ClaimTypes.NameIdentifier
             );
 
-            _logger.LogInformation($"{userIdClaim}");
+            _logger.LogInformation("User ID Claim: {}", userIdClaim);
+            
+            // return error("Invalid User. Claim corresponding to Id not found");
             if (userIdClaim is null)
             {
-                // throw new Exception("Invalid User. Claim corresponding to Id not found");
-                return new ServiceResponse<UserDto>()
+                failResponse = new ServiceResponse<UserDto>()
                 {
                     IsSuccess = false,
+                    StatusCode = 404,
                     Error = new ErrorResponse()
                     {
                         ErrorCode = 404,
                         ErrorDescription = "User Not Found"
                     }
                 };
+
+                return failResponse;
             }
 
             Guid userId = Guid.Parse(userIdClaim.Value);
 
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
-            _logger.LogInformation($"{user}");
-
+            _logger.LogInformation("User Found: {}", user);
+            // return error if the user found is null.
             if (user is null)
             {
-                return new ServiceResponse<UserDto>()
+                failResponse = new ServiceResponse<UserDto>()
                 {
                     IsSuccess = false,
                     Error = new ErrorResponse()
@@ -270,14 +320,18 @@ public class AuthService : IAuthService
                         ErrorDescription = "User Not Found"
                     }
                 };
+
+                return failResponse;
             }
+
+            // Errors due to invalid refresh/access tokens.
             if (user.RefreshToken != refreshToken || user.RefreshTokenExpiry <= DateTime.Now)
             {
                 _logger.LogDebug($"User refresh token: {user.RefreshToken}");
                 _logger.LogDebug($"Supplied refresh token: {refreshToken}");
                 _logger.LogDebug($"Token Expiry: {user.RefreshTokenExpiry}");
 
-                return new ServiceResponse<UserDto>()
+                failResponse = new ServiceResponse<UserDto>()
                 {
                     IsSuccess = false,
                     Error = new ErrorResponse()
@@ -286,21 +340,32 @@ public class AuthService : IAuthService
                         ErrorDescription = "Invalid or Expired Refresh Token"
                     }
                 };
+                
+                return failResponse;
             }
-            var newAccessToken = _tokenGenerator.GenerateToken(user, principal.Claims);
-            var newRefreshToken = _tokenGenerator.GenerateRefreshToken();
 
+            // Generate new access and refresh tokens.
+            var newAccessToken = _tokenGenerator.GenerateToken(user, principal.Claims);
+            
+            // Save the refresh token to the db.
+            var newRefreshToken = _tokenGenerator.GenerateRefreshToken();
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
 
             await _userManager.UpdateAsync(user);
 
-            // return new AuthSucessResponse(new UserDto(user, newAccessToken, newRefreshToken));
-            return new ServiceResponse<UserDto>()
+            var role = await _userAccountService.GetUserRole(user);
+            successResponse = new ServiceResponse<UserDto>()
             {
-                Data = new UserDto(user, newAccessToken, newRefreshToken),
+                StatusCode = 200,
+                Data = new UserDto(
+                    user: user,
+                    accessToken: newAccessToken,
+                    refreshToken: newRefreshToken,
+                    role: role),
                 IsSuccess = true
             };
+            return successResponse;
         }
 
         catch (Exception e)
@@ -310,6 +375,7 @@ public class AuthService : IAuthService
             return new ServiceResponse<UserDto>()
             {
                 IsSuccess = false,
+                StatusCode = 500,
                 Error = new ErrorResponse()
                 {
                     ErrorCode = 500,
@@ -321,6 +387,8 @@ public class AuthService : IAuthService
 
     public async Task<IServiceResponse<string>> GenerateEmailConfirmationToken(string email)
     {
+        IServiceResponse<UserDto> successResponse;
+        IServiceResponse<UserDto> failResponse;
         try
         {
             var user = await _userManager.FindByEmailAsync(email);

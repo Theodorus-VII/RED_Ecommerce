@@ -14,7 +14,7 @@ public class UserManagementService : IUserManagementService
     private readonly IUserAccountService _userAccountService;
 
     public UserManagementService(
-        UserManager<User> userManager, 
+        UserManager<User> userManager,
         ILogger<UserAccountService> logger,
         IUserAccountService userAccountService)
     {
@@ -132,5 +132,33 @@ public class UserManagementService : IUserManagementService
                 }
             };
         }
+    }
+
+    public async Task<IServiceResponse<UserDto>> GetUserDetails(Guid userId)
+    {
+        var user = await _userAccountService.GetUserById(userId);
+
+        if (user is null)
+        {
+            return new ServiceResponse<UserDto>()
+            {
+                IsSuccess = false,
+                StatusCode = 404,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 404,
+                    ErrorDescription = "User Not Found"
+                }
+            };
+        }
+
+        var role = await _userAccountService.GetUserRole(user);
+
+        return new ServiceResponse<UserDto>()
+        {
+            IsSuccess = true,
+            StatusCode = 200,
+            Data = new UserDto(user: user, role: role)
+        };
     }
 }

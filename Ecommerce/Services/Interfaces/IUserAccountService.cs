@@ -8,4 +8,6 @@ public interface IUserAccountService{
     public Task<User?> GetUserById(Guid UserId);
 
     public Task<User?> GetUserByEmail(string Email);
+
+    public Task<string> GetUserRole(User user);
 }

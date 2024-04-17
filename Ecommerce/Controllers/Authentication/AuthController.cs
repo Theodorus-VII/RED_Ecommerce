@@ -137,7 +137,8 @@ public class AuthController : ControllerBase
     ///           "billingAddress": "Kizaru",
     ///           "accessToken": "Some access token",
     ///           "refreshToken": "Some refresh token",
-    ///           "phoneNumber": null
+    ///           "phoneNumber": null,
+    ///           "role": "customer"/"admin"
     ///         }
     /// </returns>
     /// </response>
@@ -157,7 +158,6 @@ public class AuthController : ControllerBase
         {
             return StatusCode(response.Error.ErrorCode, response?.Error?.ErrorDescription);
         }
-
         return Ok(response.Data);
     }
 

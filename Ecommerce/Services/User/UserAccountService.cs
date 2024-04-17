@@ -166,4 +166,15 @@ public class UserAccountService : IUserAccountService
             };
         }
     }
+
+    public async Task<string> GetUserRole(User user)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+        _logger.LogInformation("{}", roles);
+        if (roles.Contains(Roles.Admin))
+        {
+            return Roles.Admin;
+        }
+        return Roles.Customer;
+    }
 }

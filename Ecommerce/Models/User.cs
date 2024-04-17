@@ -60,6 +60,7 @@ public class UserDto
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
     public string? PhoneNumber { get; set; }
+    public string? Role { get; set; }
 
     public UserDto(
         Guid id,
@@ -69,7 +70,8 @@ public class UserDto
         string? defaultShippingAddress,
         string? billingAddress,
         string accessToken,
-        string refreshToken
+        string refreshToken, 
+        string role
     )
     {
         Id = id;
@@ -80,9 +82,14 @@ public class UserDto
         BillingAddress = billingAddress;
         AccessToken = accessToken;
         RefreshToken = refreshToken;
+        Role = role;
     }
 
-    public UserDto(User user, string accessToken, string refreshToken)
+    public UserDto(
+        User user,
+        string accessToken,
+        string refreshToken,
+        string role)
     {
         Id = user.Id;
         FirstName = user.FirstName;
@@ -93,9 +100,10 @@ public class UserDto
         PhoneNumber = user.PhoneNumber;
         AccessToken = accessToken;
         RefreshToken = refreshToken;
+        Role = role;
     }
 
-    public UserDto(User user)
+    public UserDto(User user, string role)
     {
         Id = user.Id;
         FirstName = user.FirstName;
@@ -104,5 +112,6 @@ public class UserDto
         DefaultShippingAddress = user.DefaultShippingAddress;
         BillingAddress = user.BillingAddress;
         PhoneNumber = user.PhoneNumber;
+        Role = role;
     }
 }

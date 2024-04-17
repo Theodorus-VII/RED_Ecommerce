@@ -56,7 +56,7 @@ public class UserManagementController : ControllerBase
     [SwaggerResponse(200, "User Details retrieved successfully", typeof(UserDto))]
     public async Task<IActionResult> GetUserDetails()
     {
-        var userId = ExtractUser.GetUserId(HttpContext);
+        Guid? userId = ExtractUser.GetUserId(HttpContext);
 
         _logger.LogInformation(userId.ToString());
 
@@ -67,14 +67,8 @@ public class UserManagementController : ControllerBase
                 "Invalid token"
             );
         }
-        var user = await _userAccountService.GetUserById(userId.Value);
-
-        if (user is null)
-        {
-            return StatusCode(404, "User not found");
-        }
-
-        return Ok(new UserDto(user));
+        var user = await _userManagementService.GetUserDetails(userId.Value);
+        return StatusCode(statusCode: 200, user);
     }
 
 
