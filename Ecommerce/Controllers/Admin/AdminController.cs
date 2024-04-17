@@ -62,7 +62,11 @@ public class AdminController : ControllerBase
             );
     }
 
+<<<<<<< HEAD
     /// <summary>
+=======
+        /// <summary>
+>>>>>>> 762a5eb865c8ee3fb4d3b61141271f242332e860
     ///     Register A New Administrator Account
     /// </summary>
     /// <remarks>

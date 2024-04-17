@@ -40,7 +40,8 @@ public class UserManagementService : IUserManagementService
             request.FirstName,
             request.LastName,
             request.DefaultShippingAddress,
-            request.BillingAddress
+            request.BillingAddress,
+            request.PhoneNumber
         );
         // user provided both new and old password. attempt to update the password.
         if (request.NewPassword != null && request.OldPassword != null)
