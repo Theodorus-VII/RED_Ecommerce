@@ -15,6 +15,7 @@ using System.Reflection;
 using Ecommerce.Services.Payment;
 using DotNetEnv;
 using Ecommerce.Services.Orders;
+using Ecommerce.Middleware;
 
 
 Env.Load();
@@ -113,6 +114,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
+builder.Services.AddTransient<ErrorHandlingMiddleware>();
 
 
 var app = builder.Build();
@@ -140,6 +142,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ExtractUserIdMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseCors(
     options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
