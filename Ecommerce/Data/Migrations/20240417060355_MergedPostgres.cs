@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ecommerce.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Final : Migration
+    public partial class MergedPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -339,7 +339,7 @@ namespace Ecommerce.Data.Migrations
                     OrderNumber = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: true),
                     ShippingAddressId = table.Column<int>(type: "integer", nullable: false),
-                    BillingAddressId = table.Column<int>(type: "integer", nullable: false),
+                    BillingAddressId = table.Column<int>(type: "integer", nullable: true),
                     PaymentInfoId = table.Column<int>(type: "integer", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
@@ -351,8 +351,7 @@ namespace Ecommerce.Data.Migrations
                         name: "FK_Orders_BillingAddresses_BillingAddressId",
                         column: x => x.BillingAddressId,
                         principalTable: "BillingAddresses",
-                        principalColumn: "BillingAddressId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "BillingAddressId");
                     table.ForeignKey(
                         name: "FK_Orders_PaymentInfos_PaymentInfoId",
                         column: x => x.PaymentInfoId,
@@ -374,8 +373,8 @@ namespace Ecommerce.Data.Migrations
                     OrderItemId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
-                    Price = table.Column<float>(type: "real", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
+                    Price = table.Column<float>(type: "real", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: true)

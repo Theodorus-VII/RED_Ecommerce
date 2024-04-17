@@ -142,7 +142,7 @@ namespace Ecommerce.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OrderId"));
 
-                    b.Property<int>("BillingAddressId")
+                    b.Property<int?>("BillingAddressId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("OrderDate")
@@ -583,9 +583,7 @@ namespace Ecommerce.Data.Migrations
                 {
                     b.HasOne("Ecommerce.Models.BillingAddress", "BillingAddress")
                         .WithMany()
-                        .HasForeignKey("BillingAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BillingAddressId");
 
                     b.HasOne("Ecommerce.Models.PaymentInfo", "PaymentInfo")
                         .WithMany()

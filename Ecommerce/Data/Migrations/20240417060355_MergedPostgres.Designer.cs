@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ecommerce.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240415073347_Final")]
-    partial class Final
+    [Migration("20240417060355_MergedPostgres")]
+    partial class MergedPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -145,7 +145,7 @@ namespace Ecommerce.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OrderId"));
 
-                    b.Property<int>("BillingAddressId")
+                    b.Property<int?>("BillingAddressId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("OrderDate")
@@ -586,9 +586,7 @@ namespace Ecommerce.Data.Migrations
                 {
                     b.HasOne("Ecommerce.Models.BillingAddress", "BillingAddress")
                         .WithMany()
-                        .HasForeignKey("BillingAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BillingAddressId");
 
                     b.HasOne("Ecommerce.Models.PaymentInfo", "PaymentInfo")
                         .WithMany()

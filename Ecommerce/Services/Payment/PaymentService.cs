@@ -95,7 +95,7 @@ namespace Ecommerce.Services.Payment
         }
 
 
-        public async Task<string> VerifyTransactionAsync(string userId, string TxRef, int shippingAddressId, int billingAddressId)
+        public async Task<string> VerifyTransactionAsync(string userId, string TxRef, int shippingAddressId, int? billingAddressId)
         {
             try
             {
