@@ -35,7 +35,7 @@ namespace Ecommerce.Services.Payment
             string firstName, 
             string lastName,
             string currency,
-            string? returnUrl,
+            string returnUrl,
             string? phoneNumber)
         {
             try
@@ -95,7 +95,7 @@ namespace Ecommerce.Services.Payment
         }
 
 
-        public async Task<string> VerifyTransactionAsync(string userId, string TxRef, int shippingAddressId, int billingAddressId)
+        public async Task<string> VerifyTransactionAsync(string userId, string TxRef, int shippingAddressId, int? billingAddressId)
         {
             try
             {
@@ -124,6 +124,7 @@ namespace Ecommerce.Services.Payment
                 {
                     throw new Exception("The payment request was not successful.");
                 }
+                Console.WriteLine(paymentResponse.data.email);
 
                 var paymentInfo = _context.PaymentInfos.FirstOrDefault(p => p.TxRef == TxRef);
                 if (paymentInfo != null)

@@ -8,6 +8,7 @@ namespace Ecommerce.Services.Interfaces
     public interface IShoppingCartService
     {
         Task<CartResponseDTO> GetCartItemsAsync(string userId);
+        Task<CartItemResponseDTO> GetCartItemsById(string userId, int cartItemId);
         Task AddToCartAsync(string userId, int productId, int quantity);
         Task AddMultipleItemsToCartAsync(string userId, List<AddToCartRequest> items);
         Task RemoveFromCartAsync(string userId, int productId);

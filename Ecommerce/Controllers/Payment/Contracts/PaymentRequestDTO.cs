@@ -10,8 +10,9 @@
 
     public class PaymentVerifyDTO
     {
+        public string? TxRef { get; set; }
         public int ShippingAddressId { get; set; }
-        public int BillingAddressId { get; set; }
+        public int? BillingAddressId { get; set; }
     }
 
 }

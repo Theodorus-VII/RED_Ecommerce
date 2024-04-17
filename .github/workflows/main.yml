@@ -1,0 +1,29 @@
+name: Environment Setup Workflow
+
+on: [push, pull_request]
+
+jobs:
+ example_job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up environment variables
+      run: |
+        echo "JwtSettings__Secret=${{ secrets.JwtSettings__Secret }}" >> $GITHUB_ENV
+        echo "JwtSettings__Issuer=${{ secrets.JwtSettings__Issuer }}" >> $GITHUB_ENV
+        echo "JwtSettings__Audience=${{ secrets.JwtSettings__Audience }}" >> $GITHUB_ENV
+        echo "JwtSettings__ExpiryMinutes=${{ secrets.JwtSettings__ExpiryMinutes }}" >> $GITHUB_ENV
+        echo "EmailConfiguration__From=${{ secrets.EmailConfiguration__From }}" >> $GITHUB_ENV
+        echo "EmailConfiguration__SmtpServer=${{ secrets.EmailConfiguration__SmtpServer }}" >> $GITHUB_ENV
+        echo "EmailConfiguration__Port=${{ secrets.EmailConfiguration__Port }}" >> $GITHUB_ENV
+        echo "EmailConfiguration__UserName=${{ secrets.EmailConfiguration__UserName }}" >> $GITHUB_ENV
+        echo "EmailConfiguration__Password=${{ secrets.EmailConfiguration__Password }}" >> $GITHUB_ENV
+
+    - name: Example step using environment variables
+      run: |
+        echo "JWT Secret: $JwtSettings__Secret"
+        echo "Email From: $EmailConfiguration__From"
+        # Add more commands that use the environment variables as needed
