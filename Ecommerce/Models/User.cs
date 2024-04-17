@@ -47,6 +47,24 @@ public class User : IdentityUser<Guid>
         FirstName = firstName;
         LastName = lastName;
     }
+
+    public User UpdateUser(
+        string? email,
+        string? firstName,
+        string? lastName,
+        string? defaultShippingAddress,
+        string? billingAddress
+    )
+    {
+        Email = email ?? Email;
+        UserName = email ?? UserName;
+        FirstName = firstName ?? FirstName;
+        LastName = lastName ?? LastName;
+        BillingAddress = billingAddress ?? BillingAddress;
+        DefaultShippingAddress =
+            defaultShippingAddress ?? DefaultShippingAddress;
+        return this;
+    }
 }
 
 public class UserDto
@@ -70,7 +88,7 @@ public class UserDto
         string? defaultShippingAddress,
         string? billingAddress,
         string accessToken,
-        string refreshToken, 
+        string refreshToken,
         string role
     )
     {

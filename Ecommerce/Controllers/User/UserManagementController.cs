@@ -67,8 +67,10 @@ public class UserManagementController : ControllerBase
                 "Invalid token"
             );
         }
-        var user = await _userManagementService.GetUserDetails(userId.Value);
-        return StatusCode(statusCode: 200, user);
+        var response = await _userManagementService.GetUserDetails(userId.Value);
+        return StatusCode(
+            statusCode: response.StatusCode,
+            value: response.Data);
     }
 
 
@@ -98,8 +100,8 @@ public class UserManagementController : ControllerBase
             return Ok("User Updated Successfully");
         }
         return StatusCode(
-            result.Error.ErrorCode,
-            result.Error.ErrorDescription
+            statusCode: result.Error.ErrorCode,
+            value: result.Error.ErrorDescription
         );
     }
 
@@ -129,55 +131,8 @@ public class UserManagementController : ControllerBase
             return Ok("User Account Deleted");
         }
         return StatusCode(
-            result.Error.ErrorCode,
-            result.Error.ErrorDescription
-            );
-    }
-
-
-    /// <summary>
-    /// Admin - User Delete Endpoint
-    /// </summary>
-    /// <response code="200">User Deleted Successfully</response>
-    /// <response code="403">Insufficient Priveledges(User tried to access this admin endpoint)</response>
-    /// <response code="404">User Not Found</response>
-    /// <response code="500">Server Error</response>
-    /// <param name="request"></param>
-    [HttpPost("admin-user-delete")]
-    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> AdminUserDelete(AdminUserDeleteRequest request)
-    {
-        User? user;
-        if (request.UserId != null)
-        {
-            user = await _userAccountService.GetUserById(Guid.Parse(request.UserId));
-        }
-        else if (request.Email != null)
-        {
-            user = await _userAccountService.GetUserByEmail(request.Email);
-        }
-        else
-        {
-            return BadRequest("Please provide the User Id or email of the user to delete");
-        }
-
-        if (user is null)
-        {
-            return StatusCode(
-                404,
-                "User Not Found"
-            );
-        }
-        var userId = user.Id;
-        var result = await _userManagementService.DeleteUser(userId);
-
-        if (result.IsSuccess)
-        {
-            return Ok("User Deleted");
-        }
-        return StatusCode(
-            result.Error.ErrorCode,
-            result.Error.ErrorDescription
-            );
+            statusCode: result.Error.ErrorCode,
+            value: result.Error.ErrorDescription
+        );
     }
 }

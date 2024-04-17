@@ -14,7 +14,31 @@ public class ServiceResponse<T> : IServiceResponse<T>
     public T? Data { get; set; } 
     public ErrorResponse Error { get; set; } = new ErrorResponse();
     public bool IsSuccess { get; set; }
+
+    public static IServiceResponse<T> SuccessResponse(T data, int statusCode)
+    {
+        return new ServiceResponse<T>()
+        {
+            IsSuccess = true,
+            Data = data,
+            StatusCode = statusCode
+        };
+    }
+
+    public static IServiceResponse<T> FailResponse(int statusCode, string errorDescription)
+    {
+        return new ServiceResponse<T>()
+        {
+            IsSuccess = false,
+            Error = new ErrorResponse()
+            {
+                ErrorCode = statusCode,
+                ErrorDescription = errorDescription
+            }
+        };
+    }
 }
+
 
 public class ErrorResponse
 {
