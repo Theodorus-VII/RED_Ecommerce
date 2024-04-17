@@ -53,7 +53,8 @@ public class User : IdentityUser<Guid>
         string? firstName,
         string? lastName,
         string? defaultShippingAddress,
-        string? billingAddress
+        string? billingAddress,
+        string? phoneNumber
     )
     {
         Email = email ?? Email;
@@ -63,6 +64,7 @@ public class User : IdentityUser<Guid>
         BillingAddress = billingAddress ?? BillingAddress;
         DefaultShippingAddress =
             defaultShippingAddress ?? DefaultShippingAddress;
+        PhoneNumber = phoneNumber ?? PhoneNumber;
         return this;
     }
 }
