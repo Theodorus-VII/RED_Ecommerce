@@ -29,7 +29,7 @@ public class ProductController:ControllerBase{
 /// Search for products
 /// </summary>
 /// <param name="sortType">How to sort the results</param>
-/// <param name="categories">List of categories to be included in search results.</param>
+/// <param name="Categories">List of categories to be included in search results.</param>
 /// <param name="high">Higher limit of product price range. Products above this price aren't included in results</param>
 /// <param name="low">Lower limit of product price range. Product this aren't shown</param>
 /// <param name="name">The search term that is to be used while searching products.</param>
@@ -75,7 +75,6 @@ public class ProductController:ControllerBase{
 /// Fetch details of a particular product through its id
 /// </summary>
 /// <param name="id">Product ID</param>
-/// <returns>
 /// <returns> Endpoint returns specific product details </returns>
 /// <response code="200">
 /// Successfully  fetched product
@@ -306,7 +305,7 @@ public class ProductController:ControllerBase{
 /// </summary>
 /// <param name="id"></param>
 /// <response code="204">No content</response>
-/// <response code="401">Credentials not found<>
+/// <response code="401">Credentials not found</response>
 /// <response code="404">Rating doesn't exist</response>
     [HttpDelete("{id}/rating")]
     public async Task<ActionResult> DeleteRating(int id){
@@ -404,7 +403,7 @@ public class ProductController:ControllerBase{
 /// <param name="id"></param>
 /// <param name="images"></param>
 /// <response code="204"> No content </response>
-/// <response code"="500"> Internal Server error has occurred </response>
+/// <response code="500"> Internal Server error has occurred </response>
     [HttpDelete("{id}/image")]
     public async Task<ActionResult> DeleteImages(int id,string images){
         List<string> imgNames=new List<string>(images.Split(","));
