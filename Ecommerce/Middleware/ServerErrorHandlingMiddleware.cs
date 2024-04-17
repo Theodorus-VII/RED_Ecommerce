@@ -24,11 +24,7 @@ public class ErrorHandlingMiddleware : IMiddleware
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            var errorResponse = new
-            {
-                message = @"An unexpected error ocurred. 
-                    Please try again later or contact the system administrator."
-            };
+            var errorResponse =  @"An unexpected error ocurred. Please try again later or contact the system administrator.";
 
             await context.Response.WriteAsJsonAsync(errorResponse);
         }

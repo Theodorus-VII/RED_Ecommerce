@@ -9,7 +9,7 @@ namespace Ecommerce.Controllers;
 
 [ApiController]
 [Route("test")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Roles.Customer)]
+// [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Roles.Customer)]
 public class TestController : ControllerBase
 {
     private readonly TestService _testService;
@@ -22,7 +22,9 @@ public class TestController : ControllerBase
     [HttpGet()]
     public IActionResult GetTestResult()
     {
-        return Ok("Ok from the test controller");
+        
+        return Redirect("https://google.com");
+        // return Ok("Ok from the test controller");
     }
 
     [HttpGet("service_test")]
