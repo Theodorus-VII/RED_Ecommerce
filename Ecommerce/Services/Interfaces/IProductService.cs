@@ -2,11 +2,11 @@ using Ecommerce.Controllers.Contracts;
 namespace Ecommerce.Services.Interfaces;
 public interface IProductService{
    public Task<ProductDto?> GetProduct(int id);
-    public Task<ProductDto> RegisterProduct(ProductDto dto);
+    public Task<ProductDto> RegisterProduct(ProductDto dto, List<IFormFile> imgFiles);
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
     public Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
-    public Task<ProductDto> ModifyProudct(ProductDto product,int id);  
+    public Task<ProductDto?> ModifyProudct(ProductDto product,int id, List<IFormFile> imgFiles);  
     public Task BuyProduct(int id);
     public Task<double> GetAverageRating(int id);
     public Task AddRating(int id,RatingDto dto, Guid uId);

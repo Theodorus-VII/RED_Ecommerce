@@ -10,6 +10,7 @@ using Org.BouncyCastle.Asn1.Cmp;
 using Org.BouncyCastle.Utilities;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32.SafeHandles;
 
 
 [ApiController]
@@ -27,6 +28,7 @@ public class ProductController:ControllerBase{
 /// <summary>
 /// Search for products
 /// </summary>
+/// <param name="sortType">How to sort the results</param>
 /// <param name="categories">List of categories to be included in search results.</param>
 /// <param name="high">Higher limit of product price range. Products above this price aren't included in results</param>
 /// <param name="low">Lower limit of product price range. Product this aren't shown</param>
@@ -53,7 +55,7 @@ public class ProductController:ControllerBase{
 ///     }
 /// </response>
     [HttpGet]
-    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? sortType,string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
         string[]? categories=Categories?.Split(",");
         // List<Category> catList=new List<Category>();
         // Category toAdd;
@@ -61,7 +63,7 @@ public class ProductController:ControllerBase{
         //     if(Enum.TryParse<Category>(strCategory,out toAdd))catList.Add(toAdd);
         //     Console.WriteLine(toAdd);
         // }
-        FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high};
+        FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high,sortType=sortType};
         FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
         // if(products==null)return BadRequest("Wrong parameter or filter property values");
         // return Ok(products);
@@ -115,6 +117,7 @@ public class ProductController:ControllerBase{
 /// <summary>
 /// Add a new product
 /// </summary>
+/// <param name="imgFiles">List of image files to be uploaded</param>
 /// <param name="dto">This is an object included in the body with the following format
 /// {
 ///     "name":"Jordan Monogram bag",  //product name/model
@@ -148,9 +151,9 @@ public class ProductController:ControllerBase{
 /// </response>
     [HttpPost]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> PostProduct([FromBody]ProductDto dto){
+    public async Task<ActionResult> PostProduct([FromForm]ProductDto dto,List<IFormFile> imgFiles){
         try{
-            ProductDto myDto=await _services.RegisterProduct(dto);
+            ProductDto myDto=await _services.RegisterProduct(dto,imgFiles);
             return Created(string.Empty,myDto);
         }
         catch{
@@ -196,6 +199,7 @@ public class ProductController:ControllerBase{
 /// }
 /// </param>
 /// <param name="id">ID of the product to be updated</param>
+/// <param name="imgFiles">List of image files to be uploaded</param>
 /// <returns> Updated product details are returned </returns>
 /// <response code="200">
 /// Product has been created successfully
@@ -223,9 +227,9 @@ public class ProductController:ControllerBase{
 
     [HttpPatch("{id}")]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody]ProductDto dto,int id){
+    public async Task<ActionResult<ProductDto>> ChangeProduct([FromForm]ProductDto dto,int id, List<IFormFile> imgFiles){
         try{
-            ProductDto resDto=await _services.ModifyProudct(dto,id);
+            ProductDto? resDto=await _services.ModifyProudct(dto,id,imgFiles);
             if(resDto!=null)return Ok(resDto);
             return NotFound();
         }

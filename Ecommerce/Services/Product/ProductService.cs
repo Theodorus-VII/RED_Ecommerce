@@ -31,10 +31,12 @@ public class ProductService:IProductService{
             myDto.Images=myProduct.Images.Select(img=>img.Url).ToList();
             return myDto;
     }
-     public async Task<ProductDto> RegisterProduct(ProductDto dto){
+     public async Task<ProductDto> RegisterProduct(ProductDto dto, List<IFormFile> imgFiles){
         try{
-            List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl}).ToList();
             if(dto.Name==null||dto.Brand==null)throw new Exception("Invalid request");
+            // List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl}).ToList();
+           
+            List<Image> images=new List<Image>();
             Product product=new Product{
                 Name=dto.Name,
                 Brand=dto.Brand,
@@ -42,9 +44,20 @@ public class ProductService:IProductService{
                 Category=dto.Category,
                 Price=dto.Price,
                 Count=dto.Count,
-                Images=images
             };
+            string fileName;
+            string extension;
+            foreach(IFormFile imgFile in imgFiles){
+                fileName=Path.GetRandomFileName();
+                extension=Path.GetExtension(imgFile.FileName);
+                using(FileStream fs=new FileStream($"Public/Images/{fileName}{extension}",FileMode.Create)){
+                    await imgFile.CopyToAsync(fs);
+                }
+                images.Add(new Image{Url=$"{fileName}{extension}"});
+            }
+            product.Images.AddRange(images);
             _context.Products?.Add(product);
+
             await _context.SaveChangesAsync();
             _context.Products=null!;
             // Product? registeredProduct=await _context.Products.Include(p=>p.Images).FirstOrDefaultAsync(p=>p.Id==product.Id);
@@ -52,6 +65,7 @@ public class ProductService:IProductService{
             // if(registeredProduct!=null)registeredProduct.Images=images;
             // await _context.SaveChangesAsync();
             dto.Id=product.Id;
+            dto.Images=product.Images.Select(img=>img.Url).ToList();
             return dto;
         }
         catch(Exception e){
@@ -83,6 +97,12 @@ public class ProductService:IProductService{
                 }
             }
             else finalProducts=products;
+
+            SortType type;
+            Enum.TryParse(filterAttributes.sortType?.ToUpper(),out type);
+            if (type==SortType.PRICE_ASCENDING)finalProducts=finalProducts.OrderBy(product=>product.Price).ToList();
+            else if(type==SortType.PRICE_DESCENDING)finalProducts=finalProducts.OrderByDescending(product=>product.Price).ToList();
+            
             List<ProductDto> pDto=new List<ProductDto>();
             if(start>=maxSize+start)throw new Exception("Invalid start index");
             if(start+maxSize>=finalProducts.Count){
@@ -91,9 +111,11 @@ public class ProductService:IProductService{
             }
             else response.NextIndex=start+maxSize;
             if(start==0)response.Total=finalProducts.Count;
+            ProductDto? toAdd;
             finalProducts=finalProducts.GetRange(start,maxSize);
             foreach(Product product in finalProducts ){
-                pDto.Add(ToDto(product));
+                toAdd=ToDto(product);
+                if(toAdd!=null)pDto.Add(toAdd);
             }
             response.ProductDtos=pDto;
             return response;
@@ -101,7 +123,7 @@ public class ProductService:IProductService{
         catch(Exception e){
             Console.WriteLine(e.Message);
             Console.WriteLine(e.StackTrace);
-            return null;
+            throw new Exception();
         }
     }
      public async Task DeleteProduct(int id){
@@ -120,7 +142,7 @@ public class ProductService:IProductService{
         return average;
 
     }
-    public async Task<ProductDto> ModifyProudct(ProductDto product, int id){
+    public async Task<ProductDto?> ModifyProudct(ProductDto product, int id, List<IFormFile> imgFiles){
         Product? match=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
         if(match==null)throw new Exception();
         match.Name=product.Name??match.Name;
@@ -128,8 +150,17 @@ public class ProductService:IProductService{
         match.Details=product.Details;
         match.Price=product.Price<0?match.Price:product.Price;
         match.Count=product.Count<0?match.Count:product.Count;
-        List<Image> images=product.Images.Select(imgUrl=>new Image{Url=imgUrl,ProductId=id}).ToList();
-        match.Images.AddRange(images);
+        string fileName;
+        string extension;
+        foreach(IFormFile imgFile in imgFiles){
+            fileName=Path.GetRandomFileName();
+            extension=Path.GetExtension(imgFile.FileName);
+            using(FileStream fs=new FileStream($"Public/Images/{fileName}{extension}",FileMode.Create)){
+                await imgFile.CopyToAsync(fs);
+            }
+            match.Images.Add(new Image{Url=$"{fileName}{extension}"});
+        }
+        
         await _context.SaveChangesAsync();
         return ToDto(match);
     }
@@ -210,33 +241,26 @@ public class ProductService:IProductService{
         Product? product=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
         if(product==null)return null;
         List<string> presentImages=await Task.Run(()=>{
-            return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
+            return Directory.EnumerateFiles("./Public/Images",$"*",SearchOption.TopDirectoryOnly).ToList<string>();
         });
-        product.Images=presentImages.Select(imgUrl=>new Image{Url=Path.GetFileName(imgUrl),ProductId=id}).ToList();
+        presentImages=presentImages.Select(img=>Path.GetFileName(img)).ToList();
+        product.Images=product.Images.Where(image=>presentImages.Contains(image.Url)).ToList();
         await _context.SaveChangesAsync();
-        return presentImages;
+        return product.Images.Select(img=>img.Url).ToList();
     }
     public async Task DeleteImages(int id, List<string> imgNames){
         Product? product=await _context.Products.Include(p=>p.Images).FirstAsync(p=>p.Id==id);
         if(product==null)return;
         try{
-            List<string>? presentImages=await Task.Run(()=>{
-                return Directory.EnumerateFiles("./Public/Images",$"*PID{id}*",SearchOption.TopDirectoryOnly).ToList<string>();
-            });
             List<string>? dbImages=product.Images.Select(img=>img.Url).ToList()??new List<string>();
-            presentImages=presentImages.Select(imgPath=>Path.GetFileName(imgPath)).ToList();
             foreach(string imgName in imgNames){
                 if(dbImages.Contains(imgName)){
                       product.Images.RemoveAll(img=>img.ProductId==id&img.Url.Equals(imgName));
-                }
-                if(presentImages.Contains(imgName)){
-                    await Task.Run(()=>{
+                      await Task.Run(()=>{
                         string path="./Public/Images";
                         File.Delete(Path.Join(path,imgName));
                     });
-                    
                 }
-              
             }
             
             await _context.SaveChangesAsync();
