@@ -276,7 +276,7 @@ public class AuthController : ControllerBase
             if (user != null && user.EmailConfirmed)
             {
                 // return Ok("Email Confirmed");
-                return Redirect("red://ecommerce.com/cart");
+                return Redirect("https://red-ecommerce.onrender.com/error");
             }
         }
         return StatusCode(
