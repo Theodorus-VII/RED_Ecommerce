@@ -275,7 +275,8 @@ public class AuthController : ControllerBase
             user = await _userAccountService.GetUserById(userId);
             if (user != null && user.EmailConfirmed)
             {
-                return Ok("Email Confirmed");
+                // return Ok("Email Confirmed");
+                return Redirect("red://ecommerce.com/cart");
             }
         }
         return StatusCode(
