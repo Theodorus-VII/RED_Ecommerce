@@ -23,7 +23,7 @@ public class TestController : ControllerBase
     public IActionResult GetTestResult()
     {
         
-        return Redirect("https://google.com");
+        return Redirect("red://ecommerce.com/cart");
         // return Ok("Ok from the test controller");
     }
 
