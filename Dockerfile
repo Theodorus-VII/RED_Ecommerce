@@ -21,6 +21,9 @@ COPY --from=publish /app .
 WORKDIR /app/Public/Images
 COPY "./Ecommerce/Public/Images" .
 
+WORKDIR /app/.well-known
+COPY "./Ecommerce/.well-known" .
+
 # Run EF Migrations
 
 FROM runtime as migrations
