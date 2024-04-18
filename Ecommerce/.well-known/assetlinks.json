@@ -1,0 +1,14 @@
+[
+    {
+      "relation": [
+        "delegate_permission/common.handle_all_urls"
+      ],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.example.ecommerce_app",
+        "sha256_cert_fingerprints": [
+          "1E:B9:A7:B6:49:55:A8:65:0F:1E:43:39:21:7A:2C:43:A0:BB:F0:30:4C:F3:9A:31:56:1C:3F:30:75:EF:BB:13"
+        ]
+      }
+    }
+  ]

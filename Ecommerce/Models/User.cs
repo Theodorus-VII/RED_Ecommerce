@@ -134,4 +134,12 @@ public class UserDto
         PhoneNumber = user.PhoneNumber;
         Role = role;
     }
+
+    public UserDto(string firstName, string lastName, string email)
+    {
+        Id = Guid.NewGuid();
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+    }
 }

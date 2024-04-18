@@ -174,6 +174,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/images"
 });
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./.well-known")),
+    RequestPath = "/.well-known"
+});
+
 // Predefining roles in the database    
 app.Logger.LogInformation("Creating roles...");
 using (var scope = app.Services.CreateScope())
