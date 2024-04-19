@@ -47,4 +47,11 @@ public class TestController : ControllerBase
     {
         return Ok("Authenticated");
     }
+
+    [HttpGet("redirect")]
+    public IActionResult RedirectTest(string path)
+    {
+        Console.WriteLine($"RedirectUrl: red://{path}");
+        return Redirect($"red://{path}");
+    }
 }
