@@ -306,14 +306,16 @@ public class AuthController : ControllerBase
             return NotFound("User not found");
         }
 
-        string baseUrl = $"{Request.Host}{Request.PathBase}";
-        string action = Url.Action("ResetPassword", "auth")!;
+        // string baseUrl = $"{Request.Host}{Request.PathBase}";
+        // string action = Url.Action("ResetPassword", "auth")!;
+        string baseUrl = "";
+        string action = "email-sent";
 
         var result = await _authService.SendPasswordResetEmail(
             user: user,
             baseUrl: baseUrl,
             action: action,
-            scheme: Request.Scheme
+            scheme: "red"
         );
 
         if (result.IsSuccess)

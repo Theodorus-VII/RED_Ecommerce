@@ -371,7 +371,7 @@ public class AuthService : IAuthService
         {
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
             resetToken = System.Web.HttpUtility.UrlEncode(resetToken);
-            var callbackUrl = $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={resetToken}";
+            var callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}";
 
             var passResetEmail = new EmailDto
             {
