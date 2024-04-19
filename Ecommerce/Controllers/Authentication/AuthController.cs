@@ -277,7 +277,7 @@ public class AuthController : ControllerBase
             if (user != null && user.EmailConfirmed)
             {
                 // return Ok("Email Confirmed");
-                return Redirect("red://confirmedEmail");
+                return Redirect("red://confirmed-email");
             }
         }
         return StatusCode(
