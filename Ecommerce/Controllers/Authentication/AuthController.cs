@@ -1,3 +1,4 @@
+using System.Web;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services;
@@ -262,6 +263,8 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Confirming user email...");
         var user = await _userAccountService.GetUserById(userId);
 
+        token = HttpUtility.UrlDecode(token);
+
         if (user is null)
         {
             return NotFound("User not found.");
@@ -330,6 +333,7 @@ public class AuthController : ControllerBase
     [HttpGet("forgot-redirect")]
     public IActionResult ForgotRedirect(string email, string token)
     {
+        _logger.LogInformation($"Redirecting .... Email: {email}, Token: {token}");
         return Redirect($"red://email-sent?email={email}&token={token}");
     }
 
@@ -359,9 +363,11 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
     {
+
+        
         var result = await _authService.ResetPassword(
             passwordResetRequest.Email,
-            passwordResetRequest.ResetToken,
+            HttpUtility.UrlDecode(passwordResetRequest.ResetToken),
             passwordResetRequest.Password
         );
         if (result.IsSuccess)

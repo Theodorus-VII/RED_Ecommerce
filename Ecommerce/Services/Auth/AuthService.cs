@@ -417,6 +417,8 @@ public class AuthService : IAuthService
             );
         }
 
+        _logger.LogInformation("Resetting password...");
+        _logger.LogInformation("Token: {}, Password: {}", resetToken, newPassword);
         var result =
             await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
 
