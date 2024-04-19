@@ -256,9 +256,10 @@ public class AuthController : ControllerBase
     /// <response code="404">User Not Found</response>
     /// <response code="500">Server Error</response>
     /// <returns></returns>
-    [HttpPost("confirm-email")]
+    [HttpGet("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token)
     {
+        _logger.LogInformation("Confirming user email...");
         var user = await _userAccountService.GetUserById(userId);
 
         if (user is null)
@@ -269,7 +270,7 @@ public class AuthController : ControllerBase
         _logger.LogInformation(user.Email);
 
         var result = await _authService.ConfirmEmail(user.Email, token);
-        _logger.LogDebug(result.ToString());
+        _logger.LogInformation(result.ToString());
         if (result.IsSuccess)
         {
             user = await _userAccountService.GetUserById(userId);

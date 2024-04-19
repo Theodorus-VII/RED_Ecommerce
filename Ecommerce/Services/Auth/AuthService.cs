@@ -345,10 +345,18 @@ public class AuthService : IAuthService
 
         _logger.LogInformation($"URL for email confirmation: {callbackUrl}");
 
-        await _emailService.SendEmail(confirmationEmail);
-        return ServiceResponse<bool>.SuccessResponse(
-            statusCode: StatusCodes.Status200OK,
-            data: true
+        var result = await _emailService.SendEmail(confirmationEmail);
+
+        if (result.IsSuccess)
+        {
+            return ServiceResponse<bool>.SuccessResponse(
+                statusCode: StatusCodes.Status200OK,
+                data: true
+            );
+        }
+        return ServiceResponse<bool>.FailResponse(
+            statusCode: StatusCodes.Status500InternalServerError,
+            errorDescription: "Error sending account confirmation email"
         );
     }
 
@@ -409,7 +417,7 @@ public class AuthService : IAuthService
             );
         }
 
-        var result = 
+        var result =
             await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
 
         if (result.Succeeded)
