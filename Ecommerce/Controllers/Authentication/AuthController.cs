@@ -330,7 +330,7 @@ public class AuthController : ControllerBase
     [HttpGet("forgot-redirect")]
     public IActionResult ForgotRedirect(string email, string token)
     {
-        return Redirect($"red://forgot-password?email={email}&token={token}");
+        return Redirect($"red://email-sent?email={email}&token={token}");
     }
 
 
