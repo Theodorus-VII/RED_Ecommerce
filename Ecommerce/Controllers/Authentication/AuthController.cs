@@ -306,10 +306,8 @@ public class AuthController : ControllerBase
             return NotFound("User not found");
         }
 
-        // string baseUrl = $"{Request.Host}{Request.PathBase}";
-        // string action = Url.Action("ResetPassword", "auth")!;
-        string baseUrl = "";
-        string action = "email-sent";
+        string baseUrl = $"{Request.Host}{Request.PathBase}";
+        string action = Url.Action("ForgotRedirect", "auth")!;
 
         var result = await _authService.SendPasswordResetEmail(
             user: user,
@@ -327,6 +325,12 @@ public class AuthController : ControllerBase
             500,
             "Server Error: error sending password reset email. Try again later."
         );
+    }
+
+    [HttpGet("forgot-redirect")]
+    public IActionResult ForgotRedirect(string email, string token)
+    {
+        return Redirect($"red://forgot-password?email={email}&token={token}");
     }
 
 
