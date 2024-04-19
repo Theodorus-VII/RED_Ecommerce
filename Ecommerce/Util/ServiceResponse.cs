@@ -30,6 +30,7 @@ public class ServiceResponse<T> : IServiceResponse<T>
         return new ServiceResponse<T>()
         {
             IsSuccess = false,
+            StatusCode = statusCode,
             Error = new ErrorResponse()
             {
                 ErrorCode = statusCode,

@@ -313,7 +313,7 @@ public class AuthController : ControllerBase
             user: user,
             baseUrl: baseUrl,
             action: action,
-            scheme: "red"
+            scheme: Request.Scheme
         );
 
         if (result.IsSuccess)
