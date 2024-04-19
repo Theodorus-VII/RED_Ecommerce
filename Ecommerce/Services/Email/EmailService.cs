@@ -1,5 +1,6 @@
 using Ecommerce.Configuration;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -24,7 +25,7 @@ public class EmailService : IEmailService
         return;
     }
 
-    public async Task<bool> SendEmail(EmailDto request)
+    public async Task<IServiceResponse<bool>> SendEmail(EmailDto request)
     {
         try
         {
@@ -47,12 +48,18 @@ public class EmailService : IEmailService
             _logger.LogInformation("Email sent");
             smtp.Disconnect(true);
             
-            return true;
+            return ServiceResponse<bool>.SuccessResponse(
+                statusCode: StatusCodes.Status200OK,
+                data: true
+            );
         }
         catch (Exception e)
         {
             _logger.LogError($"Error sending email: {e}");
-            return false;
+            return ServiceResponse<bool>.FailResponse(
+                statusCode: StatusCodes.Status500InternalServerError,
+                errorDescription: "Error sending Email."
+            );
         }
     }
 }
