@@ -374,6 +374,9 @@ public class AuthController : ControllerBase
         {
             return Ok("Password has been reset successfully. Please log in with the new password.");
         }
-        return StatusCode(500, "Server Error: Error resetting user password");
+        return StatusCode(
+            result.Error.ErrorCode,
+            result.Error.ErrorDescription
+        );
     }
 }
