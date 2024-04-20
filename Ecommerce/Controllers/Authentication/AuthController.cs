@@ -364,7 +364,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
     {
 
-        
+        _logger.LogInformation("Password Reset Token: {}",passwordResetRequest.ResetToken);
         var result = await _authService.ResetPassword(
             passwordResetRequest.Email,
             HttpUtility.UrlDecode(passwordResetRequest.ResetToken),
