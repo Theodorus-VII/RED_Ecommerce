@@ -34,9 +34,19 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public IEnumerable<User> GetUsers()
+    public async Task<IEnumerable<UserDto>> GetUsers()
     {
-        return _userManager.Users;
+        var userDtos = new List<UserDto>();
+        var users = _userManager.Users;
+        foreach (User user in users)
+        {
+            userDtos.Add(new UserDto(
+                user: user,
+                accessToken: "",
+                refreshToken: "",
+                role: await _userAccountService.GetUserRole(user)));
+        }
+        return userDtos;
     }
 
     private ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
@@ -385,9 +395,9 @@ public class AuthService : IAuthService
             };
 
             _logger.LogInformation("Password reset Email sending...");
-            
+
             await _emailService.SendEmail(passResetEmail);
-            
+
             _logger.LogInformation("Password Reset Email Sent");
             return ServiceResponse<string>.SuccessResponse(
                 statusCode: StatusCodes.Status200OK,

@@ -34,9 +34,9 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public IActionResult GetUsers()
+    public async Task<IActionResult> GetUsers()
     {
-        return Ok(_authService.GetUsers());
+        return Ok(await _authService.GetUsers());
     }
 
     [HttpGet("test")]

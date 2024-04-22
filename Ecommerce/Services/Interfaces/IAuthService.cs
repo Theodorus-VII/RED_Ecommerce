@@ -7,7 +7,7 @@ namespace Ecommerce.Services;
 
 public interface IAuthService
 {
-    public IEnumerable<User> GetUsers();
+    public Task<IEnumerable<UserDto>> GetUsers();
     public Task<IServiceResponse<UserDto>> RegisterCustomer(RegistrationRequest request);
     public Task<IServiceResponse<UserDto>> RegisterAdmin(RegistrationRequest request);
 

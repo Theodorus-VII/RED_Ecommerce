@@ -37,9 +37,9 @@ public class AuthController : ControllerBase
     /// Returns a list of all users. Not going to be in the final version.
     /// </remarks>
     [HttpGet("test")]
-    public IActionResult GetUsers()
+    public async Task<IActionResult> GetUsers()
     {
-        return Ok(_authService.GetUsers());
+        return Ok(await _authService.GetUsers());
     }
 
 
@@ -96,9 +96,9 @@ public class AuthController : ControllerBase
                 response.Error.ErrorCode,
                 response.Error.ErrorDescription);
         }
-        
+
         _logger.LogInformation("User Successfully Created.");
-        
+
         UserDto user = response.Data;
 
         string baseUrl = $"{Request.Host}{Request.PathBase}";
@@ -148,7 +148,7 @@ public class AuthController : ControllerBase
     /// <response code="404">User Not Found(Incorrect Email)</response>
     /// <response code="500">Some other Internal Server Error</response>
     /// <param name="loginRequest"></param>
-    
+
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
@@ -365,7 +365,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword(PasswordResetRequest passwordResetRequest)
     {
 
-        _logger.LogInformation("Password Reset Token: {}",passwordResetRequest.ResetToken);
+        _logger.LogInformation("Password Reset Token: {}", passwordResetRequest.ResetToken);
         var result = await _authService.ResetPassword(
             passwordResetRequest.Email,
             HttpUtility.UrlDecode(passwordResetRequest.ResetToken, Encoding.UTF8),
