@@ -10,6 +10,7 @@ using Org.BouncyCastle.Asn1.Cmp;
 using Org.BouncyCastle.Utilities;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32.SafeHandles;
 
 
 [ApiController]
@@ -26,83 +27,80 @@ public class ProductController : ControllerBase
         _services = services;
         _userService = userService;
     }
-    /// <summary>
-    /// Search for products
-    /// </summary>
-    /// <param name="Categories">List of categories to be included in search results.</param>
-    /// <param name="high">Higher limit of product price range. Products above this price aren't included in results</param>
-    /// <param name="low">Lower limit of product price range. Product this aren't shown</param>
-    /// <param name="name">The search term that is to be used while searching products.</param>
-    /// <param name="start">The start index of results. Results of only this index and above are shown</param>
-    /// <param name="maxSize">The maximum size of the products to be fetched. Number of results can't exceed this number</param>
-    /// <returns> List of filtered product with their details </returns>
-    /// <response code="200">
-    /// Successfully  fetched results
-    ///     A an object contatining a list of results:
-    ///     
-    /// ```
-    ///     {
-    ///         "productDtos":[{
-    ///              "id": 14,
-    ///               "name": "Name",
-    ///               "brand": "cat",
-    ///               "details": "None",
-    ///               "count": 6000,
-    ///               "images": [
-    ///                   "img2.jpg"
-    ///               ],
-    ///               "category": "HomeCleaning",
-    ///               "price": 1200
-    ///          },...]
-    ///     }
-    /// ``` 
-    /// </response>
+/// <summary>
+/// Search for products
+/// </summary>
+/// <param name="sortType">How to sort the results</param>
+/// <param name="Categories">List of categories to be included in search results.</param>
+/// <param name="high">Higher limit of product price range. Products above this price aren't included in results</param>
+/// <param name="low">Lower limit of product price range. Product this aren't shown</param>
+/// <param name="name">The search term that is to be used while searching products.</param>
+/// <param name="start">The start index of results. Results of only this index and above are shown</param>
+/// <param name="maxSize">The maximum size of the products to be fetched. Number of results can't exceed this number</param>
+/// <returns> List of filtered product with their details </returns>
+/// <response code="200">
+/// Successfully  fetched results
+///     A an object contatining a list of results
+///     {
+///         "productDtos":[{
+///              "id": 14,
+                /// "name": "Name",
+                /// "brand": "cat",
+                /// "details": "None",
+                /// "count": 6000,
+                /// "images": [
+                ///     "img2.jpg"
+                /// ],
+                /// "category": "HomeCleaning",
+                /// "price": 1200
+///          },...]
+///     }
+/// </response>
     [HttpGet]
-    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? Categories = "", string? name = "", int start = 0, int maxSize = 10, int low = 0, int high = int.MaxValue)
-    {
-        string[]? categories = Categories?.Split(",");
+    public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? sortType,string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
+        string[]? categories=Categories?.Split(",");
         // List<Category> catList=new List<Category>();
         // Category toAdd;
         // foreach(string strCategory in categories){
         //     if(Enum.TryParse<Category>(strCategory,out toAdd))catList.Add(toAdd);
         //     Console.WriteLine(toAdd);
         // }
-        FilterAttributes filter = new FilterAttributes { categories = categories, name = name ?? "", low = low, high = high };
-        FilterAttributesResponse? products = await _services.GetProductByFilter(filter, start, maxSize);
+        FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high,sortType=sortType};
+        FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
         // if(products==null)return BadRequest("Wrong parameter or filter property values");
         // return Ok(products);
 
 
         return Ok(products);
     }
-    /// <summary>
-    /// Fetch details of a particular product through its id
-    /// </summary>
-    /// <param name="id">Product ID</param>
-    /// <returns> Endpoint returns specific product details </returns>
-    /// <response code="200">
-    /// Successfully  fetched product
-    ///    
-    /// A an object contatining the product details:
-    /// ```    
-    ///     {   
-    ///         "id": 14,
-    ///         "name": "Name",
-    ///         "brand": "cat",
-    ///         "details": "product characteristics description",
-    ///         "count": 6000,
-    ///         "images": ["img2.jpg"],
-    ///         "category": "HomeCleaning",
-    ///         "price": 1200
-    ///     }
-    /// ```
-    /// </response>
-    /// <response code="404">
-    ///     Product is not found
-    /// </response>
-    /// <response code="500">
-    ///     A sever error has occured
-    /// </response>
+/// <summary>
+/// Fetch details of a particular product through its id
+/// </summary>
+/// <param name="id">Product ID</param>
+/// <returns> Endpoint returns specific product details </returns>
+/// <response code="200">
+/// Successfully  fetched product
+///    
+///     A an object contatining the product details
+///     {
+///         "id": 14,
+        /// "name": "Name",
+        /// "brand": "cat",
+        /// "details": "product characteristics description",
+        /// "count": 6000,
+        /// "images": [
+        ///     "img2.jpg"
+        /// ],
+        /// "category": "HomeCleaning",
+        /// "price": 1200
+///     }
+/// </response>
+/// <response code="404">
+///     Product is not found
+/// </response>
+/// <response code="500">
+///     A sever error has occured
+/// </response>
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductDto>> GetProduct(int id)
     {
@@ -123,54 +121,47 @@ public class ProductController : ControllerBase
         }
 
     }
-    /// <summary>
-    /// Add a new product
-    /// </summary>
-    /// <param name="dto">This is an object included in the body with the following format
-    /// 
-    /// ```
-    /// {
-    ///     "name":"Jordan Monogram bag",  //product name/model
-    ///     "brand":"Nike",  //Brand name of the company that manufactured the product,
-    ///     "details":"A very big comfortable bag",  //A description of the characteristics of the product
-    ///     "count":60, // An INTEGER number that specifies the number of products available for purchase
-    ///     "price":120, //A FLOAT number that specifies the price of the product
-    ///     "images":["img2.jpg"],  //list of product images
-    ///     "cateogry":"Fashion" //Category in which the product is included
-    /// }
-    /// ```
-    /// </param>
-    /// <returns> Product details</returns>
-    /// <response code="201">
-    /// Product has been created successfully
-    /// An object contatining the product details is returned
-    /// 
-    /// ```
-    ///     {
-    ///         "id": 12,
-    ///         "name": "Jordan Monogram bag",
-    ///         "brand": "Nike",
-    ///         "details": "A very big comfortable bag",
-    ///         "count": 60,
-    ///         "images": [
-    ///             "img2.jpg"
-    ///         ],
-    ///         "category": "Fashion",
-    ///         "price": 120
-    ///      }
-    /// ```
-    /// </response>
-    /// <response code="400">
-    ///     Invalid request format
-    /// </response>
+/// <summary>
+/// Add a new product
+/// </summary>
+/// <param name="imgFiles">List of image files to be uploaded</param>
+/// <param name="dto">This is an object included in the body with the following format
+/// {
+///     "name":"Jordan Monogram bag",  //product name/model
+///     "brand":"Nike",  //Brand name of the company that manufactured the product,
+///     "details":"A very big comfortable bag",  //A description of the characteristics of the product
+///     "count":60, // An INTEGER number that specifies the number of products available for purchase
+///     "price":120, //A FLOAT number that specifies the price of the product
+///     "images":["img2.jpg"],  //list of product images
+///     "cateogry":"Fashion" //Category in which the product is included
+/// }
+/// </param>
+/// <returns> Product details</returns>
+/// <response code="201">
+/// Product has been created successfully
+/// An object contatining the product details is returned
+///     {
+///         "id": 12,
+        /// "name": "Jordan Monogram bag",
+        /// "brand": "Nike",
+        /// "details": "A very big comfortable bag",
+        /// "count": 60,
+        /// "images": [
+        ///     "img2.jpg"
+        /// ],
+        /// "category": "Fashion",
+        /// "price": 120
+///     }
+/// </response>
+/// <response code="400">
+///     Invalid request format
+/// </response>
     [HttpPost]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> PostProduct([FromBody] ProductDto dto)
-    {
-        try
-        {
-            ProductDto myDto = await _services.RegisterProduct(dto);
-            return Created(string.Empty, myDto);
+    public async Task<ActionResult> PostProduct([FromForm]ProductDto dto,List<IFormFile> imgFiles){
+        try{
+            ProductDto myDto=await _services.RegisterProduct(dto,imgFiles);
+            return Created(string.Empty,myDto);
         }
         catch
         {
@@ -204,61 +195,53 @@ public class ProductController : ControllerBase
 
 
     }
-    /// <summary>
-    /// Update product details
-    /// </summary>
-    /// <param name="dto">
-    /// This is an object included in the body with the following format.
-    ///
-    /// ```
-    ///     {
-    ///         "name":"Jordan Monogram bag",  //product name/model
-    ///         "brand":"Nike",  //Brand name of the company that manufactured the product,
-    ///         "details":"A very big comfortable bag",  //A description of the characteristics of the product
-    ///         "count":59, // An INTEGER number that specifies the number of products available for purchase
-    ///         "price":120, //A FLOAT number that specifies the price of the product
-    ///         "images":["img2.jpg"],  //list of product images
-    ///         "cateogry":"Fashion" //Category in which the product is included
-    ///     }
-    /// ```
-    /// </param>
-    /// <param name="id">ID of the product to be updated</param>
-    /// <returns> Updated product details are returned </returns>
-    /// <response code="200">
-    /// Product has been created successfully
-    ///     A an object contatining the updated product details:
-    ///     ```     
-    ///         {
-    ///             "id": 12,
-    ///             "name": "Jordan Monogram bag",
-    ///             "brand": "Nike",
-    ///             "details": "A very big comfortable bag",
-    ///             "count": 59,
-    ///             "images": 
-    ///                 [
-    ///                 "img2.jpg"
-    ///                 ],
-    ///             "category": "Fashion",
-    ///             "price": 120
-    ///         }
-    ///     ```
-    /// </response>
-    /// <response code="400">
-    ///     Invalid request format
-    /// </response>
-    /// <response code="404">
-    ///     Product to be updated is not found
-    /// </response>
-    /// <response code="500"> Server error has occured </response>
+/// <summary>
+/// Update product details
+/// </summary>
+/// <param name="dto">This is an object included in the body with the following format.
+/// {
+///     "name":"Jordan Monogram bag",  //product name/model
+///     "brand":"Nike",  //Brand name of the company that manufactured the product,
+///     "details":"A very big comfortable bag",  //A description of the characteristics of the product
+///     "count":59, // An INTEGER number that specifies the number of products available for purchase
+///     "price":120, //A FLOAT number that specifies the price of the product
+///     "images":["img2.jpg"],  //list of product images
+///     "cateogry":"Fashion" //Category in which the product is included
+/// }
+/// </param>
+/// <param name="id">ID of the product to be updated</param>
+/// <param name="imgFiles">List of image files to be uploaded</param>
+/// <returns> Updated product details are returned </returns>
+/// <response code="200">
+/// Product has been created successfully
+///     A an object contatining the updated product details:
+///     {
+///         "id": 12,
+        /// "name": "Jordan Monogram bag",
+        /// "brand": "Nike",
+        /// "details": "A very big comfortable bag",
+        /// "count": 59,
+        /// "images": [
+        ///     "img2.jpg"
+        /// ],
+        /// "category": "Fashion",
+        /// "price": 120
+///     }
+/// </response>
+/// <response code="400">
+///     Invalid request format
+/// </response>
+/// <response code="404">
+///     Product to be updated is not found
+/// </response>
+/// <response code="500"> Server error has occured </response>
 
     [HttpPatch("{id}")]
     // [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<ProductDto>> ChangeProduct([FromBody] ProductDto dto, int id)
-    {
-        try
-        {
-            ProductDto resDto = await _services.ModifyProudct(dto, id);
-            if (resDto != null) return Ok(resDto);
+    public async Task<ActionResult<ProductDto>> ChangeProduct([FromForm]ProductDto dto,int id, List<IFormFile> imgFiles){
+        try{
+            ProductDto? resDto=await _services.ModifyProudct(dto,id,imgFiles);
+            if(resDto!=null)return Ok(resDto);
             return NotFound();
         }
         catch (InvalidDataException)
@@ -343,13 +326,13 @@ public class ProductController : ControllerBase
         }
 
     }
-    /// <summary>
-    /// Delete a rating for a product
-    /// </summary>
-    /// <param name="id"></param>
-    /// <response code="204">No content</response>
-    /// <response code="401">Credentials not found</response>
-    /// <response code="404">Rating doesn't exist</response>
+/// <summary>
+/// Delete a rating for a product
+/// </summary>
+/// <param name="id"></param>
+/// <response code="204">No content</response>
+/// <response code="401">Credentials not found</response>
+/// <response code="404">Rating doesn't exist</response>
     [HttpDelete("{id}/rating")]
     public async Task<ActionResult> DeleteRating(int id)
     {
@@ -453,13 +436,13 @@ public class ProductController : ControllerBase
     //         return File(imgBytes,"image/jpeg");
     //     }
     // }
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="images"></param>
-    /// <response code="204"> No content </response>
-    /// <response code="500"> Internal Server error has occurred </response>
+/// <summary>
+/// 
+/// </summary>
+/// <param name="id"></param>
+/// <param name="images"></param>
+/// <response code="204"> No content </response>
+/// <response code="500"> Internal Server error has occurred </response>
     [HttpDelete("{id}/image")]
     public async Task<ActionResult> DeleteImages(int id, string images)
     {

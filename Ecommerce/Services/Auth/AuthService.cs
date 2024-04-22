@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
@@ -330,7 +331,7 @@ public class AuthService : IAuthService
 
         var stringConfirmationToken = generateConfirmationToken.Data;
 
-        var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
+        var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken, Encoding.UTF8);
         var callbackUrl =
             $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}";
 
@@ -370,9 +371,12 @@ public class AuthService : IAuthService
         try
         {
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            resetToken = System.Web.HttpUtility.UrlEncode(resetToken);
-            var callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}";
+            _logger.LogInformation("Unencoded Reset Token: {}", resetToken);
 
+            resetToken = System.Web.HttpUtility.UrlEncode(resetToken, Encoding.UTF8);
+            _logger.LogInformation("Encoded Reset Token: {}", resetToken);
+
+            var callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}";
             var passResetEmail = new EmailDto
             {
                 Recipient = user.Email,
@@ -381,9 +385,10 @@ public class AuthService : IAuthService
             };
 
             _logger.LogInformation("Password reset Email sending...");
+            
             await _emailService.SendEmail(passResetEmail);
+            
             _logger.LogInformation("Password Reset Email Sent");
-
             return ServiceResponse<string>.SuccessResponse(
                 statusCode: StatusCodes.Status200OK,
                 data: "Confirmation Email Sent"

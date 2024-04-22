@@ -1,3 +1,4 @@
+using System.Text;
 using System.Web;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
@@ -263,7 +264,7 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Confirming user email...");
         var user = await _userAccountService.GetUserById(userId);
 
-        token = HttpUtility.UrlDecode(token);
+        token = HttpUtility.UrlDecode(token, Encoding.UTF8);
 
         if (user is null)
         {
@@ -367,7 +368,7 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Password Reset Token: {}",passwordResetRequest.ResetToken);
         var result = await _authService.ResetPassword(
             passwordResetRequest.Email,
-            HttpUtility.UrlDecode(passwordResetRequest.ResetToken),
+            HttpUtility.UrlDecode(passwordResetRequest.ResetToken, Encoding.UTF8),
             passwordResetRequest.Password
         );
         if (result.IsSuccess)
