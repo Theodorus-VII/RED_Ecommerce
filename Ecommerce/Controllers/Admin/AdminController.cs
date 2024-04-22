@@ -33,6 +33,12 @@ public class AdminController : ControllerBase
         _productService = productService;
     }
 
+    [HttpGet("users")]
+    public IActionResult GetUsers()
+    {
+        return Ok(_authService.GetUsers());
+    }
+
     [HttpGet("test")]
     public IActionResult Test(){
         return Ok("ADMIN CONTROLLER");
