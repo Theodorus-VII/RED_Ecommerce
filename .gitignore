@@ -32,3 +32,5 @@ publish/
 
 
 */appsettings.*.json
+
+**/Requests/
