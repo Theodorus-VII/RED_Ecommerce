@@ -300,9 +300,18 @@ public class AuthService : IAuthService
             );
         }
 
+        if (user.EmailConfirmed)
+        {
+            return ServiceResponse<bool>.FailResponse(
+                statusCode: StatusCodes.Status400BadRequest,
+                errorDescription: "User email already confirmed"
+            );
+        }
+
         var result = await _userManager.ConfirmEmailAsync(user, token);
         if (result.Succeeded)
         {
+            _logger.LogInformation("Email confirmed...");
             return ServiceResponse<bool>.SuccessResponse(statusCode: 200, data: true);
         }
         else
@@ -340,8 +349,11 @@ public class AuthService : IAuthService
         }
 
         var stringConfirmationToken = generateConfirmationToken.Data;
+        _logger.LogInformation("Generated Confirmation Token: {}", stringConfirmationToken);
 
-        var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken, Encoding.UTF8);
+        var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
+
+        _logger.LogInformation("Encoded Generated confirmation Token: {}", encodedConfirmationToken);
         var callbackUrl =
             $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}";
 
@@ -441,7 +453,7 @@ public class AuthService : IAuthService
         {
             return ServiceResponse<string>.SuccessResponse(
                 statusCode: StatusCodes.Status200OK,
-                data: "Password Reset Email Sent Successfully"
+                data: "Password Changed. Please login using your new password."
             );
         }
 

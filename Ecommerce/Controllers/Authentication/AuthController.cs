@@ -263,8 +263,7 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Confirming user email...");
         var user = await _userAccountService.GetUserById(userId);
-
-        token = HttpUtility.UrlDecode(token, Encoding.UTF8);
+        _logger.LogInformation("Encoded Token: {}", token);
 
         if (user is null)
         {
@@ -281,12 +280,14 @@ public class AuthController : ControllerBase
             if (user != null && user.EmailConfirmed)
             {
                 // return Ok("Email Confirmed");
+                _logger.LogInformation("User Email Confirmed");
                 return Redirect("red://confirmed-email");
             }
         }
         return StatusCode(
-            500,
-            "Error Confirming Account, please try again later.");
+            result.StatusCode,
+            result.Error.ErrorDescription
+        );
     }
 
 

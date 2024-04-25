@@ -25,7 +25,6 @@ public static class ApplicationDbContextSeed
                         products.Add(
                             new Product
                             {
-                                Id = products.Count + 1, // Assuming Id is auto-incremented
                                 Name = $"Sample Product {i + 1} for {category}",
                                 Brand = "Seed",
                                 Count = 10, // Example count
