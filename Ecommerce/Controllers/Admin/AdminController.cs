@@ -149,7 +149,7 @@ public class AdminController : ControllerBase
     {
         var ratings = await _productService.GetRecentProductReviews();
 
-        var data = new {count=ratings.Count, data= ratings};
+        var data = new {ratings};
 
         return Ok(
             new ApiResponse<Object>(
