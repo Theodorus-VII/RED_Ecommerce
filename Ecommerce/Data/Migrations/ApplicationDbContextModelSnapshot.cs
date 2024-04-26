@@ -262,6 +262,10 @@ namespace Ecommerce.Data.Migrations
                     b.Property<int>("Count")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("Details")
                         .IsRequired()
                         .HasColumnType("text");

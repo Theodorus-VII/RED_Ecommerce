@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ecommerce.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240426063459_Init")]
+    [Migration("20240426121904_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -264,6 +264,10 @@ namespace Ecommerce.Data.Migrations
 
                     b.Property<int>("Count")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Details")
                         .IsRequired()
