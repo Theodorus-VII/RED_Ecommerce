@@ -149,7 +149,7 @@ public class AdminController : ControllerBase
     {
         var ratings = await _productService.GetRecentProductReviews();
 
-        var data = new {ratings};
+        var data = new {ratings=ratings};
 
         return Ok(
             new ApiResponse<Object>(
@@ -162,7 +162,7 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetRecentOrders()
     {
         var orders =  await _orderService.GetRecentOrdersAsync();
-        var data = new {count=orders.Count, data= orders};
+        var data = new {count=orders.Count, orders= orders};
         
         return Ok(
             new ApiResponse<Object>(
