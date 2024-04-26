@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Ecommerce.Services.Interfaces;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
+using System.Xml;
+using Org.BouncyCastle.Utilities;
 namespace Ecommerce.Services;
 public class ProductService:IProductService{
     private ApplicationDbContext _context;
@@ -33,7 +35,9 @@ public class ProductService:IProductService{
     }
      public async Task<ProductDto> RegisterProduct(ProductDto dto, List<IFormFile> imgFiles){
         try{
-            if(dto.Name==null||dto.Brand==null)throw new Exception("Invalid request");
+            if(dto.Name==null||dto.Brand==null) throw new Exception("Invalid request");
+            if(dto.Count<0) dto.Count=0;
+            if(dto.Price<0) dto.Price=0;
             // List<Image> images=dto.Images.Select(imgUrl=>new Image{Url=imgUrl}).ToList();
            
             List<Image> images=new List<Image>();
@@ -74,12 +78,14 @@ public class ProductService:IProductService{
         }
         
     }
-    public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize){
+    public async Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes,int start,int maxSize, bool isAdmin){
         try{
+            int minCount=1;
+            if(isAdmin)minCount=int.MinValue;
             List<Product> products=await _context.Products.Include(product=>product.Images).Where(p=>p.Price<=filterAttributes.high&&p.Price>=filterAttributes.low)
-                                                      .Where(p=>p.Name.Contains(filterAttributes.name)||p.Brand.Contains(filterAttributes.name))
-                                                      .Where(p=>p.Count>0)
+                                                      .Where(p=>p.Count>=minCount)
                                                       .ToListAsync();
+            products=products.Where(p=>p.Name.Contains(filterAttributes.name,StringComparison.OrdinalIgnoreCase)||p.Brand.Contains(filterAttributes.name,StringComparison.OrdinalIgnoreCase)).ToList();
             List<Product> finalProducts=new List<Product>();
             FilterAttributesResponse response=new FilterAttributesResponse();
             

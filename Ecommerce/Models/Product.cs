@@ -7,6 +7,9 @@ public class Product
     public string Brand{get;set;}=null!;
     public int Count{get;set;}=1;
     public string Details{get;set;}="None";
+
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public DateTime CreatedAt{get;set;}=DateTime.Now;
     public Category Category{get;set;}=Category.Other;
     public List<Image> Images{get;set;}=new List<Image>();
     public float Price{get;set;}
