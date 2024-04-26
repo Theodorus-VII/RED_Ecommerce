@@ -138,6 +138,7 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var orders = await _context.Orders
+                    .Where(order => order.Status == "Pending")
                     .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                     .Include(o => o.PaymentInfo)

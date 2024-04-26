@@ -282,11 +282,12 @@ public class ProductService:IProductService{
         try
         {
             List<Rating>? ratings = await _context.Ratings
+                .Where(r => r.CreatedAt >= DateTime.Now.AddMonths(-1))
                 .OrderByDescending(r => r.CreatedAt)
                 .OrderByDescending(r => r.UpdatedAt)
                 .ToListAsync();
 
-            List<ReviewDto> reviews = new List<ReviewDto>();
+            List<ReviewDto> reviews = new();
             if (ratings != null)
             {
                 foreach (Rating _rating in ratings)

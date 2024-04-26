@@ -196,7 +196,7 @@ public class AdminController : ControllerBase
             var data = new { count = orders.Count, orders = orders };
 
             return Ok(
-                new ApiResponse<Object>(
+                new ApiResponse<object>(
                     true, "Orders fetched successfully.", data
                 )
             );
