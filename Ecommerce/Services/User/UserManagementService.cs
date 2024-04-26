@@ -27,8 +27,11 @@ public class UserManagementService : IUserManagementService
     {
         var user = await _userAccountService.GetUserById(userId);
 
+        _logger.LogInformation("Attempting to update user details...");
+
         if (user == null)
         {
+            _logger.LogInformation("User not found");
             return ServiceResponse<bool>.FailResponse(
                 statusCode: StatusCodes.Status404NotFound,
                 errorDescription: "User Not Found"
@@ -60,10 +63,13 @@ public class UserManagementService : IUserManagementService
                     errorDescription: $"Error Changing Password: {result.Errors.ToList()}"
                 );
             }
+            _logger.LogInformation("Password Updated");
         }
+
         // User provided a new password, but not the old password.
         else if (request.NewPassword != null && request.OldPassword == null)
         {
+            _logger.LogInformation("Old Password not provided.");
             return ServiceResponse<bool>.FailResponse(
                 statusCode: StatusCodes.Status400BadRequest,
                 errorDescription: "Old Password Not Provided"
@@ -71,6 +77,8 @@ public class UserManagementService : IUserManagementService
         }
 
         await _userManager.UpdateAsync(user);
+
+        _logger.LogInformation("User details updated successfully");
 
         return ServiceResponse<bool>.SuccessResponse(
             statusCode: StatusCodes.Status200OK,

@@ -276,8 +276,41 @@ public class ProductService:IProductService{
         b=await File.ReadAllBytesAsync(Path.Join(path,name));
         return b;
     }
-    
 
+    public async Task<List<ReviewDto>> GetRecentProductReviews()
+    {
+        try
+        {
+            List<Rating>? ratings = await _context.Ratings
+                .OrderByDescending(r => r.CreatedAt)
+                .OrderByDescending(r => r.UpdatedAt)
+                .ToListAsync();
 
+            List<ReviewDto> reviews = new List<ReviewDto>();
+            if (ratings != null)
+            {
+                foreach (Rating _rating in ratings)
+                {
+                    User? user;
 
+                    user = await _userService.GetUserById(_rating.UserId);
+                    string fullName = user?.FirstName + " " + user?.LastName;
+
+                    reviews.Add(new ReviewDto
+                    {
+                        IsMine = false,
+                        Rating = _rating.RatingN,
+                        Review = _rating.Review,
+                        Name = fullName
+                    });
+
+                }
+            }
+            return reviews;
+        }
+        catch
+        {
+            throw new Exception("Something went wrong whie trying to get reviews");
+        }
+    }
 }

@@ -2,6 +2,7 @@ using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Util;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,14 @@ public class AdminController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IUserAccountService _userAccountService;
     private readonly IUserManagementService _userManagementService;
+    private readonly IOrderService _orderService;
     public AdminController(
         ILogger<AdminController> logger,
         IAuthService authService,
         IUserAccountService userAccountService,
         IUserManagementService userManagementService,
-        IProductService productService
+        IProductService productService,
+        IOrderService orderService
     )
     {
         _logger = logger;
@@ -31,6 +34,7 @@ public class AdminController : ControllerBase
         _userAccountService = userAccountService;
         _userManagementService = userManagementService;
         _productService = productService;
+        _orderService = orderService;
     }
 
     [HttpGet("users")]
@@ -138,5 +142,32 @@ public class AdminController : ControllerBase
             action: action
         );
         return StatusCode(statusCode: 201, user);
+    }
+
+    [HttpGet("recent_reviews")]
+    public async Task<IActionResult> GetRecentRatings()
+    {
+        var ratings = await _productService.GetRecentProductReviews();
+
+        var data = new {count=ratings.Count, data= ratings};
+
+        return Ok(
+            new ApiResponse<Object>(
+                true, "Ratings fetched successfully.", data
+            )
+        );
+    }
+
+    [HttpGet("recent_orders")]
+    public async Task<IActionResult> GetRecentOrders()
+    {
+        var orders =  await _orderService.GetRecentOrdersAsync();
+        var data = new {count=orders.Count, data= orders};
+        
+        return Ok(
+            new ApiResponse<Object>(
+                true, "Orders fetched successfully.", data
+            )
+        );
     }
 }

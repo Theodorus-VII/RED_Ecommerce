@@ -133,6 +133,28 @@ namespace Ecommerce.Services.Orders
             }
         }
 
-
+        public async Task<List<OrderResponseDTO>> GetRecentOrdersAsync()
+        {
+            try
+            {
+                var orders = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .Include(o => o.PaymentInfo)
+                    .Include(o => o.ShippingAddress)
+                    .Include(o => o.BillingAddress)
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToListAsync();
+                if(orders.Count == 0)
+                {
+                    throw new ArgumentException("No orders found");
+                }
+                return _mapper.Map<List<OrderResponseDTO>>(orders);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }
