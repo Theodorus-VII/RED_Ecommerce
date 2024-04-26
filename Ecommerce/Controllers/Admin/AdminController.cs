@@ -147,27 +147,45 @@ public class AdminController : ControllerBase
     [HttpGet("recent_reviews")]
     public async Task<IActionResult> GetRecentRatings()
     {
-        var ratings = await _productService.GetRecentProductReviews();
+        try
+        {
+            var ratings = await _productService.GetRecentProductReviews();
 
-        var data = new {ratings=ratings};
+            var data = new {ratings=ratings};
 
-        return Ok(
-            new ApiResponse<Object>(
-                true, "Ratings fetched successfully.", data
-            )
-        );
+            return Ok(
+                new ApiResponse<Object>(
+                    true, "Ratings fetched successfully.", data
+                )
+            );
+        }
+        catch (Exception e)
+        {
+            return StatusCode(
+                500,
+                new ApiResponse<Object>(false, e.Message, null)
+            );
+        }
     }
 
     [HttpGet("recent_orders")]
     public async Task<IActionResult> GetRecentOrders()
     {
-        var orders =  await _orderService.GetRecentOrdersAsync();
-        var data = new {count=orders.Count, orders= orders};
-        
-        return Ok(
-            new ApiResponse<Object>(
-                true, "Orders fetched successfully.", data
-            )
-        );
+        try
+            {
+                var orders =  await _orderService.GetRecentOrdersAsync();
+                var data = new {count=orders.Count, orders= orders};
+
+                return Ok(
+                    new ApiResponse<Object>(
+                        true, "Orders fetched successfully.", data
+                    )
+                );
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new ApiResponse<object>(false, ex.Message, null);
+                return StatusCode(500, errorResponse);
+            }
     }
 }

@@ -145,11 +145,31 @@ namespace Ecommerce.Services.Orders
                     .Include(o => o.BillingAddress)
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
+                    
                 if(orders.Count == 0)
                 {
-                    throw new ArgumentException("No orders found");
+                    return new List<OrderResponseDTO> { };
                 }
-                return _mapper.Map<List<OrderResponseDTO>>(orders);
+                // var response = _mapper.Map<List<OrderResponseDTO>>(orders);
+                var response = new List<OrderResponseDTO> {};
+                foreach (var order in orders)
+                {
+                    var orderResponse = new OrderResponseDTO
+                        {
+                            OrderId = order.OrderId,
+                            OrderDate = order.OrderDate,
+                            OrderNumber = order.OrderNumber
+                        };
+                    var user = await _userManager.FindByIdAsync(order.UserId);
+                    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                    orderResponse.User = new UserDto(
+                        user,
+                        role
+                    );
+                    response.Add(orderResponse);
+                }
+
+                return response;
             }
             catch (Exception)
             {

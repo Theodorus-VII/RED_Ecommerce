@@ -14,6 +14,7 @@ namespace Ecommerce.Controllers.Orders.Contracts
         public DateTime? OrderDate { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<OrderItemResponseDTO>? Items { get; set; }
+        public UserDto? User {get; set;}
     }
 
     public class OrderItemResponseDTO
