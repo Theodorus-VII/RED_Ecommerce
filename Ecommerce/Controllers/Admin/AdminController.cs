@@ -44,7 +44,8 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("test")]
-    public IActionResult Test(){
+    public IActionResult Test()
+    {
         return Ok("ADMIN CONTROLLER");
     }
 
@@ -144,6 +145,12 @@ public class AdminController : ControllerBase
         return StatusCode(statusCode: 201, user);
     }
 
+    /// <summary>
+    ///  Get all reviews posted for products on the platform. Sorted by the most recent first.
+    /// </summary>
+    /// <response code="200"> A list of reviews </response>
+    /// <response code="401"> Unauthorized access </response>
+    /// <response code="500"> Internal server has occurred </response>
     [HttpGet("recent_reviews")]
     public async Task<IActionResult> GetRecentRatings()
     {
@@ -151,7 +158,7 @@ public class AdminController : ControllerBase
         {
             var ratings = await _productService.GetRecentProductReviews();
 
-            var data = new {ratings=ratings};
+            var data = new { ratings = ratings };
 
             return Ok(
                 new ApiResponse<Object>(
@@ -168,24 +175,36 @@ public class AdminController : ControllerBase
         }
     }
 
+
+    /// <summary>
+    /// Get all orders placed on the platform. Sorted by the most recent first.
+    /// </summary>
+    /// <returns>Returns list of orders in apiresponse object</returns>
+    /// <remarks>
+    /// Sample request:
+    ///     GET /order
+    /// </remarks>
+    /// <response code="200">Returns list of orders with in an apiresponse object</response>
+    /// <response code="401">Unauthorized access</response>
+    /// <response code="500">Internal server error</response>
     [HttpGet("recent_orders")]
     public async Task<IActionResult> GetRecentOrders()
     {
         try
-            {
-                var orders =  await _orderService.GetRecentOrdersAsync();
-                var data = new {count=orders.Count, orders= orders};
+        {
+            var orders = await _orderService.GetRecentOrdersAsync();
+            var data = new { count = orders.Count, orders = orders };
 
-                return Ok(
-                    new ApiResponse<Object>(
-                        true, "Orders fetched successfully.", data
-                    )
-                );
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<object>(false, ex.Message, null);
-                return StatusCode(500, errorResponse);
-            }
+            return Ok(
+                new ApiResponse<Object>(
+                    true, "Orders fetched successfully.", data
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            var errorResponse = new ApiResponse<object>(false, ex.Message, null);
+            return StatusCode(500, errorResponse);
+        }
     }
 }
