@@ -11,6 +11,7 @@ using Org.BouncyCastle.Utilities;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32.SafeHandles;
+using Microsoft.AspNetCore.Identity;
 
 
 [ApiController]
@@ -56,6 +57,20 @@ public class ProductController:ControllerBase{
 /// </response>
     [HttpGet]
     public async Task<ActionResult<FilterAttributesResponse>> GetFilteredProducts(string? sortType,string? Categories="",string? name="",int start=0, int maxSize=10,int low=0, int high=int.MaxValue){
+         var userIdClaim = User.Claims.Where(c => c.Type == ClaimTypes.Role);
+
+        // return error if the user Id isn't in the token claims.
+        _logger.LogInformation($"{userIdClaim}");
+        if (userIdClaim == null)
+        {
+            _logger.LogError("Invalid request provided");
+            return Unauthorized("Credentials not found");
+        }
+        bool isAdmin=false;
+        foreach(var claim in userIdClaim){
+            if(claim.Value.Equals("Admin"))isAdmin=true;
+        }
+
         string[]? categories=Categories?.Split(",");
         // List<Category> catList=new List<Category>();
         // Category toAdd;
@@ -64,7 +79,7 @@ public class ProductController:ControllerBase{
         //     Console.WriteLine(toAdd);
         // }
         FilterAttributes filter=new FilterAttributes{categories=categories,name=name??"",low=low,high=high,sortType=sortType};
-        FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize);
+        FilterAttributesResponse? products=await _services.GetProductByFilter(filter,start,maxSize,isAdmin);
         // if(products==null)return BadRequest("Wrong parameter or filter property values");
         // return Ok(products);
         

@@ -7,6 +7,7 @@ public class ProductDto{
     public string? Name{get;set;}
     public string? Brand{get;set;}
     public string Details{get;set;}="None";
+    public DateTime CreatedAt {get;set;}
     public int Count{get;set;}=-1;
     public List<string> Images{get;set;}=new List<string>();
     [EnumDataType(typeof(Category))]

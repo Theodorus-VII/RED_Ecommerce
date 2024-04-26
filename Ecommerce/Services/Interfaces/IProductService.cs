@@ -5,7 +5,7 @@ public interface IProductService{
     public Task<ProductDto> RegisterProduct(ProductDto dto, List<IFormFile> imgFiles);
     public Task DeleteProduct(int id);
     // public Task<float> GetAverageRating(int id);
-    public Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize);
+    public Task<FilterAttributesResponse> GetProductByFilter(FilterAttributes filterAttributes, int start, int maxSize, bool isAdmin);
     public Task<ProductDto?> ModifyProudct(ProductDto product,int id, List<IFormFile> imgFiles);  
     public Task BuyProduct(int id);
     public Task<double> GetAverageRating(int id);
