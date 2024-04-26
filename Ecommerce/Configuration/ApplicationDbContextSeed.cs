@@ -47,7 +47,7 @@ public static class ApplicationDbContextSeed
             {
 
                 // define roles
-                string[] roleNames = {"Customer", "Admin"};
+                string[] roleNames = { "Customer", "Admin" };
 
                 // ensure the roles exist
                 foreach (var roleName in roleNames)
@@ -89,7 +89,7 @@ public static class ApplicationDbContextSeed
                     ratings.Add(new Rating
                     {
                         RatingN = 4, // Example rating
-                        Review = "Great product!", // Example review
+                        Review = i % 2 == 0 ? "Great product!" : i % 3 == 0 ? "Amazing product!" : "Shite product. I'm suing this company", // Example review
                         UserId = users[i % users.Count].Id, // Assuming users is a list of User entities
                         ProductId = products[i % products.Count].Id // Assuming products is a list of Product entities
                     });
