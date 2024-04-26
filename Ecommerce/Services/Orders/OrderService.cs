@@ -154,14 +154,13 @@ namespace Ecommerce.Services.Orders
                 var response = new List<OrderResponseDTO> {};
                 foreach (var order in orders)
                 {
-                    var orderResponse = new OrderResponseDTO
-                        {
-                            OrderId = order.OrderId,
-                            OrderDate = order.OrderDate,
-                            OrderNumber = order.OrderNumber
-                        };
+                    var orderResponse = _mapper.Map<OrderResponseDTO>(order);
                     var user = await _userManager.FindByIdAsync(order.UserId);
                     var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                    orderResponse.User = new UserDto(
+                        user,
+                        role
+                    );
                     orderResponse.User = new UserDto(
                         user,
                         role
