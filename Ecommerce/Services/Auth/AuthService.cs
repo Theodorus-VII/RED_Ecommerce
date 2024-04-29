@@ -61,18 +61,16 @@ public class AuthService : IAuthService
     public async Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-
-        _logger.LogInformation("CanSignIn{}", await _signInManager.CanSignInAsync(user));
         var result = await _signInManager.PasswordSignInAsync(
             request.Email,
             request.Password,
             isPersistent: true,
             lockoutOnFailure: false);
 
+        _logger.LogInformation("{}", result.Succeeded);
         if (!result.Succeeded)
         {
             _logger.LogInformation("{}", result);
-
             if (user == null)
             {
                 return ServiceResponse<UserDto>.FailResponse(
@@ -80,14 +78,14 @@ public class AuthService : IAuthService
                     errorDescription: "User Not Found"
                 );
             }
-            else if (!user.EmailConfirmed)
+            if (!user.EmailConfirmed)
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
                     "Please confirm your email first before logging into the service."
                 );
             }
-            else if (!await _userManager.CheckPasswordAsync(user, request.Password))
+            if (!await _userManager.CheckPasswordAsync(user, request.Password))
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
