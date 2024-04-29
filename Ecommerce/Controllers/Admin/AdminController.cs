@@ -140,9 +140,10 @@ public class AdminController : ControllerBase
             user: user,
             baseUrl: baseUrl,
             scheme: Request.Scheme,
+            callbackUrl: request.CallbackUrl,
             action: action
         );
-        return StatusCode(statusCode: 201, user);
+        return StatusCode(statusCode: StatusCodes.Status201Created, user);
     }
 
     /// <summary>

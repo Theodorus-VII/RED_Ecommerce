@@ -334,6 +334,7 @@ public class AuthService : IAuthService
         UserDto user,
         string baseUrl,
         string scheme,
+        string callbackUrl,
         string action = "confirm-email"
     )
     {
@@ -354,8 +355,8 @@ public class AuthService : IAuthService
         var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
 
         _logger.LogInformation("Encoded Generated confirmation Token: {}", encodedConfirmationToken);
-        var callbackUrl =
-            $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}";
+        var service_callbackUrl =
+            $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}&callbackUrl={callbackUrl}";
 
         var confirmationEmail = new EmailDto
         {
@@ -363,7 +364,7 @@ public class AuthService : IAuthService
             Subject = "Welcome to _______ Commerce",
             Message =
                 $@"<p>Your new account at  _______Commerce has been created. 
-                    Please confirm your account by <a href={callbackUrl}>clicking here.</a></p>"
+                    Please confirm your account by <a href={service_callbackUrl}>clicking here.</a></p>"
         };
 
         _logger.LogInformation($"URL for email confirmation: {callbackUrl}");
@@ -387,6 +388,7 @@ public class AuthService : IAuthService
         User user,
         string baseUrl,
         string scheme,
+        string callbackUrl,
         string action = "reset-password"
     )
     {
@@ -398,12 +400,12 @@ public class AuthService : IAuthService
             resetToken = System.Web.HttpUtility.UrlEncode(resetToken, Encoding.UTF8);
             _logger.LogInformation("Encoded Reset Token: {}", resetToken);
 
-            var callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}";
+            var service_callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
             var passResetEmail = new EmailDto
             {
                 Recipient = user.Email,
                 Subject = "Reset Password",
-                Message = $@"<p>Reset your password <a href={callbackUrl}>here</a></p>"
+                Message = $@"<p>Reset your password <a href={service_callbackUrl}>here</a></p>"
             };
 
             _logger.LogInformation("Password reset Email sending...");

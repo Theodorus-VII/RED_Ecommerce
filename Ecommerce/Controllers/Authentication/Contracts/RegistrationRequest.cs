@@ -26,6 +26,7 @@ public class RegistrationRequest
     public string? PhoneNumber { get; set; }
     public string? DefaultShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
+    public string CallbackUrl {get; set;}
 
     public RegistrationRequest(
         string firstName,
@@ -34,8 +35,7 @@ public class RegistrationRequest
         string password,
         string confirmPassword,
         string? phoneNumber,
-        string? defaultShippingAddress,
-        string? billingAddress
+        string callbackUrl = "red://"
     )
     {
         FirstName = firstName;
@@ -43,8 +43,7 @@ public class RegistrationRequest
         Email = email;
         PhoneNumber = phoneNumber;
         Password = password;
-        DefaultShippingAddress = defaultShippingAddress;
-        BillingAddress = billingAddress;
         ConfirmPassword = confirmPassword;
+        CallbackUrl = callbackUrl;
     }
 }

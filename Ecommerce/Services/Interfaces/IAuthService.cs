@@ -10,7 +10,6 @@ public interface IAuthService
     public Task<IEnumerable<UserDto>> GetUsers();
     public Task<IServiceResponse<UserDto>> RegisterCustomer(RegistrationRequest request);
     public Task<IServiceResponse<UserDto>> RegisterAdmin(RegistrationRequest request);
-
     public Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request);
     public Task<IServiceResponse<bool>> LogoutUser(string userId);
     public Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken);
@@ -20,12 +19,14 @@ public interface IAuthService
         UserDto user,
         string baseUrl,
         string scheme,
+        string callbackUrl,
         string action
     );
     public Task<IServiceResponse<string>> SendPasswordResetEmail(
         User user,
         string baseUrl,
         string scheme,
+        string callbackUrl,
         string action
     );
     public Task<IServiceResponse<string>> ResetPassword(string email, string resetToken, string newPassword);

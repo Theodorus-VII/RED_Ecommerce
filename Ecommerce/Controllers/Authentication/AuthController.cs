@@ -101,13 +101,17 @@ public class AuthController : ControllerBase
 
         UserDto user = response.Data;
 
+        _logger.LogInformation("Attempting to send confirmation email...");
+
         string baseUrl = $"{Request.Host}{Request.PathBase}";
         string action = Url.Action("ConfirmEmail", "auth")!;
+
         var result = await _authService.SendConfirmationEmail(
                 user: user,
                 baseUrl: baseUrl,
                 scheme: Request.Scheme,
-                action: action
+                action: action,
+                callbackUrl: registrationRequest.CallbackUrl
             );
 
         if (!result.IsSuccess)
@@ -119,7 +123,49 @@ public class AuthController : ControllerBase
         {
             _logger.LogInformation("Confirmation email sent");
         }
-        return StatusCode(statusCode: 201, user);
+        return StatusCode(statusCode: StatusCodes.Status201Created, user);
+    }
+
+    [HttpPost("confirmation-email")]
+    public async Task<IActionResult> SendConfirmationEmail(Guid userId, string callbackUrl)
+    {
+        var user = await _userAccountService.GetUserById(userId);
+        if (user is null)
+        {
+            return StatusCode(
+                StatusCodes.Status404NotFound,
+                "User not found."
+            );
+        }
+
+        var role = await _userAccountService.GetUserRole(user);
+        var userModel = new UserDto(user, role);
+
+        string baseUrl = $"{Request.Host}{Request.PathBase}";
+        string action = Url.Action("ConfirmEmail", "auth") ?? "";
+        var result = await _authService.SendConfirmationEmail(
+                user: userModel,
+                baseUrl: baseUrl,
+                scheme: Request.Scheme,
+                callbackUrl: callbackUrl,
+                action: action
+            );
+        if (!result.IsSuccess)
+        {
+            _logger.LogInformation("Unable to send confirmation email.");
+            _logger.LogError("Error sending confirmation email: {}", result.Error.ErrorDescription);
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Error sending confirmation email."
+            );
+        }
+
+        _logger.LogInformation("Confirmation email sent");
+
+        return StatusCode(
+            StatusCodes.Status204NoContent,
+            "Email has been sent. Please confirm your email address to complete registration."
+        );
     }
 
     /// <summary>
@@ -252,14 +298,18 @@ public class AuthController : ControllerBase
     /// <summary>
     ///     Endpoint for Account Email Confirmation
     /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="token"></param>
+    /// <remarks>
+    ///     Params:
+    /// </remarks>
+    /// <param name="userId">The Guid User ID supplied through the email sent upon registration.</param>
+    /// <param name="token">Email Confirmation Token supplied through the email sent upon registration.</param>
+    /// <param name="callbackUrl">The Url to redirect to upon completion (on success or failure).</param>
     /// <response code="200">Email Confirmed</response>
     /// <response code="404">User Not Found</response>
     /// <response code="500">Server Error</response>
     /// <returns></returns>
     [HttpGet("confirm-email")]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token)
+    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, string callbackUrl = "red://confirmed-email")
     {
         _logger.LogInformation("Confirming user email...");
         var user = await _userAccountService.GetUserById(userId);
@@ -270,10 +320,10 @@ public class AuthController : ControllerBase
             return NotFound("User not found.");
         }
 
-        _logger.LogInformation(user.Email);
+        _logger.LogInformation("User Email: {}", user.Email);
 
         var result = await _authService.ConfirmEmail(user.Email, token);
-        _logger.LogInformation(result.ToString());
+        _logger.LogInformation("Result of email confirmation: {}", result.ToString());
         if (result.IsSuccess)
         {
             user = await _userAccountService.GetUserById(userId);
@@ -281,7 +331,7 @@ public class AuthController : ControllerBase
             {
                 // return Ok("Email Confirmed");
                 _logger.LogInformation("User Email Confirmed");
-                return Redirect("red://confirmed-email");
+                return Redirect(callbackUrl);
             }
         }
         return StatusCode(
@@ -292,18 +342,21 @@ public class AuthController : ControllerBase
 
 
     /// <summary>
-    ///     Request Password Reset Email Endpoint
+    ///     Request Password Reset Email Endpoint.
     /// </summary>
     /// <remarks>
     ///     Sends a password reset email to the given email address if a 
     ///     user exists with that email.
+    ///     After the user clicks the link in the email, they will be redirected
+    ///     to the page specified in the callbackUrl parameter.
     /// </remarks>
-    /// <response code="200">Successfully sent password reset email</response>
-    /// <response code="404">User Not Found</response>
-    /// <response code="500">Internal Server Error</response>
-    /// <param name="email"></param>
+    /// <param name="email">Email address of the user.</param>
+    /// <param name="callbackUrl">The address to redirect to from the sent email.</param>
+    /// <response code="200">Successfully sent password reset email.</response>
+    /// <response code="404">User Not Found.</response>
+    /// <response code="500">Internal Server Error.</response>
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(string email)
+    public async Task<IActionResult> ForgotPassword(string email, string callbackUrl = "red://email-sent")
     {
         var user = await _userAccountService.GetUserByEmail(email);
         if (user is null)
@@ -318,7 +371,8 @@ public class AuthController : ControllerBase
             user: user,
             baseUrl: baseUrl,
             action: action,
-            scheme: Request.Scheme
+            scheme: Request.Scheme,
+            callbackUrl: callbackUrl
         );
 
         if (result.IsSuccess)
@@ -332,11 +386,18 @@ public class AuthController : ControllerBase
         );
     }
 
+    /// <summary>
+    /// Redirects the user to a page from the password reset email that was sent.
+    /// </summary>
+    /// <param name="email">The email address of the user.</param>
+    /// <param name="token">The password reset token.</param>
+    /// <param name="callbackUrl">The url of the page/provider to redirect to.</param>
+    /// <returns>A redirect response to a page including the email and token for the password reset.</returns>
     [HttpGet("forgot-redirect")]
-    public IActionResult ForgotRedirect(string email, string token)
+    public IActionResult ForgotRedirect(string email, string token, string callbackUrl)
     {
         _logger.LogInformation($"Redirecting .... Email: {email}, Token: {token}");
-        return Redirect($"red://email-sent?email={email}&token={token}");
+        return Redirect($"{callbackUrl}?email={email}&token={token}");
     }
 
 
