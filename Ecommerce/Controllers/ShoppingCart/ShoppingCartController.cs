@@ -310,12 +310,6 @@ namespace Ecommerce.Controllers.Cart
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                // Get userId from token
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -383,7 +377,6 @@ namespace Ecommerce.Controllers.Cart
                     return BadRequest(ModelState);
                 }
 
-                // Get userId from token
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
