@@ -77,6 +77,10 @@ public static class ApplicationDbContextSeed
                     admin, "adminpassword"
                 );
                 await userManager.AddToRoleAsync(admin, Roles.Admin);
+
+                // confirming the emails of the admin and customer default accounts
+                await userManager.ConfirmEmailAsync(customer, await userManager.GenerateEmailConfirmationTokenAsync(customer));
+                await userManager.ConfirmEmailAsync(admin, await userManager.GenerateEmailConfirmationTokenAsync(admin));
             }
 
             var users = await userManager.GetUsersInRoleAsync(Roles.Customer);

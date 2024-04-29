@@ -4,6 +4,7 @@ using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Services;
@@ -16,6 +17,7 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
     private readonly IUserAccountService _userAccountService;
+    private readonly SignInManager<User> _signInManager;
 
     public AuthService(
         UserManager<User> userManager,
@@ -23,9 +25,11 @@ public class AuthService : IAuthService
         IJwtTokenGenerator tokenGenerator,
         IEmailService emailService,
         IUserAccountService userAccountService,
-        ILogger<AuthService> logger
+        ILogger<AuthService> logger,
+        SignInManager<User> signInManager
     )
     {
+        _signInManager = signInManager;
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
@@ -58,27 +62,54 @@ public class AuthService : IAuthService
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
 
-        if (user == null)
+        _logger.LogInformation("CanSignIn{}", await _signInManager.CanSignInAsync(user));
+        var result = await _signInManager.PasswordSignInAsync(
+            request.Email,
+            request.Password,
+            isPersistent: true,
+            lockoutOnFailure: false);
+
+        if (!result.Succeeded)
         {
+            _logger.LogInformation("{}", result);
+
+            if (user == null)
+            {
+                return ServiceResponse<UserDto>.FailResponse(
+                    statusCode: StatusCodes.Status404NotFound,
+                    errorDescription: "User Not Found"
+                );
+            }
+            else if (!user.EmailConfirmed)
+            {
+                return ServiceResponse<UserDto>.FailResponse(
+                    statusCode: StatusCodes.Status401Unauthorized,
+                    "Please confirm your email first before logging into the service."
+                );
+            }
+            else if (!await _userManager.CheckPasswordAsync(user, request.Password))
+            {
+                return ServiceResponse<UserDto>.FailResponse(
+                    statusCode: StatusCodes.Status401Unauthorized,
+                    errorDescription: "Invalid Password"
+                );
+            }
+
             return ServiceResponse<UserDto>.FailResponse(
-                statusCode: StatusCodes.Status404NotFound,
-                errorDescription: "User Not Found"
-            );
-        }
-        if (!await _userManager.CheckPasswordAsync(user, request.Password))
-        {
-            return ServiceResponse<UserDto>.FailResponse(
-                statusCode: StatusCodes.Status401Unauthorized,
-                errorDescription: "Invalid Password"
+                statusCode: StatusCodes.Status500InternalServerError,
+                errorDescription: "Internal Server Error Encountered Signing in. Please try again later"
             );
         }
 
-        var claims = new List<Claim>();
-        var roles = await _userManager.GetRolesAsync(user);
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
+        // var claims = new List<Claim>();
+        // var roles = await _userManager.GetRolesAsync(user);
+        // foreach (var role in roles)
+        // {
+        //     claims.Add(new Claim(ClaimTypes.Role, role));
+        // }
+
+        var principal = await _signInManager.CreateUserPrincipalAsync(user);
+        var claims = principal.Claims.ToList();
 
         string token = _tokenGenerator.GenerateToken(user, claims);
         string refreshToken = _tokenGenerator.GenerateRefreshToken();
