@@ -80,10 +80,6 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var orders = await _context.Orders.Where(o => o.UserId == userId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).ToListAsync();
-                if(orders.Count == 0)
-                {
-                    throw new ArgumentException("No orders found");
-                }
                 return _mapper.Map<List<OrderResponseDTO>>(orders);
             }
             catch (Exception)
