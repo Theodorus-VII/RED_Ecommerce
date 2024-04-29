@@ -181,7 +181,7 @@ namespace Ecommerce.Controllers.Orders
                     var errorResponse = new ApiResponse<object>(false, "Invalid order id.", null);
                     return BadRequest(errorResponse);
                 }
-                if (status <= 0 && status > 3)
+                if (status <= 0 || status > 3)
                 {
                     var errorResponse = new ApiResponse<object>(false, "Invalid status.", null);
                     return BadRequest(errorResponse);
