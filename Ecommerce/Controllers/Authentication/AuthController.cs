@@ -126,6 +126,15 @@ public class AuthController : ControllerBase
         return StatusCode(statusCode: StatusCodes.Status201Created, user);
     }
 
+    /// <summary>
+    /// Sends a confirmation email to the user with the specified userId and callbackUrl.
+    /// </summary>
+    /// <param name="userId">The ID of the user to send the confirmation email to.</param>
+    /// <param name="callbackUrl">The URL to redirect the user to after confirming their email.</param>
+    /// <response code="204">The email was successfully sent.</response>
+    /// <respose code="404">The user was not found.</respose>
+    /// <exception cref="ArgumentException">Thrown if the user with the specified userId is not found.</exception>
+    /// <exception cref="Exception">Thrown if there is an error sending the confirmation email.</exception>
     [HttpPost("confirmation-email")]
     public async Task<IActionResult> SendConfirmationEmail(Guid userId, string callbackUrl)
     {
@@ -194,7 +203,6 @@ public class AuthController : ControllerBase
     /// <response code="404">User Not Found(Incorrect Email)</response>
     /// <response code="500">Some other Internal Server Error</response>
     /// <param name="loginRequest"></param>
-
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
