@@ -9,7 +9,6 @@ using Ecommerce.Services.ShoppingCart;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
-using System.Runtime.CompilerServices;
 using System.Reflection;
 
 using Ecommerce.Services.Payment;
@@ -26,8 +25,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration
     .AddEnvironmentVariables()
     .AddUserSecrets(Assembly.GetExecutingAssembly(), true);
-
-// Add services to the container.
 
 builder.Services.AddControllers();
 
@@ -70,49 +67,53 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Configure Automapper.
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Add the HttpClient for sending http requests from the server.
 builder.Services.AddHttpClient();
 
-
-
+// Old MySql Connection config.
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-
 // var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+
+
 var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(
         connectionString,
         npgsqlOptionsAction:
-            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 50)
-    )
+            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 50))
 );
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+// Load Configuration for the email service.
+var emailConfig = builder.Configuration
+    .GetSection("EmailConfiguration")
+    .Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
 
-// Add the services here. Same format,
-//  just replace TestService with the service to use.
-builder.Services.AddScoped<TestService>();
+// Add Services.
+builder.Services.AddScoped<TestService>();  // Sample Service.
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-
-
-builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
+
+// Add middleware.
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
 builder.Services.AddTransient<ErrorHandlingMiddleware>();
 
@@ -122,28 +123,30 @@ var app = builder.Build();
 app.Logger.LogInformation("Application Created...");
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(
         options =>
         {
-            // options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-            // options.RoutePrefix = string.Empty;
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+            // swagger ui is available at the root of the application.
+            options.RoutePrefix = string.Empty;
         }
     );
 }
-
+// Add Https auto-redirection.
 app.UseHttpsRedirection();
 
+// Configure authentication and authorization.
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Register middleware for use.
 app.UseMiddleware<ExtractUserIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+// Configure CORS.
 app.UseCors(
     options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
 );
@@ -164,19 +167,23 @@ using (var scope = app.Services.CreateScope())
     }
     else
     {
-        app.Logger.LogInformation("Found no pending migrations.");
+        app.Logger.LogInformation("Found no pending migrations. Proceeding...");
     }
 }
 
+// serve static images.
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
     RequestPath = "/images"
 });
 
+// .well-known (for flutter deep link).
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./.well-known")),
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "./.well-known")),
     RequestPath = "/.well-known"
 });
 
@@ -187,19 +194,17 @@ using (var scope = app.Services.CreateScope())
     var roles = new string[] { Roles.Admin, Roles.Customer };
     await scope.ServiceProvider.AddRoles(roles);
 }
-
 app.Logger.LogInformation("Roles created.");
 
+// Seeding the database with sample data (Using ApplicationDbContextSeed.cs).
 app.Logger.LogInformation("Seeding the database...");
-
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await services.InitializeDb();
 }
-
 app.Logger.LogInformation("Database seeded");
 
-app.Logger.LogInformation("Starting app...");
 
+app.Logger.LogInformation("Starting Server...");
 app.Run();
