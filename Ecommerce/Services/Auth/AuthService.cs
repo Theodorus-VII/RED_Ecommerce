@@ -388,9 +388,7 @@ public class AuthService : IAuthService
             encodedConfirmationToken);
         
         var email_callbackURL =
-            @$"{scheme}://{baseUrl}{action}?userId={user.Id}
-                &token={encodedConfirmationToken}
-                &callbackUrl={callbackUrl}";
+            $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}&callbackUrl={callbackUrl}";
 
         var confirmationEmail = new EmailDto
         {
