@@ -173,16 +173,16 @@ namespace Ecommerce.Services.Orders
                 {
                     var orderResponse = _mapper.Map<OrderResponseDTO>(order);
                     var user = await _userManager.FindByIdAsync(order.UserId);
-                    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
-                    orderResponse.User = new UserDto(
-                        user,
-                        role
-                    );
-                    orderResponse.User = new UserDto(
-                        user,
-                        role
-                    );
+                    if (user is not null)
+                    {
+                        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                        orderResponse.User = new UserDto(
+                            user,
+                            role
+                        );
+                    }
                     
+
                     orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
                     
                     response.Add(orderResponse);

@@ -78,8 +78,7 @@ public class AuthService : IAuthService
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
-                    errorDescription: @"Please confirm your email first before 
-                        logging into the service."
+                    errorDescription: "Please confirm your email first before logging into the service."
                 );
             }
             if (!await _userManager.CheckPasswordAsync(user, request.Password))
@@ -92,8 +91,7 @@ public class AuthService : IAuthService
 
             return ServiceResponse<UserDto>.FailResponse(
                 statusCode: StatusCodes.Status500InternalServerError,
-                errorDescription: @"Internal Server Error Encountered Signing in. 
-                    Please try again later"
+                errorDescription: "Internal Server Error Encountered Signing in. Please try again later"
             );
         }
 
@@ -388,7 +386,9 @@ public class AuthService : IAuthService
             encodedConfirmationToken);
         
         var email_callbackURL =
-            $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}&callbackUrl={callbackUrl}";
+            @$"{scheme}://{baseUrl}{action}?userId={user.Id}
+                &token={encodedConfirmationToken}
+                &callbackUrl={callbackUrl}";
 
         var confirmationEmail = new EmailDto
         {
@@ -437,7 +437,7 @@ public class AuthService : IAuthService
             _logger.LogInformation("Encoded Reset Token: {}", resetToken);
 
             var service_callbackUrl = 
-                @$"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
+                $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
             var passResetEmail = new EmailDto
             {
                 Recipient = user.Email,
