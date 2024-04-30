@@ -80,7 +80,22 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var orders = await _context.Orders.Where(o => o.UserId == userId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).ToListAsync();
-                return _mapper.Map<List<OrderResponseDTO>>(orders);
+                var orderResponses = _mapper.Map<List<OrderResponseDTO>>(orders);
+                for (int i = 0; i < orderResponses.Count; i++)
+                {
+                    orderResponses[i].StatusInt = orders[i].Status == "Pending" ? 1 : orders[i].Status == "Shipped" ? 2 : 3;
+                    var user = await _userManager.FindByIdAsync(orders[i].UserId);
+                    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                    orderResponses[i].User = new UserDto(
+                        user,
+                        role
+                    );
+                    orderResponses[i].User = new UserDto(
+                        user,
+                        role
+                    );
+                }
+                return orderResponses;
             }
             catch (Exception)
             {
@@ -93,7 +108,9 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var order = await _context.Orders.Where(o => o.UserId == userId && o.OrderId == orderId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderResponseDTO>(order);
+                var orderResponse = _mapper.Map<OrderResponseDTO>(order);
+                orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+                return orderResponse;
             }
             catch (Exception)
             {
@@ -106,7 +123,9 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var order = await _context.Orders.Where(o => o.OrderNumber == orderNumber).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderResponseDTO>(order);
+                var orderResponse = _mapper.Map<OrderResponseDTO>(order);
+                orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+                return orderResponse;
             }
             catch (Exception)
             {
@@ -163,6 +182,9 @@ namespace Ecommerce.Services.Orders
                         user,
                         role
                     );
+                    
+                    orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+                    
                     response.Add(orderResponse);
                 }
 

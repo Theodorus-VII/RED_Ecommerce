@@ -23,7 +23,8 @@ public class UserManagementService : IUserManagementService
         _logger = logger;
     }
 
-    public async Task<IServiceResponse<bool>> UpdateUserDetails(Guid userId, UserPatchRequest request)
+    public async Task<IServiceResponse<bool>> UpdateUserDetails(
+        Guid userId, UserPatchRequest request)
     {
         var user = await _userAccountService.GetUserById(userId);
 

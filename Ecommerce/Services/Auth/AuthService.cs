@@ -4,7 +4,6 @@ using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ecommerce.Services;
@@ -12,7 +11,6 @@ namespace Ecommerce.Services;
 public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
@@ -21,7 +19,6 @@ public class AuthService : IAuthService
 
     public AuthService(
         UserManager<User> userManager,
-        RoleManager<IdentityRole<Guid>> roleManager,
         IJwtTokenGenerator tokenGenerator,
         IEmailService emailService,
         IUserAccountService userAccountService,
@@ -31,7 +28,6 @@ public class AuthService : IAuthService
     {
         _signInManager = signInManager;
         _userManager = userManager;
-        _roleManager = roleManager;
         _tokenGenerator = tokenGenerator;
         _emailService = emailService;
         _userAccountService = userAccountService;
@@ -82,7 +78,8 @@ public class AuthService : IAuthService
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
-                    "Please confirm your email first before logging into the service."
+                    errorDescription: @"Please confirm your email first before 
+                        logging into the service."
                 );
             }
             if (!await _userManager.CheckPasswordAsync(user, request.Password))
@@ -95,16 +92,10 @@ public class AuthService : IAuthService
 
             return ServiceResponse<UserDto>.FailResponse(
                 statusCode: StatusCodes.Status500InternalServerError,
-                errorDescription: "Internal Server Error Encountered Signing in. Please try again later"
+                errorDescription: @"Internal Server Error Encountered Signing in. 
+                    Please try again later"
             );
         }
-
-        // var claims = new List<Claim>();
-        // var roles = await _userManager.GetRolesAsync(user);
-        // foreach (var role in roles)
-        // {
-        //     claims.Add(new Claim(ClaimTypes.Role, role));
-        // }
 
         var principal = await _signInManager.CreateUserPrincipalAsync(user);
         var claims = principal.Claims.ToList();
@@ -152,17 +143,20 @@ public class AuthService : IAuthService
         );
     }
 
-    public async Task<IServiceResponse<UserDto>> RegisterAdmin(RegistrationRequest request)
+    public async Task<IServiceResponse<UserDto>> RegisterAdmin(
+        RegistrationRequest request)
     {
         return await RegisterUser(request, Roles.Admin);
     }
 
-    public async Task<IServiceResponse<UserDto>> RegisterCustomer(RegistrationRequest request)
+    public async Task<IServiceResponse<UserDto>> RegisterCustomer(
+        RegistrationRequest request)
     {
         return await RegisterUser(request, Roles.Customer);
     }
 
-    public async Task<IServiceResponse<UserDto>> RegisterUser(RegistrationRequest request, string Role)
+    public async Task<IServiceResponse<UserDto>> RegisterUser(
+        RegistrationRequest request, string Role)
     {
         // check if user alerady exists.
         if (await _userManager.FindByEmailAsync(request.Email) != null)
@@ -230,7 +224,8 @@ public class AuthService : IAuthService
         );
     }
 
-    public async Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken)
+    public async Task<IServiceResponse<UserDto>> RefreshToken(
+        string expiredToken, string refreshToken)
     {
         _logger.LogInformation("Refreshing User Token");
 
@@ -283,6 +278,7 @@ public class AuthService : IAuthService
         user.RefreshToken = newRefreshToken;
         user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
 
+        // Update the user in the db.
         await _userManager.UpdateAsync(user);
 
         var role = await _userAccountService.GetUserRole(user);
@@ -328,9 +324,9 @@ public class AuthService : IAuthService
                 errorDescription: "User Not Found"
             );
         }
-
         if (user.EmailConfirmed)
         {
+            // Email Already Confirmed.
             return ServiceResponse<bool>.FailResponse(
                 statusCode: StatusCodes.Status400BadRequest,
                 errorDescription: "User email already confirmed"
@@ -341,7 +337,9 @@ public class AuthService : IAuthService
         if (result.Succeeded)
         {
             _logger.LogInformation("Email confirmed...");
-            return ServiceResponse<bool>.SuccessResponse(statusCode: 200, data: true);
+            return ServiceResponse<bool>.SuccessResponse(
+                statusCode: 200, 
+                data: true);
         }
         else
         {
@@ -354,7 +352,7 @@ public class AuthService : IAuthService
 
             return ServiceResponse<bool>.FailResponse(
                 statusCode: StatusCodes.Status500InternalServerError,
-                errorDescription: "Error Confirming Email"
+                errorDescription: "Error Confirming Email. Please try again later."
             );
         }
     }
@@ -379,21 +377,32 @@ public class AuthService : IAuthService
         }
 
         var stringConfirmationToken = generateConfirmationToken.Data;
-        _logger.LogInformation("Generated Confirmation Token: {}", stringConfirmationToken);
+        _logger.LogInformation(
+            "Generated Confirmation Token: {}", 
+            stringConfirmationToken);
 
         var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
 
-        _logger.LogInformation("Encoded Generated confirmation Token: {}", encodedConfirmationToken);
-        var service_callbackUrl =
-            $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}&callbackUrl={callbackUrl}";
+        _logger.LogInformation(
+            "Encoded Generated confirmation Token: {}", 
+            encodedConfirmationToken);
+        
+        var email_callbackURL =
+            @$"{scheme}://{baseUrl}{action}?userId={user.Id}
+                &token={encodedConfirmationToken}
+                &callbackUrl={callbackUrl}";
 
         var confirmationEmail = new EmailDto
         {
             Recipient = user.Email,
             Subject = "Welcome to _______ Commerce",
             Message =
-                $@"<p>Your new account at  _______Commerce has been created. 
-                    Please confirm your account by <a href={service_callbackUrl}>clicking here.</a></p>"
+                $@"
+                    <p>
+                    Your new account at  _______ Commerce has been created. Please 
+                    confirm your account by <a href={email_callbackURL}>clicking here.</a>
+                    </p>
+                "
         };
 
         _logger.LogInformation($"URL for email confirmation: {callbackUrl}");
@@ -429,7 +438,8 @@ public class AuthService : IAuthService
             resetToken = System.Web.HttpUtility.UrlEncode(resetToken, Encoding.UTF8);
             _logger.LogInformation("Encoded Reset Token: {}", resetToken);
 
-            var service_callbackUrl = $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
+            var service_callbackUrl = 
+                @$"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
             var passResetEmail = new EmailDto
             {
                 Recipient = user.Email,
