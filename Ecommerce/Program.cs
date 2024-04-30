@@ -131,7 +131,7 @@ if (app.Environment.IsDevelopment())
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
             // swagger ui is available at the root of the application.
-            options.RoutePrefix = string.Empty;
+            // options.RoutePrefix = string.Empty;
         }
     );
 }
