@@ -39,6 +39,7 @@ public class AuthController : ControllerBase
     [HttpGet("test")]
     public async Task<IActionResult> GetUsers()
     {
+        
         return Ok(await _authService.GetUsers());
     }
 

@@ -15,6 +15,8 @@ using Ecommerce.Services.Payment;
 using DotNetEnv;
 using Ecommerce.Services.Orders;
 using Ecommerce.Middleware;
+using Sentry.Profiling;
+using Sentry;
 
 
 Env.Load();
@@ -27,6 +29,33 @@ builder.Configuration
     .AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 builder.Services.AddControllers();
+
+// Configure the app to use sentry.io
+// Load Configuration from environment
+var sentryConfig = builder.Configuration
+    .GetSection("SentryConfiguration")
+    .Get<SentryConfiguration>() 
+    ?? throw new Exception(
+        "Sentry configuration not found. Make sure the environment variables are configured properly");
+
+builder.Services.AddSingleton(sentryConfig);
+
+builder.WebHost.UseSentry(
+    o =>
+        {
+            o.Dsn = sentryConfig.Dsn;
+            o.Debug = sentryConfig.Debug;
+            o.EnableTracing = sentryConfig.EnableTracing;
+            o.IsGlobalModeEnabled = sentryConfig.IsGlobalModeEnabled;
+            o.TracesSampleRate = sentryConfig.TracesSampleRate;
+            o.ProfilesSampleRate = sentryConfig.ProfilesSampleRate;
+            o.AddIntegration(new ProfilingIntegration(
+                TimeSpan.FromMilliseconds(500)
+            ));
+        }
+);
+
+SentrySdk.CaptureMessage("Hello Sentry");
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
