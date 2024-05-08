@@ -22,16 +22,17 @@ public static class ApplicationDbContextSeed
                     // Create 50 items for each category
                     for (int i = 0; i < 50; i++)
                     {
+                        var product = new Product
+                        {
+                            Name = $"Sample Product {i + 1} for {category}",
+                            Brand = "Seed",
+                            Count = 10, // Example count
+                            Details = $"Seed product details for {category}",
+                            Category = category,
+                            Price = 10.5f, // Example price
+                        };
                         products.Add(
-                            new Product
-                            {
-                                Name = $"Sample Product {i + 1} for {category}",
-                                Brand = "Seed",
-                                Count = 10, // Example count
-                                Details = $"Seed product details for {category}",
-                                Category = category,
-                                Price = 10.5f, // Example price
-                            }
+                            product
                         );
                     }
                 }
@@ -39,7 +40,41 @@ public static class ApplicationDbContextSeed
                 context.SaveChanges();
             }
 
+
             products = context.Products.ToList();
+
+            // Add images for all the products. This will be random-ish and the images will not match
+            // the descriptions or the categories of the products. This is only for testing purposes
+
+            foreach (var product in products)
+            {
+                string url = "";
+                if (product.Category == Category.Electronics
+                    || product.Category == Category.Automotive
+                    || product.Category == Category.ElectronicsPhone
+                    || product.Category == Category.ElectronicsPhone
+                    || product.Category == Category.SoftwareEducation
+                    || product.Category == Category.AutomotiveCarCare
+                    || product.Category == Category.AutomotiveReplacementParts
+                    || product.Category == Category.AutomotiveToolsAndEquipments)
+                {
+                    url = "elec_81Zt42ioCgL._AC_SX679_.jpg";
+                }
+                else
+                {
+                    url = "clothing_71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg";
+                }
+
+                    product.Images = new List<Image>
+                {
+                    new Image
+                    {
+                        Url = url,
+                        ProductId = product.Id,
+                        Product = product
+                    }
+                };
+            }
 
             var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
