@@ -118,12 +118,13 @@ namespace Ecommerce.Services.Orders
             }
         }
 
-        public async Task UpdateOrderStatusAsync(int orderId, string status)
+        public async Task UpdateOrderStatusAsync(int orderId, int status)
         {
             try
             {
+                var availableStatuses = new List<string> { "Pending", "Shipped", "Delivered" };
                 var order = await _context.Orders.Where(o => o.OrderId == orderId).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                order.Status = status;
+                order.Status = availableStatuses[status - 1];
                 _context.Orders.Update(order);
                 await _context.SaveChangesAsync();
             }
