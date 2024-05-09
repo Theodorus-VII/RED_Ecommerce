@@ -116,7 +116,15 @@ public class ProductService:IProductService{
                 response.NextIndex=-1;
             }
             else response.NextIndex=start+maxSize;
-            if(start==0)response.Total=finalProducts.Count;
+            float MaximumPrice=0;
+            
+            if(start==0){
+                response.Total=finalProducts.Count;
+                foreach(Product product in finalProducts){
+                    if(product.Price>MaximumPrice)MaximumPrice=product.Price;
+                }
+                response.MaximumPrice=MaximumPrice;
+            }
             ProductDto? toAdd;
             finalProducts=finalProducts.GetRange(start,maxSize);
             foreach(Product product in finalProducts ){
