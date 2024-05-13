@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.16 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.19 AS base
 EXPOSE 80
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.16 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.19 AS build
 ENV PATH="$PATH:/root/.dotnet/tools"
 
 WORKDIR /src
@@ -24,9 +24,7 @@ COPY "./Ecommerce/Public/Images" .
 WORKDIR /app/.well-known
 COPY "./Ecommerce/.well-known" .
 
-# Run EF Migrations
-
-FROM runtime as migrations
+FROM runtime as final
 WORKDIR /app
 
 ENTRYPOINT [ "dotnet", "Ecommerce.dll" ]
