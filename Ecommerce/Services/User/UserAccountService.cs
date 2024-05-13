@@ -177,4 +177,35 @@ public class UserAccountService : IUserAccountService
         }
         return Roles.Customer;
     }
+
+    public async Task<IEnumerable<UserDto>> GetAllUsers()
+    {
+        var userDtos = new List<UserDto>();
+        var users = _userManager.Users;
+        foreach (User user in users)
+        {
+            userDtos.Add(new UserDto(
+                user: user,
+                accessToken: "",
+                refreshToken: "",
+                role: await GetUserRole(user)));
+        }
+        return userDtos;
+    }
+
+    public async Task<IEnumerable<UserDto>> GetUsersByRole(string role = "Customer")
+    {
+        var userDtos = new List<UserDto>();
+        var users = await _userManager.GetUsersInRoleAsync(role);
+        foreach (User user in users)
+        {
+            userDtos.Add(new UserDto(
+                user: user,
+                accessToken: "",
+                refreshToken: "",
+                role: await GetUserRole(user)));
+        }
+        return userDtos;
+    }
+
 }

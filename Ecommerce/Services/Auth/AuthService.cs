@@ -34,21 +34,6 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<UserDto>> GetUsers()
-    {
-        var userDtos = new List<UserDto>();
-        var users = _userManager.Users;
-        foreach (User user in users)
-        {
-            userDtos.Add(new UserDto(
-                user: user,
-                accessToken: "",
-                refreshToken: "",
-                role: await _userAccountService.GetUserRole(user)));
-        }
-        return userDtos;
-    }
-
     private ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
     {
         return _tokenGenerator.GetPrincipalFromExpiredToken(token);
@@ -67,21 +52,21 @@ public class AuthService : IAuthService
         if (!result.Succeeded)
         {
             _logger.LogInformation("{}", result);
-            if (user == null)
+            if (user == null) // user not found.
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status404NotFound,
                     errorDescription: "User Not Found"
                 );
             }
-            if (!user.EmailConfirmed)
+            if (!user.EmailConfirmed) // user has not yet confirmed their email.
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
                     errorDescription: "Please confirm your email first before logging into the service."
                 );
             }
-            if (!await _userManager.CheckPasswordAsync(user, request.Password))
+            if (!await _userManager.CheckPasswordAsync(user, request.Password)) // incorrect password
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
@@ -89,23 +74,28 @@ public class AuthService : IAuthService
                 );
             }
 
+            // some other error encountered. return status 500.
             return ServiceResponse<UserDto>.FailResponse(
                 statusCode: StatusCodes.Status500InternalServerError,
-                errorDescription: "Internal Server Error Encountered Signing in. Please try again later"
+                errorDescription: "Internal Server Error Encountered Signing in. Please try again later or contact support if the issue persists."
             );
         }
 
+        // Using signin manager to create the claims. Could also do this manually but this is more consise and cleaner.
         var principal = await _signInManager.CreateUserPrincipalAsync(user);
         var claims = principal.Claims.ToList();
 
-        string token = _tokenGenerator.GenerateToken(user, claims);
+        // Generate the access and refresh tokens for the user.
+        string accessToken = _tokenGenerator.GenerateToken(user, claims);
         string refreshToken = _tokenGenerator.GenerateRefreshToken();
 
+        // Set the refresh token in the database.
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
-
+        
         await _userManager.UpdateAsync(user);
 
+        // Get the user's role for the response.
         string userRole = await _userAccountService.GetUserRole(user);
 
         _logger.LogInformation("UserRole: {}", userRole);
@@ -114,7 +104,7 @@ public class AuthService : IAuthService
             statusCode: StatusCodes.Status200OK,
             data: new UserDto(
                 user: user,
-                accessToken: token,
+                accessToken: accessToken,
                 refreshToken: refreshToken,
                 role: userRole
             )
@@ -132,6 +122,7 @@ public class AuthService : IAuthService
             );
         }
 
+        // Set the refresh token in the database to an empty string (remove it if exists).
         user.RefreshToken = "";
         await _userManager.UpdateAsync(user);
 

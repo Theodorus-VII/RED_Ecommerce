@@ -10,4 +10,7 @@ public interface IUserAccountService{
     public Task<User?> GetUserByEmail(string Email);
 
     public Task<string> GetUserRole(User user);
+    public Task<IEnumerable<UserDto>> GetAllUsers();
+    public Task<IEnumerable<UserDto>> GetUsersByRole(string role = "Customer");
+
 }

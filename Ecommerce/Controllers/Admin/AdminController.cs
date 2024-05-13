@@ -40,7 +40,7 @@ public class AdminController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
-        return Ok(await _authService.GetUsers());
+        return Ok(await _userAccountService.GetAllUsers());
     }
 
     [HttpGet("test")]

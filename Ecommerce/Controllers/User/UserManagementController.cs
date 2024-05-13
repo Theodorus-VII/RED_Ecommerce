@@ -88,6 +88,10 @@ public class UserManagementController : ControllerBase
     [HttpPatch("update")]
     public async Task<IActionResult> UpdateUserDetails(UserPatchRequest request)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
         var userId = ExtractUser.GetUserId(HttpContext);
         if (userId is null)
         {
