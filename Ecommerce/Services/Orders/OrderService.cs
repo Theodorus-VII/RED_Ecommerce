@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Text;
+using AutoMapper;
 using Ecommerce.Controllers.Orders.Contracts;
 using Ecommerce.Data;
 using Ecommerce.Models;
@@ -14,12 +15,14 @@ namespace Ecommerce.Services.Orders
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
-        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper, UserManager<User> userManager)
+        private readonly ILogger<OrderService> _logger;
+        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper, UserManager<User> userManager, ILogger<OrderService> logger)
         {
             _context = context;
             _emailService = emailService;
             _mapper = mapper;
             _userManager = userManager;
+            _logger = logger;
         }
 
         public async Task<string> MakeOrderAsync(string userId, int paymentInfoId, int shippingAddressId, int? billingAddressId)
@@ -51,6 +54,10 @@ namespace Ecommerce.Services.Orders
                     {
                         int count = orderItem.Product.Count - orderItem.Quantity;
                         if (count < 0) { throw new ArgumentException($"{orderItem.Product.Name} out of stock"); }
+                        else if (count == 0)
+                        {
+                            await SendOutOfStockEmail(orderItem.Product);
+                        }
                         orderItem.Product.Count = count;
                         _context.Products.Update(orderItem.Product);
                     }
@@ -162,13 +169,13 @@ namespace Ecommerce.Services.Orders
                     .Include(o => o.BillingAddress)
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
-                    
-                if(orders.Count == 0)
+
+                if (orders.Count == 0)
                 {
                     return new List<OrderResponseDTO> { };
                 }
                 // var response = _mapper.Map<List<OrderResponseDTO>>(orders);
-                var response = new List<OrderResponseDTO> {};
+                var response = new List<OrderResponseDTO> { };
                 foreach (var order in orders)
                 {
                     var orderResponse = _mapper.Map<OrderResponseDTO>(order);
@@ -181,10 +188,10 @@ namespace Ecommerce.Services.Orders
                             role
                         );
                     }
-                    
+
 
                     orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
-                    
+
                     response.Add(orderResponse);
                 }
 
@@ -194,6 +201,38 @@ namespace Ecommerce.Services.Orders
             {
                 throw;
             }
+        }
+
+        private async Task<bool> SendOutOfStockEmail(Product product)
+        {
+            var admins = await _userManager.GetUsersInRoleAsync(Roles.Admin);
+            StringBuilder message = new();
+            message.AppendLine($"<h3>Dear Employee,</h3>");
+            message.AppendLine(@$"
+                <p>This email is to notify you that the following product: 
+                    Product Name: {product.Name}
+                    Product Id: {product.Id}
+                is out of stock. Please restock the product at your earliest convenience.</p>");
+            message.AppendLine("<p>Best regards,</p>");
+            message.AppendLine("<p>Red E-commerce</p>");
+            
+            foreach (var admin in admins)
+            {
+                var email = new EmailDto
+                {
+                    Subject = $"RED-Ecommerce: Product {product.Name} is out of stock",
+                    Recipient = admin.Email,
+                    Message = message.ToString()
+                };
+
+                var result = await _emailService.SendEmail(email);
+
+                if (!result.IsSuccess)
+                {
+                    _logger.LogError("Out of stock Email sending failure: Admin: {}, Error: {}", admin.Email, result.Error.ErrorDescription);
+                }
+            }
+            return true;
         }
     }
 }
