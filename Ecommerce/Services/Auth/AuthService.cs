@@ -39,12 +39,12 @@ public class AuthService : IAuthService
         return _tokenGenerator.GetPrincipalFromExpiredToken(token);
     }
 
-    public async Task<IServiceResponse<UserDto>> LoginUser(LoginRequest request)
+    public async Task<IServiceResponse<UserDto>> LoginUser(string email, string password)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        var user = await _userManager.FindByEmailAsync(email);
         var result = await _signInManager.PasswordSignInAsync(
-            request.Email,
-            request.Password,
+            email,
+            password,
             isPersistent: true,
             lockoutOnFailure: false);
 
@@ -66,7 +66,7 @@ public class AuthService : IAuthService
                     errorDescription: "Please confirm your email first before logging into the service."
                 );
             }
-            if (!await _userManager.CheckPasswordAsync(user, request.Password)) // incorrect password
+            if (!await _userManager.CheckPasswordAsync(user, password)) // incorrect password
             {
                 return ServiceResponse<UserDto>.FailResponse(
                     statusCode: StatusCodes.Status401Unauthorized,
@@ -133,22 +133,22 @@ public class AuthService : IAuthService
     }
 
     public async Task<IServiceResponse<UserDto>> RegisterAdmin(
-        RegistrationRequest request)
+        User user, string password)
     {
-        return await RegisterUser(request, Roles.Admin);
+        return await RegisterUser(user, password, Roles.Admin);
     }
 
     public async Task<IServiceResponse<UserDto>> RegisterCustomer(
-        RegistrationRequest request)
+        User user, string password)
     {
-        return await RegisterUser(request, Roles.Customer);
+        return await RegisterUser(user, password, Roles.Customer);
     }
 
-    public async Task<IServiceResponse<UserDto>> RegisterUser(
-        RegistrationRequest request, string Role)
+    private async Task<IServiceResponse<UserDto>> RegisterUser(
+        User user, string password, string Role)
     {
         // check if user alerady exists.
-        if (await _userManager.FindByEmailAsync(request.Email) != null)
+        if (await _userManager.FindByEmailAsync(user.Email) != null)
         {
             return ServiceResponse<UserDto>.FailResponse(
                 statusCode: StatusCodes.Status409Conflict,
@@ -158,15 +158,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("Creating user...");
 
-        User user = new User(
-            request.Email,
-            request.FirstName,
-            request.LastName,
-            request.DefaultShippingAddress,
-            request.BillingAddress
-        );
-
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)
         {
@@ -347,7 +339,7 @@ public class AuthService : IAuthService
     }
 
     public async Task<IServiceResponse<bool>> SendConfirmationEmail(
-        UserDto user,
+        User user,
         string baseUrl,
         string scheme,
         string callbackUrl,

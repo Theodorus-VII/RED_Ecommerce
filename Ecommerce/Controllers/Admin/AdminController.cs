@@ -118,7 +118,9 @@ public class AdminController : ControllerBase
     {
         _logger.LogInformation("Attempting to register a new user...");
 
-        var response = await _authService.RegisterAdmin(request);
+        var user = request.ToUser();
+
+        var response = await _authService.RegisterAdmin(user, request.Password);
 
         if (!response.IsSuccess || response.Data is null)
         {
@@ -130,7 +132,7 @@ public class AdminController : ControllerBase
 
         _logger.LogInformation("Admin Successfully Created.");
 
-        UserDto user = response.Data;
+        UserDto userDto = response.Data;
 
         string baseUrl = $"{Request.Host}{Request.PathBase}";
         string action = Url.Action("ConfirmEmail", "auth")!;
@@ -143,7 +145,7 @@ public class AdminController : ControllerBase
             callbackUrl: request.CallbackUrl,
             action: action
         );
-        return StatusCode(statusCode: StatusCodes.Status201Created, user);
+        return StatusCode(statusCode: StatusCodes.Status201Created, userDto);
     }
 
     /// <summary>
@@ -207,5 +209,20 @@ public class AdminController : ControllerBase
             var errorResponse = new ApiResponse<object>(false, ex.Message, null);
             return StatusCode(500, errorResponse);
         }
+    }
+
+    [HttpGet("get_out_of_stock_products")]
+    public IActionResult GetOutOfStockProducts()
+    {
+        var result = _productService.GetOutOfStockProductsAsync();
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Data);
+        }
+        return StatusCode(
+            result.Error.ErrorCode,
+            result.Error.ErrorDescription
+        );
     }
 }

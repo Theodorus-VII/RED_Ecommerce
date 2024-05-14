@@ -89,7 +89,9 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Attempting to register a new user...");
 
-        IServiceResponse<UserDto> response = await _authService.RegisterCustomer(registrationRequest);
+        var user = registrationRequest.ToUser();
+        
+        IServiceResponse<UserDto> response = await _authService.RegisterCustomer(user, registrationRequest.Password);
 
         if (!response.IsSuccess || response.Data is null)
         {
@@ -100,7 +102,7 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("User Successfully Created.");
 
-        UserDto user = response.Data;
+        UserDto userDto = response.Data;
 
         _logger.LogInformation("Attempting to send confirmation email...");
 
@@ -124,7 +126,7 @@ public class AuthController : ControllerBase
         {
             _logger.LogInformation("Confirmation email sent");
         }
-        return StatusCode(statusCode: StatusCodes.Status201Created, user);
+        return StatusCode(statusCode: StatusCodes.Status201Created, userDto);
     }
 
     /// <summary>
@@ -154,7 +156,7 @@ public class AuthController : ControllerBase
         string baseUrl = $"{Request.Host}{Request.PathBase}";
         string action = Url.Action("ConfirmEmail", "auth") ?? "";
         var result = await _authService.SendConfirmationEmail(
-                user: userModel,
+                user: user,
                 baseUrl: baseUrl,
                 scheme: Request.Scheme,
                 callbackUrl: callbackUrl,
@@ -209,7 +211,7 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Attempting to login user...");
 
-        var response = await _authService.LoginUser(loginRequest);
+        var response = await _authService.LoginUser(loginRequest.Email, loginRequest.Password);
 
         if (!response.IsSuccess)
         {

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Ecommerce.Models;
 
 namespace Ecommerce.Controllers.Contracts;
 
@@ -26,7 +27,7 @@ public class RegistrationRequest
     public string? PhoneNumber { get; set; }
     public string? DefaultShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
-    public string CallbackUrl {get; set;}
+    public string CallbackUrl { get; set; }
 
     public RegistrationRequest(
         string firstName,
@@ -45,5 +46,19 @@ public class RegistrationRequest
         Password = password;
         ConfirmPassword = confirmPassword;
         CallbackUrl = callbackUrl;
+    }
+
+    public User ToUser()
+    {
+        var user = new User(
+            email: Email,
+            firstName: FirstName,
+            lastName: LastName,
+            defaultShippingAddress: DefaultShippingAddress,
+            billingAddress: BillingAddress)
+        {
+            PhoneNumber = PhoneNumber
+        };
+        return user;
     }
 }

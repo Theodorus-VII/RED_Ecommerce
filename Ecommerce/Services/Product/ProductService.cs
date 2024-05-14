@@ -5,6 +5,7 @@ using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using System.Xml;
 using Org.BouncyCastle.Utilities;
+using Ecommerce.Utilities;
 namespace Ecommerce.Services;
 public class ProductService:IProductService{
     private ApplicationDbContext _context;
@@ -326,6 +327,27 @@ public class ProductService:IProductService{
         catch
         {
             throw new Exception("Something went wrong whie trying to get reviews");
+        }
+    }
+
+    public IServiceResponse<List<Product>> GetOutOfStockProductsAsync()
+    {
+        try
+        {
+            var products = _context.Products
+                .Where(product => product.Count == 0);
+
+            return ServiceResponse<List<Product>>.SuccessResponse(
+                statusCode: StatusCodes.Status200OK,
+                data: products.ToList()
+            );
+        }
+        catch (Exception e)
+        {
+            return ServiceResponse<List<Product>>.FailResponse(
+                statusCode: StatusCodes.Status500InternalServerError,
+                errorDescription: "Failed to get out of stock products: " + e.Message
+            );
         }
     }
 }
