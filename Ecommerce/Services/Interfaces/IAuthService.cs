@@ -1,5 +1,3 @@
-using System.Security.Policy;
-using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Utilities;
 
