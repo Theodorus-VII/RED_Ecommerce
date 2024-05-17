@@ -11,11 +11,13 @@ namespace Ecommerce.Services.ShoppingCart
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<IShoppingCartService> _logger;
 
-        public ShoppingCartService(ApplicationDbContext context, IMapper mapper)
+        public ShoppingCartService(ApplicationDbContext context, IMapper mapper, ILogger<IShoppingCartService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
 
@@ -27,7 +29,8 @@ namespace Ecommerce.Services.ShoppingCart
                 .Where(c => c.UserId == userId)
                 .Include(c => c.Items)
                     .ThenInclude(ci => ci.Product)
-                .FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found.");
+                    .ThenInclude(prod => prod.Images)
+                .FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found."); 
                 var cartDTO = _mapper.Map<CartResponseDTO>(cart);
                 return cartDTO;
                 
@@ -36,8 +39,9 @@ namespace Ecommerce.Services.ShoppingCart
             {
                 throw;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError("Exception: {}", e);
                 throw new Exception("An error occurred while fetching cart items.");
             }
         }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Ecommerce.Controllers.Checkout.Contracts;
+using Ecommerce.Controllers.Contracts;
 using Ecommerce.Controllers.Orders.Contracts;
 using Ecommerce.Controllers.ShoppingCart.Contracts;
 using Ecommerce.Models;
@@ -15,6 +16,9 @@ namespace Ecommerce.Mapping
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems));
             CreateMap<Cart, CartResponseDTO>();
             CreateMap<CartItem, CartItemResponseDTO>();
+            CreateMap<Product, ProductDto>()
+                .ForMember(dest => dest.Details, opt => opt.MapFrom(src => src.Details ?? "None"))
+                .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.Select(img => img.Url).ToList()));
             CreateMap<ShippingAddress, AddressResponseDTO>()
                 .ForMember(dest => dest.AddressId, opt => opt.MapFrom(src => src.ShippingAddressId));
             CreateMap<BillingAddress, AddressResponseDTO>()
