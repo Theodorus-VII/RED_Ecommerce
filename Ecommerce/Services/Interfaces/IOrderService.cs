@@ -10,6 +10,7 @@ namespace Ecommerce.Services.Interfaces
         Task<OrderResponseDTO> GetOrderAsync(string userId, int orderId);
         Task<OrderResponseDTO> GetOrderByOrderNumberAsync(string orderNumber);
         Task UpdateOrderStatusAsync(int orderId, int status);
+        Task<List<OrderResponseDTO>> GetRecentOrdersAsync();
 
     }
 }

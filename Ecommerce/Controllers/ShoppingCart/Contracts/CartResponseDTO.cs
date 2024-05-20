@@ -1,4 +1,5 @@
-﻿using Ecommerce.Models;
+﻿using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
 
 namespace Ecommerce.Controllers.ShoppingCart.Contracts
 {

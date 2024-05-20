@@ -31,34 +31,9 @@ public class ApplicationDbContext
     {
 
         base.OnModelCreating(builder);
-        builder.Entity<Rating>().HasKey(rating => new { rating.ProductId, rating.UserId });
-        builder.Entity<Image>().HasKey(image => new { image.ProductId , image.Url});
-        // mysql specific stupidity
-
-        //builder.Entity<Order>()
-        //.HasOne(o => o.BillingAddress)
-        //.WithMany()
-        //.HasForeignKey(o => o.BillingAddressId)
-        //.OnDelete(DeleteBehavior.Restrict); // Adjust delete behavior as needed
-
-        //builder.Entity<Order>()
-        //    .HasOne(o => o.ShippingAddress)
-        //    .WithMany()
-        //    .HasForeignKey(o => o.ShippingAddressId)
-        //    .OnDelete(DeleteBehavior.Restrict);
-        foreach (var entityType in builder.Model.GetEntityTypes())
-        {
-            var tableName = entityType.GetTableName();
-            var schema = entityType.GetSchema();
-
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.ClrType == typeof(string) && (property.GetMaxLength() >= 255 || property.GetMaxLength() == null))
-                {
-                    property.SetMaxLength(100);
-                }
-            }
-        }
+        builder.Entity<Rating>().HasKey(rating=>new {rating.ProductId,rating.UserId});
+        builder.Entity<Image>().HasKey(image=>new {image.Url,image.ProductId});
+        // builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
     }
 
 }

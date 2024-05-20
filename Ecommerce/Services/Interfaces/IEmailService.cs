@@ -1,7 +1,9 @@
+using Ecommerce.Utilities;
+
 namespace Ecommerce.Services.Interfaces;
 
 public interface IEmailService
 {
-    Task<bool> SendEmail(EmailDto request);
+    Task<IServiceResponse<bool>> SendEmail(EmailDto request);
     public void CheckEmailConfig();
 }
