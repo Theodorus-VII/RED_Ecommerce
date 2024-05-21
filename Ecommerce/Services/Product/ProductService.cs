@@ -143,43 +143,42 @@ public class ProductService : IProductService
                     break;
 
                 case SortType.VIEWS_ASCENDING:
+                    var allProductViews = _context.ProductViews;
+                    var groupedProductViews = allProductViews
+                        .GroupBy(productView => productView.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Count());
                     finalProducts = finalProducts.OrderBy(
-                        product => _context.ProductViews.Where(productView => productView.ProductId == product.Id).Count()
+                        product => groupedProductViews.GetValueOrDefault(product.Id, 0)
                     ).ToList();
                     break;
-                
+
                 case SortType.VIEWS_DESCENDING:
+                    allProductViews = _context.ProductViews;
+                    groupedProductViews = allProductViews
+                        .GroupBy(productView => productView.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Count());
                     finalProducts = finalProducts.OrderByDescending(
-                        product => _context.ProductViews.Where(productView => productView.ProductId == product.Id).Count()
+                        product => groupedProductViews.GetValueOrDefault(product.Id, 0)
                     ).ToList();
                     break;
 
                 case SortType.RATING_ASCENDING:
-                    
+
+                    var allRatings = _context.Ratings.ToList();
+                    var groupedRatings = allRatings.GroupBy(rating => rating.ProductId).ToDictionary(g => g.Key, g => g.Average(g => g.RatingN));
+
                     finalProducts = finalProducts.OrderBy(
-                        product => {
-                            var ratings = _context.Ratings.Where(rating => rating.ProductId == product.Id).Select(rating => rating.RatingN).ToList();
-                            if (ratings.Count == 0)
-                            {
-                                return 0;
-                            }
-                            double averageRating = ratings.Sum() / ratings.Count;
-                            return averageRating;
-                        }
+                        product => groupedRatings.GetValueOrDefault(product.Id, 0)
                     ).ToList();
                     break;
 
                 case SortType.RATING_DESCENDING:
+                    // Regular querying was taking too long, grouping for efficiency. This way we fetch the ratings once, instead of fetching and filtering each time.
+                    allRatings = _context.Ratings.ToList();
+                    groupedRatings = allRatings.GroupBy(rating => rating.ProductId).ToDictionary(g => g.Key, g => g.Average(g => g.RatingN));
+
                     finalProducts = finalProducts.OrderByDescending(
-                        product => {
-                            var ratings = _context.Ratings.Where(rating => rating.ProductId == product.Id).Select(rating => rating.RatingN).ToList();
-                            if (ratings.Count == 0)
-                            {
-                                return 0;
-                            }
-                            double averageRating = ratings.Sum() / ratings.Count;
-                            return averageRating;
-                        }
+                        product => groupedRatings.GetValueOrDefault(product.Id, 0)
                     ).ToList();
                     break;
             }
@@ -459,8 +458,15 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task LogProductView(int productID, Guid userID)
+    public async Task<IServiceResponse<bool>> LogProductView(int productID, Guid userID)
     {
+        if (await _userService.GetUserById(userID) == null)
+        {
+            return ServiceResponse<bool>.FailResponse(
+                statusCode: 401,
+                errorDescription: "User Not Found"
+            );
+        }
         var productView = new ProductView()
         {
             UserId = userID,
@@ -468,6 +474,9 @@ public class ProductService : IProductService
         };
         await _context.ProductViews.AddAsync(productView);
         await _context.SaveChangesAsync();
-        return;
+        return ServiceResponse<bool>.SuccessResponse(
+            data: true,
+            statusCode: 200
+        );
     }
 }
