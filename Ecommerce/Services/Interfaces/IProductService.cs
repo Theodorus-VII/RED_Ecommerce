@@ -19,4 +19,5 @@ public interface IProductService{
    public Task DeleteImages(int id, List<string> imgNames);
    public Task<List<ReviewDto>> GetRecentProductReviews();
    public IServiceResponse<List<Product>> GetOutOfStockProductsAsync();
+   public Task LogProductView(int productID, Guid userID);
 }

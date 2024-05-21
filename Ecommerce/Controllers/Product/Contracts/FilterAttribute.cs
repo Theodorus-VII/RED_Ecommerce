@@ -15,5 +15,9 @@ public class FilterAttributes{
 public enum SortType{
     NONE,
     PRICE_ASCENDING,
-    PRICE_DESCENDING
+    PRICE_DESCENDING,
+    VIEWS_ASCENDING,
+    VIEWS_DESCENDING,
+    RATING_ASCENDING,
+    RATING_DESCENDING
 }

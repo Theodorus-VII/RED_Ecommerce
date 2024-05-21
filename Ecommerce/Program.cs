@@ -16,7 +16,6 @@ using DotNetEnv;
 using Ecommerce.Services.Orders;
 using Ecommerce.Middleware;
 using Sentry.Profiling;
-using Sentry;
 
 
 Env.Load();
@@ -34,28 +33,30 @@ builder.Services.AddControllers();
 // Load Configuration from environment
 var sentryConfig = builder.Configuration
     .GetSection("SentryConfiguration")
-    .Get<SentryConfiguration>() 
-    ?? throw new Exception(
-        "Sentry configuration not found. Make sure the environment variables are configured properly");
+    .Get<SentryConfiguration>();
 
-builder.Services.AddSingleton(sentryConfig);
+if (sentryConfig != null && builder.Environment.EnvironmentName == "Production")
+{
+    // Only runs sentry in production environment, and if the configuration is available from the environment.
+    // Removes the error alerts (and the annoying emails that come with them) during development.
+    builder.Services.AddSingleton(sentryConfig);
 
-builder.WebHost.UseSentry(
-    o =>
-        {
-            o.Dsn = sentryConfig.Dsn;
-            o.Debug = sentryConfig.Debug;
-            o.EnableTracing = sentryConfig.EnableTracing;
-            o.IsGlobalModeEnabled = sentryConfig.IsGlobalModeEnabled;
-            o.TracesSampleRate = sentryConfig.TracesSampleRate;
-            o.ProfilesSampleRate = sentryConfig.ProfilesSampleRate;
-            o.AddIntegration(new ProfilingIntegration(
-                TimeSpan.FromMilliseconds(500)
-            ));
-        }
-);
+    builder.WebHost.UseSentry(
+        options =>
+            {
+                options.Dsn = sentryConfig.Dsn;
+                options.Debug = sentryConfig.Debug;
+                options.EnableTracing = sentryConfig.EnableTracing;
+                options.IsGlobalModeEnabled = sentryConfig.IsGlobalModeEnabled;
+                options.TracesSampleRate = sentryConfig.TracesSampleRate;
+                options.ProfilesSampleRate = sentryConfig.ProfilesSampleRate;
+                options.AddIntegration(new ProfilingIntegration(
+                    TimeSpan.FromMilliseconds(500)));
+            }
+    );
+    SentrySdk.CaptureMessage("Hello Sentry");
+}
 
-SentrySdk.CaptureMessage("Hello Sentry");
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -159,7 +160,8 @@ if (app.Environment.IsDevelopment())
         options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-            // swagger ui is available at the root of the application.
+
+            // Make swagger ui  available at the root of the application.
             // options.RoutePrefix = string.Empty;
         }
     );
@@ -175,7 +177,7 @@ app.UseAuthorization();
 app.UseMiddleware<ExtractUserIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Configure CORS.
+// Configure CORS. Shouldn't be like this but cors can be a b*tch sometimes.
 app.UseCors(
     options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
 );
@@ -216,7 +218,7 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/.well-known"
 });
 
-// Predefining roles in the database    
+// Predefining roles in the database, make sure they exist.    
 app.Logger.LogInformation("Creating roles...");
 using (var scope = app.Services.CreateScope())
 {

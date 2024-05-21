@@ -2,15 +2,15 @@ namespace Ecommerce.Utilities;
 
 public static class ExtractUser
 {
-    public static Guid? GetUserId(HttpContext context)
+    public static Guid? GetUserId(this HttpContext context)
     {
-        if (context.Items.TryGetValue("UserId", out var userIdObj))
+        if (context.Items.TryGetValue("UserId", out var userIDobj))
         {
-            if (userIdObj is null)
+            if (userIDobj is null)
             {
                 return null;
             }
-            return Guid.Parse(userIdObj?.ToString() ?? "");
+            return Guid.Parse(userIDobj?.ToString() ?? "");
         }
         return null;
     }

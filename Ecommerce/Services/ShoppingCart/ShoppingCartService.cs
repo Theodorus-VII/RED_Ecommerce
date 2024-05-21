@@ -15,6 +15,8 @@ namespace Ecommerce.Services.ShoppingCart
 
         public ShoppingCartService(ApplicationDbContext context, IMapper mapper, ILogger<IShoppingCartService> logger)
         {
+
+            
             _context = context;
             _mapper = mapper;
             _logger = logger;

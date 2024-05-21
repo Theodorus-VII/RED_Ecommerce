@@ -21,6 +21,7 @@ public class ApplicationDbContext
 
     public DbSet<Rating> Ratings { get; set; } = null!;
     public DbSet<Image> Images { get; set; } = null!;
+    public DbSet<ProductView> ProductViews { get; set; } = null!;
 
 
     public ApplicationDbContext(
@@ -31,8 +32,8 @@ public class ApplicationDbContext
     {
 
         base.OnModelCreating(builder);
-        builder.Entity<Rating>().HasKey(rating=>new {rating.ProductId,rating.UserId});
-        builder.Entity<Image>().HasKey(image=>new {image.Url,image.ProductId});
+        builder.Entity<Rating>().HasKey(rating => new { rating.ProductId, rating.UserId });
+        builder.Entity<Image>().HasKey(image => new { image.Url, image.ProductId });
         // builder.Entity<Product>().Property(p=>p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
     }
 

@@ -125,9 +125,10 @@ public static class ApplicationDbContextSeed
             {
                 for (int i = 0; i < 100; i++) // Example: creating 100 ratings
                 {
+                    Random random = new Random();
                     ratings.Add(new Rating
                     {
-                        RatingN = 4, // Example rating
+                        RatingN = random.Next(6), // Random rating
                         Review = i % 2 == 0 ? "Great product!" : i % 3 == 0 ? "Amazing product!" : "Shite product. I'm suing this company", // Example review
                         UserId = users[i % users.Count].Id, // Assuming users is a list of User entities
                         ProductId = products[i % products.Count].Id // Assuming products is a list of Product entities

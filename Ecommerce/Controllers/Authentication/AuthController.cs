@@ -132,16 +132,16 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Sends a confirmation email to the user with the specified userId and callbackUrl.
     /// </summary>
-    /// <param name="userId">The ID of the user to send the confirmation email to.</param>
+    /// <param name="userID">The ID of the user to send the confirmation email to.</param>
     /// <param name="callbackUrl">The URL to redirect the user to after confirming their email.</param>
     /// <response code="204">The email was successfully sent.</response>
     /// <respose code="404">The user was not found.</respose>
     /// <exception cref="ArgumentException">Thrown if the user with the specified userId is not found.</exception>
     /// <exception cref="Exception">Thrown if there is an error sending the confirmation email.</exception>
     [HttpPost("confirmation-email")]
-    public async Task<IActionResult> SendConfirmationEmail(Guid userId, string callbackUrl)
+    public async Task<IActionResult> SendConfirmationEmail(Guid userID, string callbackUrl)
     {
-        var user = await _userAccountService.GetUserById(userId);
+        var user = await _userAccountService.GetUserById(userID);
         if (user is null)
         {
             return StatusCode(
@@ -312,7 +312,7 @@ public class AuthController : ControllerBase
     /// <remarks>
     ///     Params:
     /// </remarks>
-    /// <param name="userId">The Guid User ID supplied through the email sent upon registration.</param>
+    /// <param name="userID">The Guid User ID supplied through the email sent upon registration.</param>
     /// <param name="token">Email Confirmation Token supplied through the email sent upon registration.</param>
     /// <param name="callbackUrl">The Url to redirect to upon completion (on success or failure).</param>
     /// <response code="200">Email Confirmed</response>
@@ -320,10 +320,10 @@ public class AuthController : ControllerBase
     /// <response code="500">Server Error</response>
     /// <returns></returns>
     [HttpGet("confirm-email")]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, string callbackUrl = "red://confirmed-email")
+    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userID, [FromQuery] string token, string callbackUrl = "red://confirmed-email")
     {
         _logger.LogInformation("Confirming user email...");
-        var user = await _userAccountService.GetUserById(userId);
+        var user = await _userAccountService.GetUserById(userID);
         _logger.LogInformation("Encoded Token: {}", token);
 
         if (user is null)
@@ -337,7 +337,7 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Result of email confirmation: {}", result.ToString());
         if (result.IsSuccess)
         {
-            user = await _userAccountService.GetUserById(userId);
+            user = await _userAccountService.GetUserById(userID);
             if (user != null && user.EmailConfirmed)
             {
                 // return Ok("Email Confirmed");
