@@ -7,5 +7,6 @@ public class ProductView
     public Product Product { get; set; } = null!;
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
+    public DateTime Date {get; set;} = DateTime.Now;
     
 }
