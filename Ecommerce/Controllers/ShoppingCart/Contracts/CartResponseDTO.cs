@@ -15,7 +15,7 @@ namespace Ecommerce.Controllers.ShoppingCart.Contracts
         public int CartItemId { get; set; }
         public decimal Price { get; set; }
         public int Quantity { get; set; }
-        public ProductResponseDTO? Product { get; set; }
+        public ProductDto? Product { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
