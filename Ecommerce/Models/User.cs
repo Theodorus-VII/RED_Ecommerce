@@ -10,6 +10,7 @@ public class User : IdentityUser<Guid>
     public string? BillingAddress { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
+    public string? FCMToken { get; set; } = "";// Firebase Cloud Messaging Token
 
     public override DateTimeOffset? LockoutEnd
     {
@@ -81,6 +82,7 @@ public class UserDto
     public string? RefreshToken { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Role { get; set; }
+    public string? FCMToken { get; set; } = "";
 
     public UserDto(
         Guid id,
@@ -118,6 +120,7 @@ public class UserDto
         DefaultShippingAddress = user.DefaultShippingAddress;
         BillingAddress = user.BillingAddress;
         PhoneNumber = user.PhoneNumber;
+        FCMToken = user.FCMToken;
         AccessToken = accessToken;
         RefreshToken = refreshToken;
         Role = role;
@@ -133,6 +136,7 @@ public class UserDto
         BillingAddress = user.BillingAddress;
         PhoneNumber = user.PhoneNumber;
         Role = role;
+        // FCMToken = user.FCMToken;
     }
 
     public UserDto(string firstName, string lastName, string email)

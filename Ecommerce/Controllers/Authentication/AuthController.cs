@@ -210,8 +210,8 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
         _logger.LogInformation("Attempting to login user...");
-
-        var response = await _authService.LoginUser(loginRequest.Email, loginRequest.Password);
+        
+        var response = await _authService.LoginUser(loginRequest.Email, loginRequest.Password, loginRequest.FCMToken);
 
         if (!response.IsSuccess)
         {

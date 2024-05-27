@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
@@ -11,6 +12,8 @@ namespace Ecommerce.Services;
 public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
+    private readonly IMapper _mapper;
+
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
@@ -20,6 +23,7 @@ public class AuthService : IAuthService
     public AuthService(
         UserManager<User> userManager,
         IJwtTokenGenerator tokenGenerator,
+        IMapper mapper,
         IEmailService emailService,
         IUserAccountService userAccountService,
         ILogger<AuthService> logger,
@@ -32,6 +36,7 @@ public class AuthService : IAuthService
         _emailService = emailService;
         _userAccountService = userAccountService;
         _logger = logger;
+        _mapper = mapper;
     }
 
     private ClaimsPrincipal GetClaimsPrincipalFromExpiredToken(string token)
@@ -39,7 +44,7 @@ public class AuthService : IAuthService
         return _tokenGenerator.GetPrincipalFromExpiredToken(token);
     }
 
-    public async Task<IServiceResponse<UserDto>> LoginUser(string email, string password)
+    public async Task<IServiceResponse<UserDto>> LoginUser(string email, string password, string? fcmToken)
     {
         var user = await _userManager.FindByEmailAsync(email);
         var result = await _signInManager.PasswordSignInAsync(
@@ -81,7 +86,10 @@ public class AuthService : IAuthService
             );
         }
 
-        // Using signin manager to create the claims. Could also do this manually but this is more consise and cleaner.
+        // Set the fcm token of the user.
+        await SetFCMToken(email, fcmToken);
+
+        // Using SignInManager to create the claims. Could also do this manually, but this is more concise and cleaner.
         var principal = await _signInManager.CreateUserPrincipalAsync(user);
         var claims = principal.Claims.ToList();
 
@@ -92,7 +100,7 @@ public class AuthService : IAuthService
         // Set the refresh token in the database.
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiry = DateTime.Now.AddDays(7);
-        
+
         await _userManager.UpdateAsync(user);
 
         // Get the user's role for the response.
@@ -124,6 +132,7 @@ public class AuthService : IAuthService
 
         // Set the refresh token in the database to an empty string (remove it if exists).
         user.RefreshToken = "";
+        user.FCMToken = null;
         await _userManager.UpdateAsync(user);
 
         return ServiceResponse<bool>.SuccessResponse(
@@ -319,7 +328,7 @@ public class AuthService : IAuthService
         {
             _logger.LogInformation("Email confirmed...");
             return ServiceResponse<bool>.SuccessResponse(
-                statusCode: 200, 
+                statusCode: 200,
                 data: true);
         }
         else
@@ -359,15 +368,15 @@ public class AuthService : IAuthService
 
         var stringConfirmationToken = generateConfirmationToken.Data;
         _logger.LogInformation(
-            "Generated Confirmation Token: {}", 
+            "Generated Confirmation Token: {}",
             stringConfirmationToken);
 
         var encodedConfirmationToken = System.Web.HttpUtility.UrlEncode(stringConfirmationToken);
 
         _logger.LogInformation(
-            "Encoded Generated confirmation Token: {}", 
+            "Encoded Generated confirmation Token: {}",
             encodedConfirmationToken);
-        
+
         var email_callbackURL =
             $"{scheme}://{baseUrl}{action}?userId={user.Id}&token={encodedConfirmationToken}&callbackUrl={callbackUrl}";
 
@@ -417,7 +426,7 @@ public class AuthService : IAuthService
             resetToken = System.Web.HttpUtility.UrlEncode(resetToken, Encoding.UTF8);
             _logger.LogInformation("Encoded Reset Token: {}", resetToken);
 
-            var service_callbackUrl = 
+            var service_callbackUrl =
                 $"{scheme}://{baseUrl}{action}?email={user.Email}&token={resetToken}&callbackUrl={callbackUrl}";
             var passResetEmail = new EmailDto
             {
@@ -487,5 +496,30 @@ public class AuthService : IAuthService
             statusCode: StatusCodes.Status500InternalServerError,
             errorDescription: "Server Error while resetting user password."
         );
+    }
+
+    public async Task<IServiceResponse<bool>> SetFCMToken(string email, string? fcmToken)
+    {
+        try
+        {
+            if (fcmToken != null)
+            {
+                var user = await _userManager.FindByEmailAsync(email);
+                user.FCMToken = fcmToken;
+                await _userManager.UpdateAsync(user);
+            }
+            return ServiceResponse<bool>.SuccessResponse(
+                statusCode: StatusCodes.Status200OK,
+                data: true
+            );
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("{}", e.ToString());
+            return ServiceResponse<bool>.FailResponse(
+                statusCode: StatusCodes.Status500InternalServerError,
+                errorDescription: $"Error while setting fcm token: {e.ToString()}"
+            );
+        }
     }
 }

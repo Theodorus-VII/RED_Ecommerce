@@ -7,7 +7,7 @@ public interface IAuthService
 {
     public Task<IServiceResponse<UserDto>> RegisterCustomer(User user, string password);
     public Task<IServiceResponse<UserDto>> RegisterAdmin(User user, string password);
-    public Task<IServiceResponse<UserDto>> LoginUser(string email, string password);
+    public Task<IServiceResponse<UserDto>> LoginUser(string email, string password, string? fcmToken);
     public Task<IServiceResponse<bool>> LogoutUser(string userId);
     public Task<IServiceResponse<UserDto>> RefreshToken(string expiredToken, string refreshToken);
     public Task<IServiceResponse<string>> GenerateEmailConfirmationToken(string email);
