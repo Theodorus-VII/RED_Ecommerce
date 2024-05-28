@@ -23,7 +23,69 @@ namespace Ecommerce.Controllers.Payment
         }
 
         /// <summary>
-        /// Make payment request to chapa
+        /// Make payment request to chapa for single product
+        /// </summary>
+        /// <param name="request">the request object used to make a payment request to chapa</param>
+        /// <returns>returns the txref and checoutUrl in apiresponse object</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     POST /payment/singleproduct
+        ///         request body:
+        ///             {
+        ///                 "currency": "ETB",
+        ///                 "returnUrl": "https://example.com",
+        ///                 "phoneNumber": "0912345678",
+        ///                 "productId": 1,
+        ///                 "quantity": 2 
+        ///             }
+        /// </remarks>
+        /// <response code="200">Returns the txref and checoutUrl in an apiresponse object</response>
+        /// <response code="400">Invalid request</response>
+        /// <response code="400">Product out of stock</response>
+        /// <response code="401">Unauthorized access</response>
+        /// <response code="500">Internal server error</response>
+        [HttpPost("singleproduct")]
+
+        public async Task<IActionResult> MakePaymentForSingleProduct([FromBody] SingleProductPaymentRequestDTO request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                if (request == null || request.Currency == null || request.ReturnUrl == null || request.ProductId < 1 || request.Quantity < 1)
+                {
+                    var errorResponse = new ApiResponse<object>(false, "Invalid request", null);
+                    return BadRequest(errorResponse);
+                }
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var firstName = User.FindFirstValue(ClaimTypes.GivenName);
+                var lastName = User.FindFirstValue(ClaimTypes.Surname);
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+                {
+                    var errorResponse = new ApiResponse<object>(false, "Unauthorized access.", null);
+                    return Unauthorized(errorResponse);
+                }
+                var response = await _paymentService.MakePaymentAsync(userId, email, firstName, lastName, request.Currency, request.ReturnUrl, request.PhoneNumber, request.ProductId, request.Quantity);
+                return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", response));
+            }
+            catch (ArgumentException ex)
+            {
+                var response = new ApiResponse<object>(false, ex.Message, null);
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new ApiResponse<object>(false, ex.Message, null);
+                return StatusCode(500, response);
+            }
+
+        }
+
+        /// <summary>
+        /// Make payment request to chapa for multiple products
         /// </summary>
         /// <param name="request">the request object used to make a payment request to chapa</param>
         /// <returns>returns the txref and checoutUrl in apiresponse object</returns>
@@ -65,7 +127,7 @@ namespace Ecommerce.Controllers.Payment
                     var errorResponse = new ApiResponse<object>(false, "Unauthorized access.", null);
                     return Unauthorized(errorResponse);
                 }
-                var response = await _paymentService.MakePaymentAsync(userId, email, firstName, lastName, request.Currency, request.ReturnUrl, request.PhoneNumber);
+                var response = await _paymentService.MakePaymentAsync(userId, email, firstName, lastName, request.Currency, request.ReturnUrl, request.PhoneNumber, null, null);
                 return Ok(new ApiResponse<object>(true, "successful payment request to chapa.", response));
             }
             catch (ArgumentException ex)

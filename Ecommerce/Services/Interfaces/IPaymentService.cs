@@ -11,7 +11,9 @@ namespace Ecommerce.Services.Interfaces
             string lastName,
             string currency,
             string returnUrl,
-            string? phoneNumber);
+            string? phoneNumber,
+            int? productId,
+            int? quantity);
         Task<string> VerifyTransactionAsync(string userId, string transactionId, int shippingAddressId, int? billingAddressId);
     }
 }

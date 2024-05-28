@@ -8,6 +8,11 @@
 
     }
 
+    public class SingleProductPaymentRequestDTO : PaymentRequestDTO
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+    }
     public class PaymentVerifyDTO
     {
         public string? TxRef { get; set; }
