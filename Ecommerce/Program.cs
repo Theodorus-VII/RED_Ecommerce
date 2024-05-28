@@ -16,6 +16,8 @@ using DotNetEnv;
 using Ecommerce.Services.Orders;
 using Ecommerce.Middleware;
 using Sentry.Profiling;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 
 Env.Load();
@@ -102,6 +104,14 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Add the HttpClient for sending http requests from the server.
 builder.Services.AddHttpClient();
+
+
+// Add FirebaseApp for push notifications.
+var firebaseConfiguration = builder.Configuration["Firebase_Configuration"];
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromJson(firebaseConfiguration)
+});
 
 // Old MySql Connection config.
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";

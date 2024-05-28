@@ -7,6 +7,9 @@ using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Identity;
 
+// temp
+using FirebaseAdmin.Messaging;
+
 namespace Ecommerce.Services;
 
 public class AuthService : IAuthService
@@ -107,6 +110,22 @@ public class AuthService : IAuthService
         string userRole = await _userAccountService.GetUserRole(user);
 
         _logger.LogInformation("UserRole: {}", userRole);
+
+        // Section: 
+        //      testing push notifications. Since we set the fcm token here, it's easier to just send one out to test using it here.
+        var message = new Message()
+        {
+            Notification = new Notification
+            {
+                Title = "You have successfully logged in",
+                Body = "This is a test push notification"
+            },
+            Token = fcmToken
+        };
+
+        var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+        _logger.LogInformation("Message successfully sent: {}", response);
+        // endSection
 
         return ServiceResponse<UserDto>.SuccessResponse(
             statusCode: StatusCodes.Status200OK,
