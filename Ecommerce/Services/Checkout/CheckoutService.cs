@@ -114,7 +114,9 @@ namespace Ecommerce.Services.Checkout
                         City = address.City,
                         State = address.State,
                         Country = address.Country,
-                        PostalCode = address.PostalCode
+                        PostalCode = address.PostalCode,
+                        Latitude = address.Latitude,
+                        Longitude = address.Longitude
                     };
                     _context.ShippingAddresses.Add(newAddress);
                     await _context.SaveChangesAsync();
