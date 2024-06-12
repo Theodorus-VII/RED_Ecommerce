@@ -13,9 +13,11 @@ namespace Ecommerce.Controllers;
 public class TestController : ControllerBase
 {
     private readonly TestService _testService;
+    private readonly ILogger<TestController> _logger;
 
-    public TestController(TestService testService)
+    public TestController(TestService testService, ILogger<TestController> logger)
     {
+        _logger = logger;
         _testService = testService;
     }
 
@@ -53,5 +55,13 @@ public class TestController : ControllerBase
     {
         Console.WriteLine($"RedirectUrl: red://{path}");
         return Redirect($"red://{path}");
+    }
+
+    [HttpGet("log_ip")]
+    public IActionResult LogIP()
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        _logger.LogInformation(ip);
+        return Ok(ip);
     }
 }
