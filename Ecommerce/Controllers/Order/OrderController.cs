@@ -160,7 +160,7 @@ namespace Ecommerce.Controllers.Orders
         /// <response code="500">Internal server error</response>
         [HttpPatch("status/{orderId}")]
         [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> UpdateOrderStatusAsync(int orderId, [FromBody] string status)
+        public async Task<IActionResult> UpdateOrderStatusAsync(int orderId, [FromBody] int status)
         {
             try
             {
@@ -181,7 +181,7 @@ namespace Ecommerce.Controllers.Orders
                     var errorResponse = new ApiResponse<object>(false, "Invalid order id.", null);
                     return BadRequest(errorResponse);
                 }
-                if (string.IsNullOrEmpty(status))
+                if (status <= 0 || status > 3)
                 {
                     var errorResponse = new ApiResponse<object>(false, "Invalid status.", null);
                     return BadRequest(errorResponse);
