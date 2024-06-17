@@ -532,6 +532,7 @@ public class AuthService : IAuthService
             if (fcmToken != null)
             {
                 var user = await _userManager.FindByEmailAsync(email);
+                _logger.LogInformation("Old fcm token: {}, New fcm token: {}", user.FCMToken, fcmToken);
                 user.FCMToken = fcmToken;
                 await _userManager.UpdateAsync(user);
             }
