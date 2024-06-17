@@ -8,9 +8,6 @@ using Ecommerce.Utilities;
 using Ecommerce.Services.ShoppingCart;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.OpenApi.Models;
-using System.Runtime.CompilerServices;
-using System.Reflection;
 using Ecommerce.Services.Payment;
 using DotNetEnv;
 using Ecommerce.Services.Orders;
@@ -20,10 +17,6 @@ using System.Reflection;
 
 Env.Load();
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Configuration
-    .AddEnvironmentVariables()
-    .AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 // Add services to the container.
 
@@ -80,10 +73,6 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
-//        npgsqlOptionsAction:
-//            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 50)
-//    )
-//);
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
@@ -92,9 +81,7 @@ builder.Services.AddSingleton(emailConfig);
 
 
 // Add the services here. Same format,
-builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 //  just replace TestService with the service to use.
-builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
@@ -106,26 +93,16 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
 
-builder.Services.AddTransient<ErrorHandlingMiddleware>();
-builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
 
-app.Logger.LogInformation("Application Created...");
 
-
-app.UseSwagger();
-app.UseSwaggerUI();
 
 var app = builder.Build();
 
-    app.UseSwaggerUI(
-        options =>
-        {
-            // options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-            // options.RoutePrefix = string.Empty;
-        }
-    );
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -134,61 +111,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseCors(
-    options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
-);
-
-app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    if (context.Database.GetPendingMigrations().Any())
-    {
-        app.Logger.LogWarning("Found pending Db migrations.");
-        app.Logger.LogInformation("Attempting to apply pending migrations...");
-
-        context.Database.Migrate();
-    }
-    else
-    {
-        app.Logger.LogInformation("Found no pending migrations.");
-    }
-}
-
+app.UseMiddleware<ExtractUserIdMiddleware>();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
     RequestPath = "/images"
-});
-app.UseMiddleware<ExtractUserIdMiddleware>();
-app.UseStaticFiles(new StaticFileOptions{
-
-// Predefining roles in the database    
-app.Logger.LogInformation("Creating roles...");
-    FileProvider=new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath,"./Public/Images")),
-    RequestPath="/images"
 
 });
 using (var scope = app.Services.CreateScope())
-
-app.Logger.LogInformation("Roles created.");
-
-app.Logger.LogInformation("Seeding the database...");
-
-using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    await services.InitializeDb();
-}
-{
-app.Logger.LogInformation("Database seeded");
-
-app.Logger.LogInformation("Starting app...");
+    var roles = new string[] { Roles.Admin, Roles.Customer };
     await scope.ServiceProvider.AddRoles(roles);
 }
 
