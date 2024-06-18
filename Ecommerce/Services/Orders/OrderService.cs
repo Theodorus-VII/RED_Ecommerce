@@ -7,6 +7,7 @@ using Ecommerce.Services.Interfaces;
 using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using FirebaseAdmin.Messaging;
 
 namespace Ecommerce.Services.Orders
 {
@@ -150,9 +151,35 @@ namespace Ecommerce.Services.Orders
                 order.Status = availableStatuses[status - 1];
                 _context.Orders.Update(order);
                 await _context.SaveChangesAsync();
+
+
+                // Send a push notification to the user.
+                _logger.LogInformation("Sending push notification on order status update...");
+                string? fcmToken = (await _context.Users.FindAsync(Guid.Parse(order.UserId.ToString())))?.FCMToken;
+                _logger.LogInformation("Fcm Token: {}", fcmToken);
+
+                if (fcmToken == null)
+                {
+                    _logger.LogWarning("User FCM token not found. Aborting push notification...");
+                    return;
+                }
+
+                var message = new Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = $"Your order has been {availableStatuses[status - 1]}.",
+                        Body = $"Your order for order {order.OrderId}, with items {order.OrderItems} has been {availableStatuses[status - 1]}. Thank you for choosing RED E-commerce."
+                    },
+                    Token = fcmToken
+                };
+
+                var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                _logger.LogInformation("Result of push notification: {}", response);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError("{}",e);
                 throw;
             }
         }
@@ -216,7 +243,7 @@ namespace Ecommerce.Services.Orders
                 is out of stock. Please restock the product at your earliest convenience.</p>");
             message.AppendLine("<p>Best regards,</p>");
             message.AppendLine("<p>Red E-commerce</p>");
-            
+
             foreach (var admin in admins)
             {
                 var email = new EmailDto

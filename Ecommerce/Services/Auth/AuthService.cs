@@ -112,19 +112,27 @@ public class AuthService : IAuthService
         _logger.LogInformation("UserRole: {}", userRole);
 
         // Section: 
-        //      testing push notifications. Since we set the fcm token here, it's easier to just send one out to test using it here.
-        var message = new Message()
-        {
-            Notification = new Notification
-            {
-                Title = "You have successfully logged in",
-                Body = "This is a test push notification"
-            },
-            Token = fcmToken
-        };
+        //  testing push notifications. Since we set the fcm token here, it's easier to just send one out to test using it here.
 
-        var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        _logger.LogInformation("Message successfully sent: {}", response);
+        try
+        {
+            _logger.LogInformation("Attempting to send push notificaiton");
+            var message = new Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "You have successfully logged in.",
+                    Body = "This is just a demo push notification."
+                },
+                Token = fcmToken
+            };
+            var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            _logger.LogInformation("Message successfully sent: {}", response);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error sending push notification: {}", e);
+        }
         // endSection
 
         return ServiceResponse<UserDto>.SuccessResponse(
@@ -524,6 +532,7 @@ public class AuthService : IAuthService
             if (fcmToken != null)
             {
                 var user = await _userManager.FindByEmailAsync(email);
+                _logger.LogInformation("Old fcm token: {}, New fcm token: {}", user.FCMToken, fcmToken);
                 user.FCMToken = fcmToken;
                 await _userManager.UpdateAsync(user);
             }
