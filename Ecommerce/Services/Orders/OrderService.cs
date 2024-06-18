@@ -78,14 +78,14 @@ namespace Ecommerce.Services.Orders
                 await _context.SaveChangesAsync();
                 var user = await _userManager.FindByIdAsync(userId);
                 string message = newOrder.GenerateOrderEmailMessage(user.FirstName);
-                Console.WriteLine(user.Email);
+
                 await _emailService.SendEmail(new EmailDto
                 {
                     Subject = $"Order Confirmation - Order Number: {newOrder.OrderNumber}",
                     Recipient = user.Email,
                     Message = message
                 });
-                Console.WriteLine(user.Email);
+
                 return newOrder.OrderNumber;
 
             }

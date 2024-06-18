@@ -162,7 +162,7 @@ namespace Ecommerce.Controllers.Payment
         /// <response code="400">Invalid request</response>
         /// <response code="400">Bad request</response>
         /// <response code="401">Unauthorized access</response>
-        [HttpGet("verifypayment")]
+        [HttpPost("verifypayment")]
         public async Task<IActionResult> VerifyPaymentAsync(PaymentVerifyDTO request)
         {
             try
