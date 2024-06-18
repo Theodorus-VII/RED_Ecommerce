@@ -26,5 +26,6 @@ bld/
 **/bin/
 
 Ecommerce/appsettings.json
-*/Migrations/
+**/Migrations/
+/Ecommerce/Ecommerce.csproj
 .env

@@ -13,6 +13,8 @@ namespace Ecommerce.Mapping
             CreateMap<OrderItem, OrderItemResponseDTO>();
             CreateMap<Order, OrderResponseDTO>()
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems));
+            CreateMap<Image, ImageResponseDTO>();
+            CreateMap<Product, ProductResponseDTO>();
             CreateMap<Cart, CartResponseDTO>();
             CreateMap<CartItem, CartItemResponseDTO>();
             CreateMap<ShippingAddress, AddressResponseDTO>()

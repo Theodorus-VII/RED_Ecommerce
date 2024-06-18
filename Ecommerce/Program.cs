@@ -94,7 +94,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
 
@@ -115,9 +115,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ExtractUserIdMiddleware>();
-app.UseStaticFiles(new StaticFileOptions{
-    FileProvider=new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath,"./Public/Images")),
-    RequestPath="/images"
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
+    RequestPath = "/images"
 
 });
 using (var scope = app.Services.CreateScope())

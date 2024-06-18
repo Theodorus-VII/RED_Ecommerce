@@ -26,7 +26,7 @@ namespace Ecommerce.Services.ShoppingCart
                 var cart = await _context.Carts
                 .Where(c => c.UserId == userId)
                 .Include(c => c.Items)
-                    .ThenInclude(ci => ci.Product)
+                    .ThenInclude(ci => ci.Product).ThenInclude(p => p.Images)
                 .FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found.");
                 var cartDTO = _mapper.Map<CartResponseDTO>(cart);
                 return cartDTO;
@@ -49,7 +49,7 @@ namespace Ecommerce.Services.ShoppingCart
             {
                 var cart = await _context.Carts.FirstOrDefaultAsync(c => c.UserId == userId) ?? throw new ArgumentException("Cart not found.");
                 Console.WriteLine(cart.CartId);
-                var cartItem = await _context.CartItems.Where(ci => ci.CartItemId == cartItemId && ci.CartId == cart.CartId).Include(ci => ci.Product).FirstOrDefaultAsync() ?? throw new ArgumentException("Cart item not found.");
+                var cartItem = await _context.CartItems.Where(ci => ci.CartItemId == cartItemId && ci.CartId == cart.CartId).Include(ci => ci.Product).ThenInclude(p => p.Images).FirstOrDefaultAsync() ?? throw new ArgumentException("Cart item not found.");
                 return _mapper.Map<CartItemResponseDTO>(cartItem); 
             }
             catch (ArgumentException)
