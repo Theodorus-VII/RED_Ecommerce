@@ -116,7 +116,7 @@ public class AuthService : IAuthService
 
         try
         {
-            _logger.LogInformation("Attempting to send push notificaiton");
+            _logger.LogInformation("Attempting to send push notification");
             var message = new Message()
             {
                 Notification = new Notification
@@ -124,7 +124,7 @@ public class AuthService : IAuthService
                     Title = "You have successfully logged in.",
                     Body = "This is just a demo push notification."
                 },
-                Token = fcmToken
+                Token = user.FCMToken
             };
             var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
             _logger.LogInformation("Message successfully sent: {}", response);
