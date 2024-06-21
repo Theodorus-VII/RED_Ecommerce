@@ -1,4 +1,6 @@
 using Ecommerce.Controllers.Contracts;
+using Ecommerce.Models;
+using Ecommerce.Utilities;
 namespace Ecommerce.Services.Interfaces;
 public interface IProductService{
    public Task<ProductDto?> GetProduct(int id);
@@ -15,5 +17,7 @@ public interface IProductService{
     public Task<List<string>?> RefreshImages(int id);
    // public Task<byte[]?> GetImage(string name);
    public Task DeleteImages(int id, List<string> imgNames);
-
+   public Task<List<ReviewDto>> GetRecentProductReviews();
+   public IServiceResponse<List<Product>> GetOutOfStockProductsAsync();
+   public Task<IServiceResponse<bool>> LogProductView(int productID, Guid userID);
 }

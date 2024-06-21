@@ -1,10 +1,13 @@
-﻿using AutoMapper;
+﻿using System.Text;
+using AutoMapper;
 using Ecommerce.Controllers.Orders.Contracts;
 using Ecommerce.Data;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using FirebaseAdmin.Messaging;
 
 namespace Ecommerce.Services.Orders
 {
@@ -14,12 +17,14 @@ namespace Ecommerce.Services.Orders
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
-        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper, UserManager<User> userManager)
+        private readonly ILogger<OrderService> _logger;
+        public OrderService(ApplicationDbContext context, IEmailService emailService, IMapper mapper, UserManager<User> userManager, ILogger<OrderService> logger)
         {
             _context = context;
             _emailService = emailService;
             _mapper = mapper;
             _userManager = userManager;
+            _logger = logger;
         }
 
         public async Task<string> MakeOrderAsync(string userId, PaymentInfo paymentInfo, int shippingAddressId, int? billingAddressId)
@@ -66,6 +71,10 @@ namespace Ecommerce.Services.Orders
                     {
                         int count = orderItem.Product.Count - orderItem.Quantity;
                         if (count < 0) { throw new ArgumentException($"{orderItem.Product.Name} out of stock"); }
+                        else if (count == 0)
+                        {
+                            await SendOutOfStockEmail(orderItem.Product);
+                        }
                         orderItem.Product.Count = count;
                         _context.Products.Update(orderItem.Product);
                     }
@@ -100,11 +109,22 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var orders = await _context.Orders.Where(o => o.UserId == userId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).ToListAsync();
-                if(orders.Count == 0)
+                var orderResponses = _mapper.Map<List<OrderResponseDTO>>(orders);
+                for (int i = 0; i < orderResponses.Count; i++)
                 {
-                    throw new ArgumentException("No orders found");
+                    orderResponses[i].StatusInt = orders[i].Status == "Pending" ? 1 : orders[i].Status == "Shipped" ? 2 : 3;
+                    var user = await _userManager.FindByIdAsync(orders[i].UserId);
+                    var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                    orderResponses[i].User = new UserDto(
+                        user,
+                        role
+                    );
+                    orderResponses[i].User = new UserDto(
+                        user,
+                        role
+                    );
                 }
-                return _mapper.Map<List<OrderResponseDTO>>(orders);
+                return orderResponses;
             }
             catch (Exception)
             {
@@ -117,7 +137,9 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var order = await _context.Orders.Where(o => o.UserId == userId && o.OrderId == orderId).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderResponseDTO>(order);
+                var orderResponse = _mapper.Map<OrderResponseDTO>(order);
+                orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+                return orderResponse;
             }
             catch (Exception)
             {
@@ -130,7 +152,9 @@ namespace Ecommerce.Services.Orders
             try
             {
                 var order = await _context.Orders.Where(o => o.OrderNumber == orderNumber).Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Include(o => o.PaymentInfo).Include(o => o.ShippingAddress).Include(o => o.BillingAddress).FirstOrDefaultAsync() ?? throw new ArgumentException("Order not found");
-                return _mapper.Map<OrderResponseDTO>(order);
+                var orderResponse = _mapper.Map<OrderResponseDTO>(order);
+                orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+                return orderResponse;
             }
             catch (Exception)
             {
@@ -147,6 +171,79 @@ namespace Ecommerce.Services.Orders
                 order.Status = availableStatuses[status - 1];
                 _context.Orders.Update(order);
                 await _context.SaveChangesAsync();
+
+
+                // Send a push notification to the user.
+                _logger.LogInformation("Sending push notification on order status update...");
+                string? fcmToken = (await _context.Users.FindAsync(Guid.Parse(order.UserId.ToString())))?.FCMToken;
+                _logger.LogInformation("Fcm Token: {}", fcmToken);
+
+                if (fcmToken == null)
+                {
+                    _logger.LogWarning("User FCM token not found. Aborting push notification...");
+                    return;
+                }
+
+                var message = new Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = $"Your order has been {availableStatuses[status - 1]}.",
+                        Body = $"Your order for order {order.OrderId}, with items {order.OrderItems} has been {availableStatuses[status - 1]}. Thank you for choosing RED E-commerce."
+                    },
+                    Token = fcmToken
+                };
+
+                var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                _logger.LogInformation("Result of push notification: {}", response);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("{}",e);
+                throw;
+            }
+        }
+
+        public async Task<List<OrderResponseDTO>> GetRecentOrdersAsync()
+        {
+            try
+            {
+                var orders = await _context.Orders
+                    .Where(order => order.Status != "Delivered")
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .Include(o => o.PaymentInfo)
+                    .Include(o => o.ShippingAddress)
+                    .Include(o => o.BillingAddress)
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToListAsync();
+
+                if (orders.Count == 0)
+                {
+                    return new List<OrderResponseDTO> { };
+                }
+                // var response = _mapper.Map<List<OrderResponseDTO>>(orders);
+                var response = new List<OrderResponseDTO> { };
+                foreach (var order in orders)
+                {
+                    var orderResponse = _mapper.Map<OrderResponseDTO>(order);
+                    var user = await _userManager.FindByIdAsync(order.UserId);
+                    if (user is not null)
+                    {
+                        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault("");
+                        orderResponse.User = new UserDto(
+                            user,
+                            role
+                        );
+                    }
+
+
+                    orderResponse.StatusInt = order.Status == "Pending" ? 1 : order.Status == "Shipped" ? 2 : 3;
+
+                    response.Add(orderResponse);
+                }
+
+                return response;
             }
             catch (Exception)
             {
@@ -154,6 +251,36 @@ namespace Ecommerce.Services.Orders
             }
         }
 
+        private async Task<bool> SendOutOfStockEmail(Product product)
+        {
+            var admins = await _userManager.GetUsersInRoleAsync(Roles.Admin);
+            StringBuilder message = new();
+            message.AppendLine($"<h3>Dear Employee,</h3>");
+            message.AppendLine(@$"
+                <p>This email is to notify you that the following product: 
+                    Product Name: {product.Name}
+                    Product Id: {product.Id}
+                is out of stock. Please restock the product at your earliest convenience.</p>");
+            message.AppendLine("<p>Best regards,</p>");
+            message.AppendLine("<p>Red E-commerce</p>");
 
+            foreach (var admin in admins)
+            {
+                var email = new EmailDto
+                {
+                    Subject = $"RED-Ecommerce: Product {product.Name} is out of stock",
+                    Recipient = admin.Email,
+                    Message = message.ToString()
+                };
+
+                var result = await _emailService.SendEmail(email);
+
+                if (!result.IsSuccess)
+                {
+                    _logger.LogError("Out of stock Email sending failure: Admin: {}, Error: {}", admin.Email, result.Error.ErrorDescription);
+                }
+            }
+            return true;
+        }
     }
 }

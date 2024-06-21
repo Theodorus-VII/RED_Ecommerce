@@ -8,19 +8,57 @@ using Ecommerce.Utilities;
 using Ecommerce.Services.ShoppingCart;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Ecommerce.Services.Payment;
-using DotNetEnv;
-using Ecommerce.Services.Orders;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 
+using Ecommerce.Services.Payment;
+using DotNetEnv;
+using Ecommerce.Services.Orders;
+using Ecommerce.Middleware;
+using Sentry.Profiling;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+
 
 Env.Load();
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Configuration
+    .AddEnvironmentVariables()
+    .AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 builder.Services.AddControllers();
+
+// Configure the app to use sentry.io
+// Load Configuration from environment
+var sentryConfig = builder.Configuration
+    .GetSection("SentryConfiguration")
+    .Get<SentryConfiguration>();
+
+if (sentryConfig != null && builder.Environment.EnvironmentName == "Production")
+{
+    // Only runs sentry in production environment, and if the configuration is available from the environment.
+    // Removes the error alerts (and the annoying emails that come with them) during development.
+    builder.Services.AddSingleton(sentryConfig);
+
+    builder.WebHost.UseSentry(
+        options =>
+            {
+                options.Dsn = sentryConfig.Dsn;
+                options.Debug = sentryConfig.Debug;
+                options.EnableTracing = sentryConfig.EnableTracing;
+                options.IsGlobalModeEnabled = sentryConfig.IsGlobalModeEnabled;
+                options.TracesSampleRate = sentryConfig.TracesSampleRate;
+                options.ProfilesSampleRate = sentryConfig.ProfilesSampleRate;
+                options.AddIntegration(new ProfilingIntegration(
+                    TimeSpan.FromMilliseconds(500)));
+            }
+    );
+    SentrySdk.CaptureMessage("Hello Sentry");
+}
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -60,73 +98,155 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+// Configure Automapper.
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Add the HttpClient for sending http requests from the server.
 builder.Services.AddHttpClient();
 
 
+// Add FirebaseApp for push notifications.
+var firebaseConfiguration = builder.Configuration["Firebase_Configuration"];
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromJson(firebaseConfiguration)
+});
 
+// Old MySql Connection config.
 // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=EcommerceTest";
 // builder.Services.AddDbContext<ApplicationDbContext>(
 //     options => options.UseSqlServer(connectionString)
 // );
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+// var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+
+
+var connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(
-    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+    options => options.UseNpgsql(
+        connectionString,
+        npgsqlOptionsAction:
+            npgSqlOptions => npgSqlOptions.EnableRetryOnFailure(maxRetryCount: 50))
 );
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+// Load Configuration for the email service.
+var emailConfig = builder.Configuration
+    .GetSection("EmailConfiguration")
+    .Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
 
-
-// Add the services here. Same format,
-//  just replace TestService with the service to use.
-builder.Services.AddScoped<TestService>();
+// Add Services.
+builder.Services.AddScoped<TestService>();  // Sample Service.
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-
-
-builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
-builder.Services.AddTransient<ExtractUserIdMiddleware>();
 
+
+// Add middleware.
+builder.Services.AddTransient<ExtractUserIdMiddleware>();
+builder.Services.AddTransient<ErrorHandlingMiddleware>();
 
 
 var app = builder.Build();
+
+app.Logger.LogInformation("Application Created...");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    app.UseSwaggerUI(
+        options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
 
+            // Make swagger ui  available at the root of the application.
+            // options.RoutePrefix = string.Empty;
+        }
+    );
+}
+// Add Https auto-redirection.
 app.UseHttpsRedirection();
 
+// Configure authentication and authorization.
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Register middleware for use.
 app.UseMiddleware<ExtractUserIdMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Configure CORS. Shouldn't be like this but cors can be a b*tch sometimes.
+app.UseCors(
+    options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+);
+
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        app.Logger.LogWarning("Found pending Db migrations.");
+        app.Logger.LogInformation("Attempting to apply pending migrations...");
+
+        context.Database.Migrate();
+    }
+    else
+    {
+        app.Logger.LogInformation("Found no pending migrations. Proceeding...");
+    }
+}
+
+// serve static images.
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "./Public/Images")),
     RequestPath = "/images"
-
 });
+
+// .well-known (for flutter deep link).
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "./.well-known")),
+    RequestPath = "/.well-known"
+});
+
+// Predefining roles in the database, make sure they exist.    
+app.Logger.LogInformation("Creating roles...");
 using (var scope = app.Services.CreateScope())
 {
     var roles = new string[] { Roles.Admin, Roles.Customer };
     await scope.ServiceProvider.AddRoles(roles);
 }
+app.Logger.LogInformation("Roles created.");
 
-app.MapControllers();
+// Seeding the database with sample data (Using ApplicationDbContextSeed.cs).
+app.Logger.LogInformation("Seeding the database...");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await services.InitializeDb();
+}
+app.Logger.LogInformation("Database seeded");
 
+
+app.Logger.LogInformation("Starting Server...");
 app.Run();

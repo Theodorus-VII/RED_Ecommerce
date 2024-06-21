@@ -18,6 +18,7 @@ bld/
 **/.vs/
 **.vscode/
 **/.vscode/
+**/.env
 
 
 
@@ -25,8 +26,13 @@ bld/
 **/obj/
 **/bin/
 
-Ecommerce/appsettings.json
-**/Migrations/
-/Ecommerce/Ecommerce.csproj
-Ecommerce/.env
-**/.env
+
+publish/
+*/Migrations/
+.env
+
+
+*/appsettings.*.json
+
+**/Requests/
+

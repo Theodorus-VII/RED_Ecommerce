@@ -16,9 +16,11 @@ namespace Ecommerce.Controllers.Payment
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(IPaymentService paymentService, ILogger<PaymentController> logger)
         {
+            _logger = logger;
             _paymentService = paymentService;
         }
 
@@ -167,8 +169,10 @@ namespace Ecommerce.Controllers.Payment
         {
             try
             {
+                _logger.LogInformation("Verifying payment...");
                 if (!ModelState.IsValid)
                 {
+                    _logger.LogInformation("Invalid payment request: {}", ModelState);
                     return BadRequest(ModelState);
                 }
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -179,11 +183,13 @@ namespace Ecommerce.Controllers.Payment
                 }
                 if(request.Equals(null) || request.ShippingAddressId <= 0 || request.BillingAddressId <= 0)
                 {
+                    _logger.LogInformation("Invalid payment request: sth with the billing and shipping addresses");
                     var errorResponse = new ApiResponse<object>(false, "Invalid request", null);
                     return BadRequest(errorResponse);
                 }   
                 if (string.IsNullOrEmpty(request.TxRef))
                 {
+                    _logger.LogInformation("Invalid txref");
                     var errorResponse = new ApiResponse<object>(false, "Invalid transaction reference.", null);
                     return BadRequest(errorResponse);
                 }
@@ -192,8 +198,9 @@ namespace Ecommerce.Controllers.Payment
             }
             catch (Exception ex)
             {
+                _logger.LogError("ServerError: {}", ex);
                 var response = new ApiResponse<object>(false, ex.Message, null);
-                return BadRequest(response);
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
             
         }

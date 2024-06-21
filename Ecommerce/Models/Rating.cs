@@ -14,4 +14,7 @@ public class Rating{
   
     public int ProductId{get;set;}    
     public Product Product{get;}=null!;
+
+    public DateTime CreatedAt{get;set;}=DateTime.Now;
+    public DateTime UpdatedAt{get;set;}=DateTime.Now;
 }

@@ -146,7 +146,7 @@ namespace Ecommerce.Controllers.Orders
         /// Update order status
         /// </summary>
         /// <param name="orderId">The orderId of the order to update</param>
-        /// <param name="status">The status of the order to update</param>
+        /// <param name="requestDTO"></param>
         /// <returns>returns success message in apiresponse object</returns>
         /// <remarks>
         /// Sample request:
@@ -160,8 +160,9 @@ namespace Ecommerce.Controllers.Orders
         /// <response code="500">Internal server error</response>
         [HttpPatch("status/{orderId}")]
         [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> UpdateOrderStatusAsync(int orderId, [FromBody] int status)
+        public async Task<IActionResult> UpdateOrderStatusAsync(int orderId, OrderRequestDTO requestDTO)
         {
+            int status = requestDTO.Status;
             try
             {
                 if (!ModelState.IsValid)

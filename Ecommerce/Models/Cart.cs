@@ -34,7 +34,7 @@
         public int ProductId { get; set; }
         public int Quantity { get; set; }
         public float Price { get; set; }
-        public Product Product { get; set; }
+        public Product? Product { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 

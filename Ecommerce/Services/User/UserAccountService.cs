@@ -1,6 +1,7 @@
 using Ecommerce.Controllers.Contracts;
 using Ecommerce.Models;
 using Ecommerce.Services.Interfaces;
+using Ecommerce.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,12 +24,13 @@ public class UserAccountService : IUserAccountService
         {
             var user = await _userManager.FindByIdAsync(UserId.ToString());
 
-            if (user == null){
+            if (user == null)
+            {
                 throw new Exception("User with specified Id not found");
             }
             return user;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             _logger.LogError($"User Not found. Error: {e}");
             return null;
@@ -41,19 +43,20 @@ public class UserAccountService : IUserAccountService
         {
             var user = await _userManager.FindByEmailAsync(Email);
 
-            if (user == null){
+            if (user == null)
+            {
                 throw new Exception("User with specified Email not found");
             }
             return user;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             _logger.LogError($"User Not found. Error: {e}");
             return null;
         }
     }
 
-    public async Task<bool> UpdateUserDetails(Guid userId, UserPatchRequest request)
+    public async Task<IServiceResponse<bool>> UpdateUserDetails(Guid userId, UserPatchRequest request)
     {
         try
         {
@@ -61,7 +64,15 @@ public class UserAccountService : IUserAccountService
 
             if (user == null)
             {
-                return false;
+                return new ServiceResponse<bool>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 404,
+                        ErrorDescription = "User Not Found"
+                    }
+                };
             }
 
             user.Email = request.Email ?? user.Email;
@@ -82,37 +93,119 @@ public class UserAccountService : IUserAccountService
             }
             else if (request.NewPassword != null && request.OldPassword == null)
             {
-                throw new Exception("Old password not provided");
+                return new ServiceResponse<bool>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 400,
+                        ErrorDescription = "Old Password Not Provided"
+                    }
+                };
             }
 
             await _userManager.UpdateAsync(user);
-            return true;
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = true,
+                Data = true
+            };
         }
         catch (Exception e)
         {
             _logger.LogError($"{e}");
-            return false;
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error"
+                }
+            };
         }
     }
 
-    public async Task<bool> DeleteUser(Guid userId)
+    public async Task<IServiceResponse<bool>> DeleteUser(Guid userId)
     {
         try
         {
             var user = await GetUserById(userId);
-            
+
             if (user == null)
             {
-                return false;
+                return new ServiceResponse<bool>()
+                {
+                    IsSuccess = false,
+                    Error = new ErrorResponse()
+                    {
+                        ErrorCode = 404,
+                        ErrorDescription = "User Not Found"
+                    }
+                };
             }
 
             await _userManager.DeleteAsync(user);
-            return true;
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = true,
+                Data = true
+            };
         }
         catch (Exception e)
         {
             _logger.LogError($"{e}");
-            return false;
+            return new ServiceResponse<bool>()
+            {
+                IsSuccess = false,
+                Error = new ErrorResponse()
+                {
+                    ErrorCode = 500,
+                    ErrorDescription = "Internal Server Error"
+                }
+            };
         }
     }
+
+    public async Task<string> GetUserRole(User user)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+        _logger.LogInformation("{}", roles);
+        if (roles.Contains(Roles.Admin))
+        {
+            return Roles.Admin;
+        }
+        return Roles.Customer;
+    }
+
+    public async Task<IEnumerable<UserDto>> GetAllUsers()
+    {
+        var userDtos = new List<UserDto>();
+        var users = _userManager.Users;
+        foreach (User user in users)
+        {
+            userDtos.Add(new UserDto(
+                user: user,
+                accessToken: "",
+                refreshToken: "",
+                role: await GetUserRole(user)));
+        }
+        return userDtos;
+    }
+
+    public async Task<IEnumerable<UserDto>> GetUsersByRole(string role = "Customer")
+    {
+        var userDtos = new List<UserDto>();
+        var users = await _userManager.GetUsersInRoleAsync(role);
+        foreach (User user in users)
+        {
+            userDtos.Add(new UserDto(
+                user: user,
+                accessToken: "",
+                refreshToken: "",
+                role: await GetUserRole(user)));
+        }
+        return userDtos;
+    }
+
 }
