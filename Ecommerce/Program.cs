@@ -153,6 +153,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 
+
 // Add middleware.
 builder.Services.AddTransient<ExtractUserIdMiddleware>();
 builder.Services.AddTransient<ErrorHandlingMiddleware>();

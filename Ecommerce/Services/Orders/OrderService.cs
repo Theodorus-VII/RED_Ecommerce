@@ -27,29 +27,44 @@ namespace Ecommerce.Services.Orders
             _logger = logger;
         }
 
-        public async Task<string> MakeOrderAsync(string userId, int paymentInfoId, int shippingAddressId, int? billingAddressId)
+        public async Task<string> MakeOrderAsync(string userId, PaymentInfo paymentInfo, int shippingAddressId, int? billingAddressId)
         {
             try
             {
-                var cart = await _context.Carts.Where(c => c.UserId == userId)
-                    .Include(c => c.Items).ThenInclude(c => c.Product).FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found");
                 var shippingAddress = await _context.ShippingAddresses.Where(a => a.ShippingAddressId == shippingAddressId && a.UserId == userId).FirstOrDefaultAsync() ?? throw new ArgumentException("Shipping address not found");
                 var billingAddress = await _context.BillingAddresses.Where(a => a.BillingAddressId == billingAddressId && a.UserId == userId).FirstOrDefaultAsync();
                 var newOrder = new Order
                 {
-                    UserId = userId,
-                    OrderItems = cart.Items.Select(ci => new OrderItem
+                    UserId = userId, 
+                    PaymentInfoId = paymentInfo.PaymentInfoId,
+                    ShippingAddress = shippingAddress,
+                    BillingAddressId = billingAddressId ?? null,
+                    Status = "Pending"
+                };
+                if (paymentInfo.ProductId != null)
+                {
+                    var product = await _context.Products.FindAsync(paymentInfo.ProductId) ?? throw new ArgumentException("product not found.");
+                    newOrder.OrderItems.Add(new OrderItem { 
+                        ProductId = product.Id,
+                        Quantity = Convert.ToInt32(paymentInfo.Amount / product.Price),
+                        Price = (float)paymentInfo.Amount,
+                        Product = product
+                        });
+                }
+                else
+                {
+                    var cart = await _context.Carts.Where(c => c.UserId == userId)
+                        .Include(c => c.Items).ThenInclude(c => c.Product).FirstOrDefaultAsync() ?? throw new ArgumentException("Cart not found");
+                    newOrder.OrderItems = cart.Items.Select(ci => new OrderItem
                     {
                         ProductId = ci.ProductId,
                         Quantity = ci.Quantity,
                         Price = ci.Price,
                         Product = ci.Product
-                    }).ToList(),
-                    PaymentInfoId = paymentInfoId,
-                    ShippingAddress = shippingAddress,
-                    BillingAddressId = billingAddressId ?? null,
-                    Status = "Pending"
-                };
+                    }).ToList();
+
+                }
+                
                 foreach (var orderItem in newOrder.OrderItems)
                 {
                     if (orderItem.Product != null)
@@ -65,16 +80,21 @@ namespace Ecommerce.Services.Orders
                     }
 
                 }
+                paymentInfo.Verified = true;
+                _context.PaymentInfos.Update(paymentInfo);
+
                 _context.Orders.Add(newOrder);
                 await _context.SaveChangesAsync();
                 var user = await _userManager.FindByIdAsync(userId);
                 string message = newOrder.GenerateOrderEmailMessage(user.FirstName);
+
                 await _emailService.SendEmail(new EmailDto
                 {
                     Subject = $"Order Confirmation - Order Number: {newOrder.OrderNumber}",
                     Recipient = user.Email,
                     Message = message
                 });
+
                 return newOrder.OrderNumber;
 
             }

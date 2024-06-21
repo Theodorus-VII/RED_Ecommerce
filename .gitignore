@@ -26,6 +26,7 @@ bld/
 **/obj/
 **/bin/
 
+
 publish/
 */Migrations/
 .env
@@ -34,3 +35,4 @@ publish/
 */appsettings.*.json
 
 **/Requests/
+
